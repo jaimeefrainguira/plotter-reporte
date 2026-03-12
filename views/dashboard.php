@@ -18,6 +18,7 @@ $queryBase = [
     <title>Dashboard | Reportes Plotter</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="public/css/styles.css" rel="stylesheet">
     <link href="css/styles.css" rel="stylesheet">
 </head>
 <body>
@@ -149,6 +150,7 @@ $queryBase = [
                     <?php if (!$reportes): ?>
                         <tr>
                             <td colspan="8" class="text-center text-muted">No hay reportes registrados.</td>
+                            <td colspan="7" class="text-center text-muted">No hay reportes registrados.</td>
                         </tr>
                     <?php endif; ?>
                     </tbody>
@@ -170,6 +172,7 @@ $queryBase = [
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="public/js/app.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
