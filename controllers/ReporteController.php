@@ -7,6 +7,17 @@ require_once __DIR__ . '/../models/Reporte.php';
 
 class ReporteController
 {
+    private ?Reporte $reporteModel = null;
+    private ?Throwable $dbInitError = null;
+
+    public function __construct()
+    {
+        try {
+            $database = new Database();
+            $this->reporteModel = new Reporte($database->getConnection());
+        } catch (Throwable $exception) {
+            $this->dbInitError = $exception;
+        }
     private Reporte $reporteModel;
 
     public function __construct()
@@ -17,6 +28,13 @@ class ReporteController
 
     public function dashboard(): void
     {
+        $plotters = $this->getPlotterOptions();
+        $loadError = null;
+        $stats = [
+            "total" => 0,
+            "latest" => null,
+            "perPlotter" => [],
+        ];
         $stats = $this->reporteModel->getDashboardStats();
         $plotters = $this->getPlotterOptions();
 
@@ -39,6 +57,31 @@ class ReporteController
         $page = max(1, (int) ($_GET['page'] ?? 1));
         $perPage = 10;
 
+        $reportes = [];
+        $totalRows = 0;
+        $totalPages = 1;
+
+        if ($this->reporteModel === null) {
+            $loadError = "No se pudo conectar a MySQL. Revisa DB_HOST, DB_NAME, DB_USER y DB_PASS.";
+            if ($this->dbInitError !== null) {
+                error_log("[plotter-reporte] dashboard DB init error: " . $this->dbInitError->getMessage());
+            }
+        } else {
+            try {
+                $stats = $this->reporteModel->getDashboardStats();
+                $result = $this->reporteModel->getPaginated($filters, $page, $perPage);
+                $reportes = $result['items'];
+                $totalRows = $result['totalRows'];
+                $totalPages = (int) max(1, ceil($totalRows / $perPage));
+                if ($page > $totalPages) {
+                    $page = $totalPages;
+                    $result = $this->reporteModel->getPaginated($filters, $page, $perPage);
+                    $reportes = $result['items'];
+                }
+            } catch (Throwable $exception) {
+                $loadError = "No se pudo cargar la información de reportes. Revisa la tabla `reportes` y permisos en MySQL.";
+                error_log("[plotter-reporte] dashboard query error: " . $exception->getMessage());
+            }
         $result = $this->reporteModel->getPaginated($filters, $page, $perPage);
         $reportes = $result['items'];
         $totalRows = $result['totalRows'];
@@ -55,6 +98,10 @@ class ReporteController
 
     public function showCreateForm(array $oldData = [], array $errors = []): void
     {
+        if (!$this->ensureModelAvailable()) {
+            return;
+        }
+
         $plotters = $this->getPlotterOptions();
         $csrfToken = $this->getCsrfToken();
         include __DIR__ . '/../views/formulario_reporte.php';
@@ -62,6 +109,10 @@ class ReporteController
 
     public function store(): void
     {
+        if (!$this->ensureModelAvailable()) {
+            return;
+        }
+
         if (!$this->isValidCsrfToken((string) ($_POST['csrf_token'] ?? ''))) {
             $this->redirectWithMessage('Sesión expirada. Intenta nuevamente.', 'danger');
             return;
@@ -89,6 +140,10 @@ class ReporteController
 
     public function showEditForm(int $id, array $oldData = [], array $errors = []): void
     {
+        if (!$this->ensureModelAvailable()) {
+            return;
+        }
+
         if ($id <= 0) {
             $this->redirectWithMessage('ID de reporte inválido.', 'danger');
             return;
@@ -112,6 +167,10 @@ class ReporteController
 
     public function update(int $id): void
     {
+        if (!$this->ensureModelAvailable()) {
+            return;
+        }
+
         if ($id <= 0) {
             $this->redirectWithMessage('ID de reporte inválido.', 'danger');
             return;
@@ -154,6 +213,10 @@ class ReporteController
 
     public function destroy(int $id): void
     {
+        if (!$this->ensureModelAvailable()) {
+            return;
+        }
+
         if ($id <= 0) {
             $this->redirectWithMessage('ID de reporte inválido.', 'danger');
             return;
@@ -182,6 +245,13 @@ class ReporteController
 
     public function generatePdf(?int $id = null): void
     {
+        if (!$this->ensureModelAvailable()) {
+            return;
+        }
+
+        if (!$this->loadDompdfLibrary()) {
+            $this->redirectWithMessage(
+                'No se encontró DomPDF. Verifica que exista vendor/autoload.php o una carpeta dompdf (ej: dompdf/) con autoload.inc.php en la raíz del proyecto.',
         if (!$this->loadDompdfLibrary()) {
             $this->redirectWithMessage(
                 'No se encontró DomPDF. Verifica que exista vendor/autoload.php o una carpeta dompdf (ej: dompdf/) con autoload.inc.php en la raíz del proyecto.',
@@ -301,6 +371,20 @@ class ReporteController
         <?php
 
         return (string) ob_get_clean();
+    }
+
+    private function ensureModelAvailable(): bool
+    {
+        if ($this->reporteModel !== null) {
+            return true;
+        }
+
+        $this->redirectWithMessage(
+            "No hay conexión a la base de datos. Verifica la configuración MySQL del hosting.",
+            "danger"
+        );
+
+        return false;
     }
 
     private function sanitizeData(array $input): array

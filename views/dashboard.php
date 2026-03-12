@@ -37,6 +37,12 @@ $queryBase = [
         </div>
     <?php endif; ?>
 
+    <?php if (!empty($loadError)): ?>
+        <div class="alert alert-danger" role="alert">
+            <?= htmlspecialchars((string) $loadError) ?>
+        </div>
+    <?php endif; ?>
+
     <div class="row g-3 mb-4">
         <div class="col-md-4">
             <div class="card shadow-sm h-100">
