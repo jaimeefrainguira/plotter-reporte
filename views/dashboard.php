@@ -25,6 +25,11 @@ $queryBase = [
 <nav class="navbar navbar-dark bg-dark">
     <div class="container-fluid">
         <span class="navbar-brand mb-0 h1"><i class="bi bi-speedometer2"></i> Panel de Reportes Plotter</span>
+        <?php if (!empty($loadError)): ?>
+            <button class="btn btn-success" type="button" disabled title="Corrige la conexión MySQL para habilitar esta acción."><i class="bi bi-plus-circle"></i> Nuevo reporte</button>
+        <?php else: ?>
+            <a href="index.php?action=create" class="btn btn-success"><i class="bi bi-plus-circle"></i> Nuevo reporte</a>
+        <?php endif; ?>
         <a href="index.php?action=create" class="btn btn-success"><i class="bi bi-plus-circle"></i> Nuevo reporte</a>
     </div>
 </nav>
@@ -86,6 +91,11 @@ $queryBase = [
         <div class="card-body">
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
                 <h5 class="mb-0">Listado de reportes</h5>
+                <?php if (!empty($loadError)): ?>
+                    <button class="btn btn-outline-secondary" type="button" disabled title="Disponible cuando la base de datos esté conectada."><i class="bi bi-file-earmark-pdf"></i> Generar PDF</button>
+                <?php else: ?>
+                    <a href="index.php?action=pdf" class="btn btn-outline-primary"><i class="bi bi-file-earmark-pdf"></i> Generar PDF</a>
+                <?php endif; ?>
                 <a href="index.php?action=pdf" class="btn btn-outline-primary"><i class="bi bi-file-earmark-pdf"></i> Generar PDF</a>
             </div>
 
