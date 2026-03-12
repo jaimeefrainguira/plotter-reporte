@@ -13,6 +13,11 @@ if (PHP_VERSION_ID >= 70300) {
     session_set_cookie_params(0, '/; samesite=Lax', '', $useSecureCookie, true);
 }
 
+session_set_cookie_params([
+    'httponly' => true,
+    'samesite' => 'Lax',
+    'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+]);
 session_start();
 
 header('X-Content-Type-Options: nosniff');
@@ -54,6 +59,12 @@ try {
     $controller = new ReporteController();
 } catch (Throwable $exception) {
     renderFatalError('No fue posible inicializar la aplicación. Revisa la conexión a la base de datos.', $exception);
+try {
+    $controller = new ReporteController();
+} catch (Throwable $exception) {
+    http_response_code(500);
+    echo 'Error de configuración: verifica los datos de conexión a la base de datos.';
+    exit;
 }
 
 $action = $_GET['action'] ?? 'dashboard';
@@ -109,4 +120,51 @@ try {
     }
 } catch (Throwable $exception) {
     renderFatalError('Ocurrió un error inesperado al procesar la solicitud.', $exception);
+switch ($action) {
+    case 'dashboard':
+        $controller->dashboard();
+        break;
+
+    case 'create':
+        $controller->showCreateForm();
+        break;
+
+    case 'store':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $controller->store();
+            break;
+        }
+
+        header('Location: index.php?action=dashboard');
+        break;
+
+    case 'edit':
+        $controller->showEditForm((int) ($_GET['id'] ?? 0));
+        break;
+
+    case 'update':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $controller->update((int) ($_GET['id'] ?? 0));
+            break;
+        }
+
+        header('Location: index.php?action=dashboard');
+        break;
+
+    case 'delete':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $controller->destroy((int) ($_POST['id'] ?? 0));
+            break;
+        }
+
+        header('Location: index.php?action=dashboard');
+        break;
+
+    case 'pdf':
+        $controller->generatePdf((int) ($_GET['id'] ?? 0));
+        break;
+
+    default:
+        http_response_code(404);
+        echo 'Acción no válida.';
 }

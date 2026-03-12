@@ -19,6 +19,14 @@ class Database
         $this->password = (string) (getenv('DB_PASS') ?: '4016508a8b');
         $this->charset = trim((string) (getenv('DB_CHARSET') ?: 'utf8mb4'));
         $this->port = trim((string) (getenv('DB_PORT') ?: ''));
+
+    public function __construct()
+    {
+        $this->host = (string) (getenv('DB_HOST') ?: 'sql302.hstn.me');
+        $this->dbName = (string) (getenv('DB_NAME') ?: 'mseet_41369034_plotter_reportes');
+        $this->username = (string) (getenv('DB_USER') ?: 'mseet_41369034');
+        $this->password = (string) (getenv('DB_PASS') ?: '4016508a8b');
+        $this->charset = (string) (getenv('DB_CHARSET') ?: 'utf8mb4');
     }
 
     public function getConnection(): PDO
@@ -31,6 +39,9 @@ class Database
         $dsn = sprintf(
             'mysql:host=%s;dbname=%s;charset=%s',
             $hostSegment,
+        $dsn = sprintf(
+            'mysql:host=%s;dbname=%s;charset=%s',
+            $this->host,
             $this->dbName,
             $this->charset
         );
