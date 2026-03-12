@@ -41,6 +41,17 @@ Puedes configurar la conexión de dos formas:
 
 Para compatibilidad con hosting compartido sin CLI:
 
+1. Opción recomendada (Composer en local):
+   - `composer require dompdf/dompdf`
+   - Sube la carpeta `vendor/` al proyecto en el hosting.
+2. Opción manual (sin Composer):
+   - Descarga DomPDF y sube la carpeta `dompdf/` a la raíz del proyecto.
+
+El sistema detecta automáticamente cualquiera de estas rutas:
+- `vendor/autoload.php`
+- `dompdf/autoload.inc.php`
+
+> Si no encuentra ninguna, mostrará un mensaje en el dashboard indicando cómo instalar DomPDF.
 1. En tu computadora local, descarga DomPDF con Composer:
    - `composer require dompdf/dompdf`
 2. Sube la carpeta `vendor/` generada al proyecto en el hosting.

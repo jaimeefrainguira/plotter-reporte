@@ -169,6 +169,18 @@ class ReporteController
 
     public function generatePdf(?int $id = null): void
     {
+        if (!$this->loadDompdfLibrary()) {
+            $this->redirectWithMessage(
+                'No se encontró DomPDF. Sube la carpeta vendor o la carpeta dompdf en la raíz del proyecto.',
+                'danger'
+            );
+            return;
+        }
+
+        if (!class_exists('Dompdf\Dompdf')) {
+            $this->redirectWithMessage('DomPDF no está disponible. Verifica la instalación de la librería.', 'danger');
+            return;
+        }
         $dompdfAutoload = __DIR__ . '/../vendor/autoload.php';
         if (!file_exists($dompdfAutoload)) {
             http_response_code(500);
@@ -187,6 +199,23 @@ class ReporteController
         $dompdf->setPaper('A4', 'landscape');
         $dompdf->render();
         $dompdf->stream('reporte-impresiones-plotter.pdf', ['Attachment' => false]);
+    }
+
+    private function loadDompdfLibrary(): bool
+    {
+        $autoloadCandidates = [
+            __DIR__ . '/../vendor/autoload.php',
+            __DIR__ . '/../dompdf/autoload.inc.php',
+        ];
+
+        foreach ($autoloadCandidates as $autoloadFile) {
+            if (file_exists($autoloadFile)) {
+                require_once $autoloadFile;
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function buildPdfHtml(array $reportes): string
