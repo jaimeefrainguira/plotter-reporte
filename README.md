@@ -22,10 +22,12 @@ Puedes configurar la conexión de dos formas:
 1. Editando `config/database.php` (valores por defecto).
 2. Definiendo variables de entorno (recomendado en hosting):
    - `DB_HOST`
+   - `DB_PORT` (opcional)
    - `DB_NAME`
    - `DB_USER`
    - `DB_PASS`
    - `DB_CHARSET`
+   - `APP_DEBUG` (`1` para ver detalle técnico temporalmente)
 
 ## Instalación en local o hosting
 
@@ -117,6 +119,15 @@ ALTER TABLE reportes ADD COLUMN cantidad_impreso INT NOT NULL DEFAULT 0 AFTER ca
 ```
 
 Desde esta versión el sistema intenta agregar esa columna automáticamente al guardar, si el usuario MySQL tiene permisos `ALTER`.
+
+## Solución rápida error 500 en blanco (pantalla vacía)
+
+Si el hosting muestra HTTP 500 sin detalle:
+
+1. Verifica credenciales y host de MySQL en `config/database.php` o variables `DB_*`.
+2. Activa debug temporal en hosting con `APP_DEBUG=1` para ver el error técnico real.
+3. Revisa el `error_log` del hosting (la app ahora registra excepciones críticas allí).
+4. Confirma que estás ejecutando PHP 8+ y extensión `pdo_mysql` habilitada.
 
 
 ## Nota técnica

@@ -9,6 +9,16 @@ class Database
     private string $username;
     private string $password;
     private string $charset;
+    private string $port;
+
+    public function __construct()
+    {
+        $this->host = trim((string) (getenv('DB_HOST') ?: 'sql302.hstn.me'));
+        $this->dbName = trim((string) (getenv('DB_NAME') ?: 'mseet_41369034_plotter_reportes'));
+        $this->username = trim((string) (getenv('DB_USER') ?: 'mseet_41369034'));
+        $this->password = (string) (getenv('DB_PASS') ?: '4016508a8b');
+        $this->charset = trim((string) (getenv('DB_CHARSET') ?: 'utf8mb4'));
+        $this->port = trim((string) (getenv('DB_PORT') ?: ''));
 
     public function __construct()
     {
@@ -21,6 +31,14 @@ class Database
 
     public function getConnection(): PDO
     {
+        $hostSegment = $this->host;
+        if ($this->port !== '' && ctype_digit($this->port)) {
+            $hostSegment .= ';port=' . $this->port;
+        }
+
+        $dsn = sprintf(
+            'mysql:host=%s;dbname=%s;charset=%s',
+            $hostSegment,
         $dsn = sprintf(
             'mysql:host=%s;dbname=%s;charset=%s',
             $this->host,
