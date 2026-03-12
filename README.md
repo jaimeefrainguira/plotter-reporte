@@ -73,3 +73,8 @@ Para compatibilidad con hosting compartido sin CLI:
 - `index.php?action=update&id=1`
 - `index.php?action=delete` (POST con `id`)
 - `index.php?action=pdf`
+
+
+## Nota AeonFree (raíz pública)
+
+Este proyecto ya incluye `index.php` en la raíz para que funcione con `DirectoryIndex index.php index.html index.htm index2.html` sin cambiar DocumentRoot.
