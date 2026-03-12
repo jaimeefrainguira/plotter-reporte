@@ -114,3 +114,8 @@ ALTER TABLE reportes ADD COLUMN cantidad_impreso INT NOT NULL DEFAULT 0 AFTER ca
 ```
 
 Desde esta versión el sistema intenta agregar esa columna automáticamente al guardar, si el usuario MySQL tiene permisos `ALTER`.
+
+
+## Nota técnica
+
+Si ves `SQLSTATE[HY093]: Invalid parameter number`, esta versión usa `bindValue` explícito en `create/update` para evitar desalineación de parámetros en algunos entornos de hosting compartido.
