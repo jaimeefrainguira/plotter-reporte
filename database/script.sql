@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS reportes (
     observacion TEXT NOT NULL,
     descripcion VARCHAR(255) NOT NULL,
     cantidad INT NOT NULL,
+    cantidad_impreso INT NOT NULL DEFAULT 0,
     porcentaje_impresion INT NOT NULL,
     fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_plotter (plotter),

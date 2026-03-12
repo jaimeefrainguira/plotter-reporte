@@ -52,6 +52,10 @@
                         <input type="number" min="1" name="cantidad" class="form-control" value="<?= htmlspecialchars((string) ($oldData['cantidad'] ?? '')) ?>" required>
                     </div>
                     <div class="col-md-6">
+                        <label class="form-label">CANTIDAD IMPRESO</label>
+                        <input type="number" min="0" name="cantidad_impreso" class="form-control" value="<?= htmlspecialchars((string) ($oldData['cantidad_impreso'] ?? '0')) ?>" required>
+                    </div>
+                    <div class="col-md-6">
                         <label class="form-label">% DE IMPRESIÓN</label>
                         <input type="number" min="0" max="100" name="porcentaje_impresion" class="form-control" value="<?= htmlspecialchars((string) ($oldData['porcentaje_impresion'] ?? '')) ?>" required>
                     </div>

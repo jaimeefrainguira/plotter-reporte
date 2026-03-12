@@ -30,6 +30,10 @@ Puedes configurar la conexión de dos formas:
 ## Instalación en local o hosting
 
 1. Crea la base de datos y tabla ejecutando `database/script.sql` desde phpMyAdmin.
+   - Si ya tenías una instalación previa, ejecuta además: `ALTER TABLE reportes ADD COLUMN cantidad_impreso INT NOT NULL DEFAULT 0 AFTER cantidad;`
+2. Sube todos los archivos al hosting.
+3. En AeonFree y hostings similares, publica el proyecto en la raíz pública y usa `index.php` en la raíz (incluido en este repositorio).
+4. Los assets ahora viven en la raíz (`css/` y `js/`) y puedes abrir el sistema con `tudominio.com/index.php`.
 2. Sube todos los archivos al hosting.
 3. En AeonFree y hostings similares, publica el proyecto en la raíz pública y usa `index.php` en la raíz (incluido en este repositorio).
 4. Los assets ahora viven en la raíz (`css/` y `js/`) y puedes abrir el sistema con `tudominio.com/index.php`.
@@ -67,6 +71,7 @@ El sistema detecta automáticamente cualquiera de estas rutas:
   - Cantidad de reportes por plotter
 - CRUD completo de reportes
 - Validación de longitud para descripción (máx. 255 caracteres)
+- Campo adicional `cantidad_impreso` en formularios, tabla y PDF
 - Tabla responsive con acciones (editar/eliminar/generar PDF por registro)
 - Filtros por plotter y fecha (con validación estricta del formato)
 - Paginación

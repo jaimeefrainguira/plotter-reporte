@@ -112,6 +112,7 @@ $queryBase = [
                         <th>Observación</th>
                         <th>Descripción</th>
                         <th>Cantidad</th>
+                        <th>Cantidad impreso</th>
                         <th>% de impresión</th>
                         <th>Fecha</th>
                         <th>Acciones</th>
@@ -124,6 +125,7 @@ $queryBase = [
                             <td><?= nl2br(htmlspecialchars($reporte['observacion'])) ?></td>
                             <td><?= htmlspecialchars($reporte['descripcion']) ?></td>
                             <td><?= (int) $reporte['cantidad'] ?></td>
+                            <td><?= (int) ($reporte['cantidad_impreso'] ?? 0) ?></td>
                             <td><?= (int) $reporte['porcentaje_impresion'] ?>%</td>
                             <td><?= htmlspecialchars($reporte['fecha']) ?></td>
                             <td>
@@ -147,6 +149,7 @@ $queryBase = [
                     <?php endforeach; ?>
                     <?php if (!$reportes): ?>
                         <tr>
+                            <td colspan="8" class="text-center text-muted">No hay reportes registrados.</td>
                             <td colspan="7" class="text-center text-muted">No hay reportes registrados.</td>
                         </tr>
                     <?php endif; ?>

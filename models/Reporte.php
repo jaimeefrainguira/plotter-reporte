@@ -10,6 +10,8 @@ class Reporte
 
     public function create(array $data): bool
     {
+        $sql = 'INSERT INTO reportes (plotter, observacion, descripcion, cantidad, cantidad_impreso, porcentaje_impresion, fecha)
+                VALUES (:plotter, :observacion, :descripcion, :cantidad, :cantidad_impreso, :porcentaje_impresion, NOW())';
         $sql = 'INSERT INTO reportes (plotter, observacion, descripcion, cantidad, porcentaje_impresion, fecha)
                 VALUES (:plotter, :observacion, :descripcion, :cantidad, :porcentaje_impresion, NOW())';
 
@@ -20,6 +22,7 @@ class Reporte
             ':observacion' => $data['observacion'],
             ':descripcion' => $data['descripcion'],
             ':cantidad' => (int) $data['cantidad'],
+            ':cantidad_impreso' => (int) $data['cantidad_impreso'],
             ':porcentaje_impresion' => (int) $data['porcentaje_impresion'],
         ]);
     }
@@ -40,6 +43,7 @@ class Reporte
                     observacion = :observacion,
                     descripcion = :descripcion,
                     cantidad = :cantidad,
+                    cantidad_impreso = :cantidad_impreso,
                     porcentaje_impresion = :porcentaje_impresion
                 WHERE id = :id';
 
@@ -51,6 +55,7 @@ class Reporte
             ':observacion' => $data['observacion'],
             ':descripcion' => $data['descripcion'],
             ':cantidad' => (int) $data['cantidad'],
+            ':cantidad_impreso' => (int) $data['cantidad_impreso'],
             ':porcentaje_impresion' => (int) $data['porcentaje_impresion'],
         ]);
 

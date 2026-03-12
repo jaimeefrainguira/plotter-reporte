@@ -242,6 +242,7 @@ class ReporteController
                         <th>Observación</th>
                         <th>Descripción</th>
                         <th>Cantidad</th>
+                        <th>Cantidad Impreso</th>
                         <th>% Impresión</th>
                         <th>Fecha</th>
                     </tr>
@@ -253,12 +254,14 @@ class ReporteController
                         <td><?= htmlspecialchars((string) $reporte['observacion']) ?></td>
                         <td><?= htmlspecialchars((string) $reporte['descripcion']) ?></td>
                         <td><?= (int) $reporte['cantidad'] ?></td>
+                        <td><?= (int) ($reporte['cantidad_impreso'] ?? 0) ?></td>
                         <td><?= (int) $reporte['porcentaje_impresion'] ?>%</td>
                         <td><?= htmlspecialchars((string) $reporte['fecha']) ?></td>
                     </tr>
                 <?php endforeach; ?>
                 <?php if (!$reportes): ?>
                     <tr>
+                        <td colspan="7">No hay reportes disponibles.</td>
                         <td colspan="6">No hay reportes disponibles.</td>
                     </tr>
                 <?php endif; ?>
@@ -278,6 +281,7 @@ class ReporteController
             'observacion' => trim((string) ($input['observacion'] ?? '')),
             'descripcion' => trim((string) ($input['descripcion'] ?? '')),
             'cantidad' => (int) ($input['cantidad'] ?? 0),
+            'cantidad_impreso' => (int) ($input['cantidad_impreso'] ?? 0),
             'porcentaje_impresion' => (int) ($input['porcentaje_impresion'] ?? 0),
         ];
     }
@@ -304,6 +308,14 @@ class ReporteController
 
         if ($data['cantidad'] <= 0) {
             $errors[] = 'La cantidad debe ser mayor a 0.';
+        }
+
+        if ($data['cantidad_impreso'] < 0) {
+            $errors[] = 'La cantidad impreso no puede ser negativa.';
+        }
+
+        if ($data['cantidad_impreso'] > $data['cantidad']) {
+            $errors[] = 'La cantidad impreso no puede ser mayor a la cantidad.';
         }
 
         if ($data['porcentaje_impresion'] < 0 || $data['porcentaje_impresion'] > 100) {
