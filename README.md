@@ -31,6 +31,10 @@ Puedes configurar la conexión de dos formas:
 
 1. Crea la base de datos y tabla ejecutando `database/script.sql` desde phpMyAdmin.
    - Si ya tenías una instalación previa, ejecuta además: `ALTER TABLE reportes ADD COLUMN cantidad_impreso INT NOT NULL DEFAULT 0 AFTER cantidad;`
+   - El sistema también intenta autoagregar la columna `cantidad_impreso` al guardar por primera vez (si el usuario DB tiene permisos `ALTER`).
+2. Sube todos los archivos al hosting.
+3. En AeonFree y hostings similares, publica el proyecto en la raíz pública y usa `index.php` en la raíz (incluido en este repositorio).
+4. Los assets ahora viven en la raíz (`css/` y `js/`) y puedes abrir el sistema con `tudominio.com/index.php`.
 2. Sube todos los archivos al hosting.
 3. En AeonFree y hostings similares, publica el proyecto en la raíz pública y usa `index.php` en la raíz (incluido en este repositorio).
 4. Los assets ahora viven en la raíz (`css/` y `js/`) y puedes abrir el sistema con `tudominio.com/index.php`.
@@ -97,3 +101,16 @@ El sistema detecta automáticamente cualquiera de estas rutas:
 ## Nota AeonFree (raíz pública)
 
 Este proyecto ya incluye `index.php` en la raíz para que funcione con `DirectoryIndex index.php index.html index.htm index2.html` sin cambiar DocumentRoot.
+
+
+## Solución rápida error 500 al guardar
+
+Si al registrar aparece HTTP 500, normalmente tu tabla `reportes` es antigua y no tiene el campo `cantidad_impreso`.
+
+Ejecuta en phpMyAdmin:
+
+```sql
+ALTER TABLE reportes ADD COLUMN cantidad_impreso INT NOT NULL DEFAULT 0 AFTER cantidad;
+```
+
+Desde esta versión el sistema intenta agregar esa columna automáticamente al guardar, si el usuario MySQL tiene permisos `ALTER`.

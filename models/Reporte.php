@@ -4,12 +4,18 @@ declare(strict_types=1);
 
 class Reporte
 {
+    private bool $schemaChecked = false;
+
     public function __construct(private PDO $db)
     {
     }
 
     public function create(array $data): bool
     {
+        $this->ensureCantidadImpresoColumn();
+
+        $sql = 'INSERT INTO reportes (plotter, observacion, descripcion, cantidad, cantidad_impreso, porcentaje_impresion, fecha)
+                VALUES (:plotter, :observacion, :descripcion, :cantidad, :cantidad_impreso, :porcentaje_impresion, NOW())';
         $sql = 'INSERT INTO reportes (plotter, observacion, descripcion, cantidad, cantidad_impreso, porcentaje_impresion, fecha)
                 VALUES (:plotter, :observacion, :descripcion, :cantidad, :cantidad_impreso, :porcentaje_impresion, NOW())';
         $sql = 'INSERT INTO reportes (plotter, observacion, descripcion, cantidad, porcentaje_impresion, fecha)
@@ -38,6 +44,8 @@ class Reporte
 
     public function update(int $id, array $data): bool
     {
+        $this->ensureCantidadImpresoColumn();
+
         $sql = 'UPDATE reportes
                 SET plotter = :plotter,
                     observacion = :observacion,
@@ -132,4 +140,30 @@ class Reporte
 
         return $this->db->query('SELECT * FROM reportes ORDER BY fecha DESC, id DESC')->fetchAll();
     }
+    private function ensureCantidadImpresoColumn(): void
+    {
+        if ($this->schemaChecked) {
+            return;
+        }
+
+        $this->schemaChecked = true;
+
+        $stmt = $this->db->query("SHOW COLUMNS FROM reportes LIKE 'cantidad_impreso'");
+        $column = $stmt->fetch();
+
+        if ($column) {
+            return;
+        }
+
+        try {
+            $this->db->exec('ALTER TABLE reportes ADD COLUMN cantidad_impreso INT NOT NULL DEFAULT 0 AFTER cantidad');
+        } catch (PDOException $exception) {
+            throw new RuntimeException(
+                'No se pudo preparar la tabla reportes. Ejecuta: ALTER TABLE reportes ADD COLUMN cantidad_impreso INT NOT NULL DEFAULT 0 AFTER cantidad;',
+                0,
+                $exception
+            );
+        }
+    }
+
 }

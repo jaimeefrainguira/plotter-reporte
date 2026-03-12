@@ -75,6 +75,13 @@ class ReporteController
             return;
         }
 
+        try {
+            $this->reporteModel->create($data);
+        } catch (Throwable $exception) {
+            $this->showCreateForm($data, ['Error al guardar reporte. ' . $exception->getMessage()]);
+            return;
+        }
+
         $this->reporteModel->create($data);
         $this->rotateCsrfToken();
         $this->redirectWithMessage('Reporte creado correctamente.');
@@ -128,6 +135,12 @@ class ReporteController
             return;
         }
 
+        try {
+            $updated = $this->reporteModel->update($id, $data);
+        } catch (Throwable $exception) {
+            $this->showEditForm($id, $data, ['Error al actualizar reporte. ' . $exception->getMessage()]);
+            return;
+        }
         $updated = $this->reporteModel->update($id, $data);
         $this->rotateCsrfToken();
 
