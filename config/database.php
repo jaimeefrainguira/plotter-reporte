@@ -16,11 +16,6 @@ class Database
         $this->dbName = (string) (getenv('DB_NAME') ?: 'mseet_41369034_plotter_reportes');
         $this->username = (string) (getenv('DB_USER') ?: 'mseet_41369034');
         $this->password = (string) (getenv('DB_PASS') ?: '4016508a8b');
-        $this->host = (string) (getenv('DB_HOST') ?: 'localhost');
-        $this->dbName = (string) (getenv('DB_NAME') ?: 'plotter_reportes');
-        $this->username = (string) (getenv('DB_USER') ?: 'root');
-        $this->password = (string) (getenv('DB_PASS') ?: '');
-        $this->charset = (string) (getenv('DB_CHARSET') ?: 'utf8mb4');
     }
 
     public function getConnection(): PDO
