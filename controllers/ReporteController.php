@@ -150,6 +150,14 @@ class ReporteController
         }
 
         $plotters = $this->getPlotterOptions();
+
+        try {
+            $reporte = $this->reporteModel->getById($id);
+        } catch (Throwable $exception) {
+            error_log('[plotter-reporte] showEditForm error: ' . $exception->getMessage());
+            $this->redirectWithMessage('No se pudo cargar el reporte para edición.', 'danger');
+            return;
+        }
         $reporte = $this->reporteModel->getById($id);
 
         if (!$reporte) {
@@ -176,6 +184,15 @@ class ReporteController
             return;
         }
 
+        try {
+            $existing = $this->reporteModel->getById($id);
+        } catch (Throwable $exception) {
+            error_log('[plotter-reporte] update precheck error: ' . $exception->getMessage());
+            $this->redirectWithMessage('No se pudo validar el reporte a actualizar.', 'danger');
+            return;
+        }
+
+        if ($existing === null) {
         if ($this->reporteModel->getById($id) === null) {
             $this->redirectWithMessage('Reporte no encontrado.', 'danger');
             return;
@@ -222,6 +239,15 @@ class ReporteController
             return;
         }
 
+        try {
+            $existing = $this->reporteModel->getById($id);
+        } catch (Throwable $exception) {
+            error_log('[plotter-reporte] destroy precheck error: ' . $exception->getMessage());
+            $this->redirectWithMessage('No se pudo validar el reporte a eliminar.', 'danger');
+            return;
+        }
+
+        if ($existing === null) {
         if ($this->reporteModel->getById($id) === null) {
             $this->redirectWithMessage('Reporte no encontrado.', 'danger');
             return;
@@ -229,6 +255,14 @@ class ReporteController
 
         if (!$this->isValidCsrfToken((string) ($_POST['csrf_token'] ?? ''))) {
             $this->redirectWithMessage('Sesión expirada. Intenta nuevamente.', 'danger');
+            return;
+        }
+
+        try {
+            $deleted = $this->reporteModel->delete($id);
+        } catch (Throwable $exception) {
+            error_log('[plotter-reporte] destroy delete error: ' . $exception->getMessage());
+            $this->redirectWithMessage('No se pudo eliminar el reporte.', 'danger');
             return;
         }
 
@@ -265,6 +299,17 @@ class ReporteController
             $this->redirectWithMessage('DomPDF no está disponible. Verifica la instalación de la librería.', 'danger');
             return;
         }
+
+        $reportId = ($id !== null && $id > 0) ? $id : null;
+
+        try {
+            $reportes = $this->reporteModel->getAllForPdf($reportId);
+        } catch (Throwable $exception) {
+            error_log('[plotter-reporte] pdf data error: ' . $exception->getMessage());
+            $this->redirectWithMessage('No se pudo obtener la información para generar el PDF.', 'danger');
+            return;
+        }
+
         $dompdfAutoload = __DIR__ . '/../vendor/autoload.php';
         if (!file_exists($dompdfAutoload)) {
             http_response_code(500);
