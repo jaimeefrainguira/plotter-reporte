@@ -20,6 +20,5 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftp
-          port: 
-          timeout: 120000
+          port: 21
           server-dir: /htdocs/
