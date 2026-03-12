@@ -184,6 +184,7 @@ class ReporteController
     {
         if (!$this->loadDompdfLibrary()) {
             $this->redirectWithMessage(
+                'No se encontró DomPDF. Verifica que exista vendor/autoload.php o una carpeta dompdf (ej: dompdf/) con autoload.inc.php en la raíz del proyecto.',
                 'No se encontró DomPDF. Sube la carpeta vendor o la carpeta dompdf en la raíz del proyecto.',
                 'danger'
             );
@@ -219,6 +220,21 @@ class ReporteController
         $autoloadCandidates = [
             __DIR__ . '/../vendor/autoload.php',
             __DIR__ . '/../dompdf/autoload.inc.php',
+            __DIR__ . '/../dompdf/autoload.php',
+        ];
+
+        // Búsqueda tolerante por si la carpeta fue subida con otro nombre (ej: dompdff)
+        // o con estructura ligeramente distinta.
+        $dynamicCandidates = glob(__DIR__ . '/../dompdf*/autoload.inc.php') ?: [];
+        $dynamicCandidates = array_merge(
+            $dynamicCandidates,
+            glob(__DIR__ . '/../dompdf*/autoload.php') ?: []
+        );
+
+        $autoloadCandidates = array_merge($autoloadCandidates, $dynamicCandidates);
+
+        foreach ($autoloadCandidates as $autoloadFile) {
+            if (is_string($autoloadFile) && file_exists($autoloadFile)) {
         ];
 
         foreach ($autoloadCandidates as $autoloadFile) {

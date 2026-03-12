@@ -58,6 +58,9 @@ Para compatibilidad con hosting compartido sin CLI:
 El sistema detecta automáticamente cualquiera de estas rutas:
 - `vendor/autoload.php`
 - `dompdf/autoload.inc.php`
+- `dompdf*/autoload.inc.php` (acepta variantes de nombre, por ejemplo `dompdff`)
+
+> Si no encuentra ninguna, mostrará un mensaje en el dashboard indicando cómo instalar DomPDF.
 
 > Si no encuentra ninguna, mostrará un mensaje en el dashboard indicando cómo instalar DomPDF.
 1. En tu computadora local, descarga DomPDF con Composer:
