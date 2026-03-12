@@ -31,6 +31,8 @@ Puedes configurar la conexión de dos formas:
 2. Sube todos los archivos al hosting.
 3. En AeonFree y hostings similares, publica el proyecto en la raíz pública y usa `index.php` en la raíz (incluido en este repositorio).
 4. Mantén la carpeta `public/` para assets (`public/css` y `public/js`) y accede normalmente por `tudominio.com/index.php`.
+3. Configura el dominio/document root para que apunte a la carpeta `public/`.
+4. Si tu hosting no permite cambiar document root, mueve el contenido de `public/` a la raíz pública y ajusta rutas `require_once`.
 
 ## DomPDF (sin comandos de consola en hosting)
 
