@@ -18,6 +18,12 @@ class ReporteController
         } catch (Throwable $exception) {
             $this->dbInitError = $exception;
         }
+    private Reporte $reporteModel;
+
+    public function __construct()
+    {
+        $database = new Database();
+        $this->reporteModel = new Reporte($database->getConnection());
     }
 
     public function dashboard(): void
@@ -29,6 +35,8 @@ class ReporteController
             "latest" => null,
             "perPlotter" => [],
         ];
+        $stats = $this->reporteModel->getDashboardStats();
+        $plotters = $this->getPlotterOptions();
 
         $plotterFilter = trim((string) ($_GET['plotter'] ?? ''));
         $fechaFilter = trim((string) ($_GET['fecha'] ?? ''));
@@ -74,6 +82,14 @@ class ReporteController
                 $loadError = "No se pudo cargar la información de reportes. Revisa la tabla `reportes` y permisos en MySQL.";
                 error_log("[plotter-reporte] dashboard query error: " . $exception->getMessage());
             }
+        $result = $this->reporteModel->getPaginated($filters, $page, $perPage);
+        $reportes = $result['items'];
+        $totalRows = $result['totalRows'];
+        $totalPages = (int) max(1, ceil($totalRows / $perPage));
+        if ($page > $totalPages) {
+            $page = $totalPages;
+            $result = $this->reporteModel->getPaginated($filters, $page, $perPage);
+            $reportes = $result['items'];
         }
 
         $csrfToken = $this->getCsrfToken();
@@ -117,6 +133,7 @@ class ReporteController
             return;
         }
 
+        $this->reporteModel->create($data);
         $this->rotateCsrfToken();
         $this->redirectWithMessage('Reporte creado correctamente.');
     }
@@ -183,6 +200,7 @@ class ReporteController
             $this->showEditForm($id, $data, ['Error al actualizar reporte. ' . $exception->getMessage()]);
             return;
         }
+        $updated = $this->reporteModel->update($id, $data);
         $this->rotateCsrfToken();
 
         if (!$updated) {
@@ -234,6 +252,10 @@ class ReporteController
         if (!$this->loadDompdfLibrary()) {
             $this->redirectWithMessage(
                 'No se encontró DomPDF. Verifica que exista vendor/autoload.php o una carpeta dompdf (ej: dompdf/) con autoload.inc.php en la raíz del proyecto.',
+        if (!$this->loadDompdfLibrary()) {
+            $this->redirectWithMessage(
+                'No se encontró DomPDF. Verifica que exista vendor/autoload.php o una carpeta dompdf (ej: dompdf/) con autoload.inc.php en la raíz del proyecto.',
+                'No se encontró DomPDF. Sube la carpeta vendor o la carpeta dompdf en la raíz del proyecto.',
                 'danger'
             );
             return;
@@ -243,6 +265,14 @@ class ReporteController
             $this->redirectWithMessage('DomPDF no está disponible. Verifica la instalación de la librería.', 'danger');
             return;
         }
+        $dompdfAutoload = __DIR__ . '/../vendor/autoload.php';
+        if (!file_exists($dompdfAutoload)) {
+            http_response_code(500);
+            echo 'No se encontró DomPDF. Sube la carpeta vendor o instala dompdf/dompdf.';
+            return;
+        }
+
+        require_once $dompdfAutoload;
 
         $reportId = ($id !== null && $id > 0) ? $id : null;
         $reportes = $this->reporteModel->getAllForPdf($reportId);
@@ -275,6 +305,10 @@ class ReporteController
 
         foreach ($autoloadCandidates as $autoloadFile) {
             if (is_string($autoloadFile) && file_exists($autoloadFile)) {
+        ];
+
+        foreach ($autoloadCandidates as $autoloadFile) {
+            if (file_exists($autoloadFile)) {
                 require_once $autoloadFile;
                 return true;
             }
@@ -327,6 +361,7 @@ class ReporteController
                 <?php if (!$reportes): ?>
                     <tr>
                         <td colspan="7">No hay reportes disponibles.</td>
+                        <td colspan="6">No hay reportes disponibles.</td>
                     </tr>
                 <?php endif; ?>
                 </tbody>
