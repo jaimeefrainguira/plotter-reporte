@@ -181,6 +181,14 @@ class ReporteController
             $this->redirectWithMessage('DomPDF no está disponible. Verifica la instalación de la librería.', 'danger');
             return;
         }
+        $dompdfAutoload = __DIR__ . '/../vendor/autoload.php';
+        if (!file_exists($dompdfAutoload)) {
+            http_response_code(500);
+            echo 'No se encontró DomPDF. Sube la carpeta vendor o instala dompdf/dompdf.';
+            return;
+        }
+
+        require_once $dompdfAutoload;
 
         $reportId = ($id !== null && $id > 0) ? $id : null;
         $reportes = $this->reporteModel->getAllForPdf($reportId);
@@ -254,6 +262,7 @@ class ReporteController
                 <?php if (!$reportes): ?>
                     <tr>
                         <td colspan="7">No hay reportes disponibles.</td>
+                        <td colspan="6">No hay reportes disponibles.</td>
                     </tr>
                 <?php endif; ?>
                 </tbody>

@@ -11,6 +11,7 @@ Aplicación web en **PHP 8+** con arquitectura **MVC pura**, MySQL, Bootstrap 5 
 /views
 /css
 /js
+/public
 /database
 ```
 
@@ -33,6 +34,12 @@ Puedes configurar la conexión de dos formas:
 2. Sube todos los archivos al hosting.
 3. En AeonFree y hostings similares, publica el proyecto en la raíz pública y usa `index.php` en la raíz (incluido en este repositorio).
 4. Los assets ahora viven en la raíz (`css/` y `js/`) y puedes abrir el sistema con `tudominio.com/index.php`.
+2. Sube todos los archivos al hosting.
+3. En AeonFree y hostings similares, publica el proyecto en la raíz pública y usa `index.php` en la raíz (incluido en este repositorio).
+4. Los assets ahora viven en la raíz (`css/` y `js/`) y puedes abrir el sistema con `tudominio.com/index.php`.
+4. Mantén la carpeta `public/` para assets (`public/css` y `public/js`) y accede normalmente por `tudominio.com/index.php`.
+3. Configura el dominio/document root para que apunte a la carpeta `public/`.
+4. Si tu hosting no permite cambiar document root, mueve el contenido de `public/` a la raíz pública y ajusta rutas `require_once`.
 
 ## DomPDF (sin comandos de consola en hosting)
 
@@ -49,6 +56,12 @@ El sistema detecta automáticamente cualquiera de estas rutas:
 - `dompdf/autoload.inc.php`
 
 > Si no encuentra ninguna, mostrará un mensaje en el dashboard indicando cómo instalar DomPDF.
+1. En tu computadora local, descarga DomPDF con Composer:
+   - `composer require dompdf/dompdf`
+2. Sube la carpeta `vendor/` generada al proyecto en el hosting.
+3. El sistema detecta automáticamente `vendor/autoload.php` para la opción **Generar PDF**.
+
+> Si no existe `vendor/autoload.php`, el sistema mostrará un mensaje indicando que falta DomPDF.
 
 ## Funcionalidades implementadas
 

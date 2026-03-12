@@ -12,6 +12,8 @@ class Reporte
     {
         $sql = 'INSERT INTO reportes (plotter, observacion, descripcion, cantidad, cantidad_impreso, porcentaje_impresion, fecha)
                 VALUES (:plotter, :observacion, :descripcion, :cantidad, :cantidad_impreso, :porcentaje_impresion, NOW())';
+        $sql = 'INSERT INTO reportes (plotter, observacion, descripcion, cantidad, porcentaje_impresion, fecha)
+                VALUES (:plotter, :observacion, :descripcion, :cantidad, :porcentaje_impresion, NOW())';
 
         $stmt = $this->db->prepare($sql);
 
