@@ -19,7 +19,7 @@
         <li>Venta de tazas personalizadas</li>
     </ul>
 
-    <h2>Imagen de ejemplo</h2>
+    <h2>Imagen de ejemplo</h2>a
     <img src="https://via.placeholder.com/400" alt="Imagen de ejemplo">
 
     <h2>Formulario de contacto</h2>
