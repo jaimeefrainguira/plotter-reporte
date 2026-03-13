@@ -46,24 +46,28 @@ class ReporteController
             $reportesByPlotter[$plotter][] = $reporte;
         }
 
-        $modalPlotter = trim((string) ($_GET['modal_plotter'] ?? ''));
-        if ($modalPlotter !== '' && !in_array($modalPlotter, $plotters, true)) {
-            $modalPlotter = '';
-        }
-
-        $modalDate = trim((string) ($_GET['modal_fecha'] ?? ''));
-        if ($modalDate !== '' && !$this->isValidDate($modalDate)) {
-            $modalDate = '';
-        }
-
-        $modalReportes = [];
-        if ($modalPlotter !== '') {
-            $modalReportes = $this->reporteModel->getByDateAndPlotter($modalDate, $modalPlotter);
-        }
-
-        $modalShouldOpen = ($modalPlotter !== '');
         $csrfToken = $this->getCsrfToken();
         include __DIR__ . '/../views/dashboard.php';
+    }
+
+    public function showPlotterDetail(): void
+    {
+        $plotters = $this->getPlotterOptions();
+
+        $plotter = trim((string) ($_GET['plotter'] ?? ''));
+        if (!in_array($plotter, $plotters, true)) {
+            $this->redirectWithMessage('Plotter inválido.', 'danger');
+            return;
+        }
+
+        $fecha = trim((string) ($_GET['fecha'] ?? ''));
+        if ($fecha !== '' && !$this->isValidDate($fecha)) {
+            $fecha = '';
+        }
+
+        $reportes = $this->reporteModel->getByDateAndPlotter($fecha, $plotter);
+        $csrfToken = $this->getCsrfToken();
+        include __DIR__ . '/../views/plotter_detalle.php';
     }
 
     public function showCreateForm(array $oldData = [], array $errors = []): void
@@ -221,7 +225,9 @@ class ReporteController
     private function loadDompdfLibrary(): bool
     {
         $autoloadCandidates = [
+            __DIR__ . '/../vendor/autoload.php',
             __DIR__ . '/../dompdf/autoload.inc.php',
+            __DIR__ . '/../dompdf/vendor/autoload.php',
         ];
 
         foreach ($autoloadCandidates as $autoloadFile) {

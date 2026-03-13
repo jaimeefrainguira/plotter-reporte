@@ -5,13 +5,3 @@ document.querySelectorAll('.form-delete').forEach((form) => {
         }
     });
 });
-
-const modalElement = document.getElementById('plotterModal');
-if (modalElement && window.bootstrap) {
-    const shouldOpen = modalElement.dataset.openOnLoad === '1';
-
-    if (shouldOpen) {
-        const modal = new bootstrap.Modal(modalElement);
-        modal.show();
-    }
-}

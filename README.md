@@ -22,28 +22,35 @@ Puedes configurar la conexión de dos formas:
 1. Editando `config/database.php` (valores por defecto).
 2. Definiendo variables de entorno (recomendado en hosting):
    - `DB_HOST`
+   - `DB_PORT`
    - `DB_NAME`
    - `DB_USER`
    - `DB_PASS`
    - `DB_CHARSET`
+   - `DATABASE_URL` (formato: `mysql://usuario:clave@host:3306/base?charset=utf8mb4`)
+
+
+## Configuración por defecto (hosting actual)
+
+Si no defines variables de entorno, el sistema usa por defecto estos datos:
+
+- Host: `sql302.hstn.me`
+- Puerto: `3306`
+- Base de datos: `mseet_41369034_plotter_reportes`
+- Usuario: `mseet_41369034`
+- Clave: `4016508a8b`
+
+Si en el futuro cambias de hosting, actualiza las variables de entorno para sobrescribir estos valores.
 
 ## Instalación en local o hosting
 
 1. Crea la base de datos y tabla ejecutando `database/script.sql` desde phpMyAdmin.
-   - Si ya tenías una instalación previa, ejecuta además: `ALTER TABLE reportes ADD COLUMN cantidad_impreso INT NOT NULL DEFAULT 0 AFTER cantidad;`
-   - El sistema también intenta autoagregar la columna `cantidad_impreso` al guardar por primera vez (si el usuario DB tiene permisos `ALTER`).
-2. Sube todos los archivos al hosting.
-3. En AeonFree y hostings similares, publica el proyecto en la raíz pública y usa `index.php` en la raíz (incluido en este repositorio).
-4. Los assets ahora viven en la raíz (`css/` y `js/`) y puedes abrir el sistema con `tudominio.com/index.php`.
-2. Sube todos los archivos al hosting.
-3. En AeonFree y hostings similares, publica el proyecto en la raíz pública y usa `index.php` en la raíz (incluido en este repositorio).
-4. Los assets ahora viven en la raíz (`css/` y `js/`) y puedes abrir el sistema con `tudominio.com/index.php`.
-2. Sube todos los archivos al hosting.
-3. En AeonFree y hostings similares, publica el proyecto en la raíz pública y usa `index.php` en la raíz (incluido en este repositorio).
-4. Los assets ahora viven en la raíz (`css/` y `js/`) y puedes abrir el sistema con `tudominio.com/index.php`.
-4. Mantén la carpeta `public/` para assets (`public/css` y `public/js`) y accede normalmente por `tudominio.com/index.php`.
-3. Configura el dominio/document root para que apunte a la carpeta `public/`.
-4. Si tu hosting no permite cambiar document root, mueve el contenido de `public/` a la raíz pública y ajusta rutas `require_once`.
+2. Si tu instalación es previa, valida que existan estas columnas en `reportes`:
+   - `cantidad_impreso` (INT, default 0)
+   - `porcentaje_impresion` (INT, default 0)
+3. Sube los archivos del proyecto al hosting.
+4. Publica el proyecto apuntando a la raíz donde está `index.php`.
+5. Abre `tudominio.com/index.php?action=dashboard`.
 
 ## DomPDF (sin comandos de consola en hosting)
 
@@ -55,17 +62,14 @@ Para compatibilidad con hosting compartido sin CLI:
 2. Opción manual (sin Composer):
    - Descarga DomPDF y sube la carpeta `dompdf/` a la raíz del proyecto.
 
-El sistema detecta automáticamente cualquiera de estas rutas:
+El sistema detecta automáticamente estas rutas:
 - `vendor/autoload.php`
 - `dompdf/autoload.inc.php`
+- `dompdf/vendor/autoload.php`
 
 > Si no encuentra ninguna, mostrará un mensaje en el dashboard indicando cómo instalar DomPDF.
-1. En tu computadora local, descarga DomPDF con Composer:
-   - `composer require dompdf/dompdf`
-2. Sube la carpeta `vendor/` generada al proyecto en el hosting.
-3. El sistema detecta automáticamente `vendor/autoload.php` para la opción **Generar PDF**.
 
-> Si no existe `vendor/autoload.php`, el sistema mostrará un mensaje indicando que falta DomPDF.
+
 
 ## Funcionalidades implementadas
 
