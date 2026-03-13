@@ -16,15 +16,21 @@ header("Content-Security-Policy: default-src 'self'; style-src 'self' https://cd
 
 require_once __DIR__ . '/controllers/ReporteController.php';
 
+$action = $_GET['action'] ?? 'dashboard';
+
 try {
     $controller = new ReporteController();
 } catch (Throwable $exception) {
+    if (in_array($action, ['dashboard', 'plotter'], true)) {
+        $errorMessage = 'No fue posible conectar con la base de datos. Verifica la configuración para habilitar todos los reportes.';
+        include __DIR__ . '/views/error_conexion.php';
+        exit;
+    }
+
     http_response_code(500);
     echo 'Error de configuración: verifica los datos de conexión a la base de datos.';
     exit;
 }
-
-$action = $_GET['action'] ?? 'dashboard';
 
 switch ($action) {
     case 'dashboard':
