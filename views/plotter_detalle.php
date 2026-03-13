@@ -45,8 +45,15 @@ unset($_SESSION['flash']);
                     <label class="form-label">Fecha del reporte</label>
                     <input type="date" class="form-control" name="fecha" value="<?= htmlspecialchars($fecha) ?>">
                 </div>
-                <div class="col-md-8 d-flex align-items-end gap-2">
+                <div class="col-md-8 d-flex align-items-end gap-2 flex-wrap">
                     <button class="btn btn-primary" type="submit">Buscar</button>
+                    <a
+                        class="btn btn-danger"
+                        href="index.php?action=pdf&plotter=<?= urlencode($plotter) ?><?= $fecha !== '' ? '&fecha=' . urlencode($fecha) : '' ?>"
+                        target="_blank"
+                    >
+                        <i class="bi bi-filetype-pdf"></i> Generar PDF
+                    </a>
                     <?php if ($fecha !== ''): ?>
                         <a class="btn btn-outline-secondary" href="index.php?action=plotter&plotter=<?= urlencode($plotter) ?>">Ver todos</a>
                     <?php endif; ?>

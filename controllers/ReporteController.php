@@ -217,6 +217,19 @@ class ReporteController
         $reportId = ($id !== null && $id > 0) ? $id : null;
         $reportes = $this->reporteModel->getAllForPdf($reportId);
         $html = $this->buildPdfHtml($reportes, $reportId === null);
+        $plotter = trim((string) ($_GET['plotter'] ?? ''));
+        $fecha = trim((string) ($_GET['fecha'] ?? ''));
+
+        if ($plotter !== '' && !in_array($plotter, $this->getPlotterOptions(), true)) {
+            $plotter = '';
+        }
+
+        if ($fecha !== '' && !$this->isValidDate($fecha)) {
+            $fecha = '';
+        }
+
+        $reportes = $this->reporteModel->getAllForPdf($reportId, $plotter, $fecha);
+        $html = $this->buildPdfHtml($reportes, $plotter, $fecha);
 
         $dompdf = new Dompdf\Dompdf();
         $dompdf->loadHtml($html);
@@ -380,7 +393,16 @@ class ReporteController
     }
 
     private function buildSingleReportPdfHtml(array $reportes): string
+    private function buildPdfHtml(array $reportes, string $plotter = '', string $fecha = ''): string
     {
+        $subtitle = [];
+        if ($plotter !== '') {
+            $subtitle[] = $plotter;
+        }
+        if ($fecha !== '') {
+            $subtitle[] = 'Fecha: ' . $fecha;
+        }
+
         ob_start();
         ?>
         <html>
@@ -396,6 +418,9 @@ class ReporteController
         </head>
         <body>
             <h2>Reporte de Impresiones Plotter</h2>
+            <?php if ($subtitle): ?>
+                <p><strong><?= htmlspecialchars(implode(' | ', $subtitle)) ?></strong></p>
+            <?php endif; ?>
             <table>
                 <thead>
                     <tr>
