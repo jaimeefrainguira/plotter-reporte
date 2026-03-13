@@ -298,8 +298,7 @@ class ReporteController
             <?php endif; ?>
             <table>
                 <thead>
-                    <tr>
-                        <th>Plotter</th>
+                    <tr>                       
                         <th>Observación</th>
                         <th>Descripción</th>
                         <th>Cantidad</th>
@@ -311,7 +310,6 @@ class ReporteController
                 <tbody>
                 <?php foreach ($reportes as $reporte): ?>
                     <tr>
-                        <td><?= htmlspecialchars((string) $reporte['plotter']) ?></td>
                         <td><?= htmlspecialchars((string) $reporte['observacion']) ?></td>
                         <td><?= htmlspecialchars((string) $reporte['descripcion']) ?></td>
                         <td><?= (int) $reporte['cantidad'] ?></td>
