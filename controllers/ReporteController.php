@@ -11,7 +11,8 @@ class ReporteController
 
     public function __construct()
     {
-        
+        $database = new Database();
+        $this->reporteModel = new Reporte($database->getConnection());
     }
 
     public function dashboard(): void
