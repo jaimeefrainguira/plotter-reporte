@@ -9,7 +9,6 @@ header("Content-Security-Policy: default-src 'self'; style-src 'self' https://cd
 
 require_once __DIR__ . '/controllers/ReporteController.php';
 
-
 try {
     $controller = new ReporteController();
 } catch (Throwable $exception) {
