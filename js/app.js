@@ -5,3 +5,11 @@ document.querySelectorAll('.form-delete').forEach((form) => {
         }
     });
 });
+
+if (window.DASHBOARD_MODAL?.shouldOpen) {
+    const modalElement = document.getElementById('plotterModal');
+    if (modalElement && window.bootstrap) {
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    }
+}
