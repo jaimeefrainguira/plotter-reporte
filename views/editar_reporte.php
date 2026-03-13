@@ -25,7 +25,7 @@
             <form method="post" action="index.php?action=update&id=<?= (int) $reporte['id'] ?>">
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
                 <div class="mb-3">
-                    <label class="form-label">PLOTTER</label>
+                    <label class="form-label">PLOTTER (NÚMERO)</label>
                     <select name="plotter" class="form-select" required>
                         <?php foreach ($plotters as $plotter): ?>
                             <option value="<?= htmlspecialchars($plotter) ?>" <?= (($reporte['plotter'] ?? '') === $plotter) ? 'selected' : '' ?>>
@@ -36,7 +36,7 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">OBSERVACIÓN</label>
+                    <label class="form-label">CAMPAÑA</label>
                     <textarea name="observacion" class="form-control" rows="3" required><?= htmlspecialchars($reporte['observacion'] ?? '') ?></textarea>
                 </div>
 
@@ -47,15 +47,11 @@
 
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label">CANTIDAD</label>
-                        <input type="number" min="1" name="cantidad" class="form-control" value="<?= htmlspecialchars((string) ($reporte['cantidad'] ?? '')) ?>" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">CANTIDAD IMPRESO</label>
+                        <label class="form-label">CANT. IMPRESO</label>
                         <input type="number" min="0" name="cantidad_impreso" class="form-control" value="<?= htmlspecialchars((string) ($reporte['cantidad_impreso'] ?? '0')) ?>" required>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">% DE IMPRESIÓN</label>
+                        <label class="form-label">% IMPRESO</label>
                         <input type="number" min="0" max="100" name="porcentaje_impresion" class="form-control" value="<?= htmlspecialchars((string) ($reporte['porcentaje_impresion'] ?? '')) ?>" required>
                     </div>
                 </div>
