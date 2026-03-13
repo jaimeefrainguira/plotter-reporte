@@ -16,16 +16,6 @@ class Reporte
 
         $sql = 'INSERT INTO reportes (plotter, observacion, descripcion, cantidad, cantidad_impreso, porcentaje_impresion, fecha)
                 VALUES (:plotter, :observacion, :descripcion, :cantidad, :cantidad_impreso, :porcentaje_impresion, NOW())';
-
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindValue(':plotter', $data['plotter']);
-        $stmt->bindValue(':observacion', $data['observacion']);
-        $stmt->bindValue(':descripcion', $data['descripcion']);
-        $stmt->bindValue(':cantidad', (int) $data['cantidad'], PDO::PARAM_INT);
-        $stmt->bindValue(':cantidad_impreso', (int) $data['cantidad_impreso'], PDO::PARAM_INT);
-        $stmt->bindValue(':porcentaje_impresion', (int) $data['porcentaje_impresion'], PDO::PARAM_INT);
-
-        return $stmt->execute();
         $sql = 'INSERT INTO reportes (plotter, observacion, descripcion, cantidad, cantidad_impreso, porcentaje_impresion, fecha)
                 VALUES (:plotter, :observacion, :descripcion, :cantidad, :cantidad_impreso, :porcentaje_impresion, NOW())';
         $sql = 'INSERT INTO reportes (plotter, observacion, descripcion, cantidad, porcentaje_impresion, fecha)
@@ -66,15 +56,6 @@ class Reporte
                 WHERE id = :id';
 
         $stmt = $this->db->prepare($sql);
-        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
-        $stmt->bindValue(':plotter', $data['plotter']);
-        $stmt->bindValue(':observacion', $data['observacion']);
-        $stmt->bindValue(':descripcion', $data['descripcion']);
-        $stmt->bindValue(':cantidad', (int) $data['cantidad'], PDO::PARAM_INT);
-        $stmt->bindValue(':cantidad_impreso', (int) $data['cantidad_impreso'], PDO::PARAM_INT);
-        $stmt->bindValue(':porcentaje_impresion', (int) $data['porcentaje_impresion'], PDO::PARAM_INT);
-
-        $stmt->execute();
 
         $stmt->execute([
             ':id' => $id,
