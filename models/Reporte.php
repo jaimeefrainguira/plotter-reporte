@@ -12,7 +12,7 @@ class Reporte
 
     public function create(array $data): bool
     {
-        $this->ensureCantidadImpresoColumn();
+        $this->ensureRequiredColumns();
 
         $sql = 'INSERT INTO reportes (plotter, observacion, descripcion, cantidad, cantidad_impreso, porcentaje_impresion, fecha)
                 VALUES (:plotter, :observacion, :descripcion, :cantidad, :cantidad_impreso, :porcentaje_impresion, NOW())';
@@ -44,7 +44,7 @@ class Reporte
 
     public function update(int $id, array $data): bool
     {
-        $this->ensureCantidadImpresoColumn();
+        $this->ensureRequiredColumns();
 
         $sql = 'UPDATE reportes
                 SET plotter = :plotter,
@@ -131,6 +131,13 @@ class Reporte
     }
 
 
+    public function getByPlotter(string $plotter): array
+    {
+        $stmt = $this->db->prepare('SELECT * FROM reportes WHERE plotter = :plotter ORDER BY fecha DESC, id DESC');
+        $stmt->execute([':plotter' => $plotter]);
+
+        return $stmt->fetchAll();
+    }
 
     public function getReportsByDateGroupedByPlotter(string $date, array $plotters): array
     {
@@ -162,7 +169,7 @@ class Reporte
 
         return $this->db->query('SELECT * FROM reportes ORDER BY fecha DESC, id DESC')->fetchAll();
     }
-    private function ensureCantidadImpresoColumn(): void
+    private function ensureRequiredColumns(): void
     {
         if ($this->schemaChecked) {
             return;
@@ -170,7 +177,22 @@ class Reporte
 
         $this->schemaChecked = true;
 
-        $stmt = $this->db->query("SHOW COLUMNS FROM reportes LIKE 'cantidad_impreso'");
+        $this->ensureColumnExists(
+            'cantidad',
+            'ALTER TABLE reportes ADD COLUMN cantidad INT NOT NULL DEFAULT 0 AFTER descripcion',
+            'No se pudo preparar la tabla reportes. Ejecuta: ALTER TABLE reportes ADD COLUMN cantidad INT NOT NULL DEFAULT 0 AFTER descripcion;'
+        );
+
+        $this->ensureColumnExists(
+            'cantidad_impreso',
+            'ALTER TABLE reportes ADD COLUMN cantidad_impreso INT NOT NULL DEFAULT 0 AFTER cantidad',
+            'No se pudo preparar la tabla reportes. Ejecuta: ALTER TABLE reportes ADD COLUMN cantidad_impreso INT NOT NULL DEFAULT 0 AFTER cantidad;'
+        );
+    }
+
+    private function ensureColumnExists(string $columnName, string $alterSql, string $errorMessage): void
+    {
+        $stmt = $this->db->query("SHOW COLUMNS FROM reportes LIKE '" . $columnName . "'");
         $column = $stmt->fetch();
 
         if ($column) {
@@ -178,14 +200,11 @@ class Reporte
         }
 
         try {
-            $this->db->exec('ALTER TABLE reportes ADD COLUMN cantidad_impreso INT NOT NULL DEFAULT 0 AFTER cantidad');
+            $this->db->exec($alterSql);
         } catch (PDOException $exception) {
-            throw new RuntimeException(
-                'No se pudo preparar la tabla reportes. Ejecuta: ALTER TABLE reportes ADD COLUMN cantidad_impreso INT NOT NULL DEFAULT 0 AFTER cantidad;',
-                0,
-                $exception
-            );
+            throw new RuntimeException($errorMessage, 0, $exception);
         }
     }
 
 }
+

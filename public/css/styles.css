@@ -1,10 +1,10 @@
 body {
-    background-color: #f5f7fb;
+    background: linear-gradient(180deg, #f7f9fc 0%, #eef2f7 100%);
 }
 
 .card {
     border: none;
-    border-radius: 12px;
+    border-radius: 14px;
 }
 
 .table td,
@@ -15,6 +15,13 @@ body {
 .plotter-board {
     background: #efefef;
     border: 1px solid #c8c8c8;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 18px rgba(25, 33, 45, 0.08);
+}
+
+.plotter-board--active {
+    outline: 3px solid #1f6a9f;
 }
 
 .plotter-board__title {
@@ -24,6 +31,10 @@ body {
     font-size: 1.8rem;
     letter-spacing: 0.5px;
     padding: 14px 10px;
+}
+
+.plotter-board__table {
+    cursor: pointer;
 }
 
 .plotter-board__table thead th {
@@ -37,4 +48,29 @@ body {
 .plotter-board__table td {
     background: #f3f3f3;
     font-size: 1.05rem;
+}
+
+.plotter-board__footer {
+    padding: 10px;
+    background: #e9ecef;
+    text-align: right;
+}
+
+.elegant-table-card {
+    border-radius: 14px;
+}
+
+.elegant-table thead th {
+    background: #243447;
+    color: #fff;
+    font-weight: 600;
+    border: none;
+}
+
+.elegant-table tbody tr:nth-child(odd) {
+    background: #f8fafc;
+}
+
+.elegant-table tbody tr:hover {
+    background: #eaf4ff;
 }

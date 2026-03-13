@@ -20,17 +20,18 @@ class ReporteController
         $stats = $this->reporteModel->getDashboardStats();
         $plotters = $this->getPlotterOptions();
 
-        $plotterFilter = trim((string) ($_GET['plotter'] ?? ''));
-        $fechaFilter = trim((string) ($_GET['fecha'] ?? ''));
-
-        if ($plotterFilter !== '' && !in_array($plotterFilter, $plotters, true)) {
-            $plotterFilter = '';
+        $selectedPlotter = trim((string) ($_GET['selected_plotter'] ?? ''));
+        if ($selectedPlotter !== '' && !in_array($selectedPlotter, $plotters, true)) {
+            $selectedPlotter = '';
         }
 
-        if ($fechaFilter !== '' && !$this->isValidDate($fechaFilter)) {
-            $fechaFilter = '';
+        $selectedPlotterReports = [];
+        if ($selectedPlotter !== '') {
+            $selectedPlotterReports = $this->reporteModel->getByPlotter($selectedPlotter);
         }
 
+        $dailyDate = date('Y-m-d');
+        $dailyReportsByPlotter = $this->reporteModel->getReportsByDateGroupedByPlotter($dailyDate, $plotters);
         $filters = [
             'plotter' => $plotterFilter,
             'fecha' => $fechaFilter,
