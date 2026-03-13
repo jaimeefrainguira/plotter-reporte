@@ -49,9 +49,6 @@ class ReporteController
             $reportes = $result['items'];
         }
 
-        $dailyDate = date('Y-m-d');
-        $dailyReportsByPlotter = $this->reporteModel->getReportsByDateGroupedByPlotter($dailyDate, $plotters);
-
         $csrfToken = $this->getCsrfToken();
         include __DIR__ . '/../views/dashboard.php';
     }

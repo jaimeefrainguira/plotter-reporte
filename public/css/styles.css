@@ -11,30 +11,3 @@ body {
 .table th {
     vertical-align: middle;
 }
-
-.plotter-board {
-    background: #efefef;
-    border: 1px solid #c8c8c8;
-}
-
-.plotter-board__title {
-    background: #1f252d;
-    color: #fff;
-    text-align: center;
-    font-size: 1.8rem;
-    letter-spacing: 0.5px;
-    padding: 14px 10px;
-}
-
-.plotter-board__table thead th {
-    background: #1f6a9f;
-    color: #fff;
-    font-size: 1.1rem;
-    font-weight: 500;
-    white-space: nowrap;
-}
-
-.plotter-board__table td {
-    background: #f3f3f3;
-    font-size: 1.05rem;
-}
