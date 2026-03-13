@@ -1,7 +1,4 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
 
 
 
@@ -10,14 +7,16 @@ header('X-Frame-Options: SAMEORIGIN');
 header('Referrer-Policy: strict-origin-when-cross-origin');
 header("Content-Security-Policy: default-src 'self'; style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; script-src 'self' https://cdn.jsdelivr.net; img-src 'self' data:; font-src 'self' https://cdn.jsdelivr.net; object-src 'none'; frame-ancestors 'self';");
 
+require_once __DIR__ . '/controllers/ReporteController.php';
 
 
 try {
     $controller = new ReporteController();
 } catch (Throwable $exception) {
-    http_response_code(500);
-    echo 'Error de configuración: verifica los datos de conexión a la base de datos.';
-    exit;
+    
+   ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 }
 
 $action = $_GET['action'] ?? 'dashboard';
