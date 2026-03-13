@@ -221,7 +221,6 @@ class ReporteController
     private function loadDompdfLibrary(): bool
     {
         $autoloadCandidates = [
-            __DIR__ . '/../vendor/autoload.php',
             __DIR__ . '/../dompdf/autoload.inc.php',
         ];
 
