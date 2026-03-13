@@ -41,6 +41,17 @@ Si no defines variables de entorno, el sistema usa por defecto estos datos:
 - Clave: `4016508a8b`
 
 Si en el futuro cambias de hosting, actualiza las variables de entorno para sobrescribir estos valores.
+## Configuración local rápida
+
+Si corres el proyecto en local sin variables de entorno, se usan estos valores por defecto:
+
+- Host: `127.0.0.1`
+- Puerto: `3306`
+- Base de datos: `plotter_reportes`
+- Usuario: `root`
+- Clave: *(vacía)*
+
+En hosting, define variables de entorno para evitar depender de estos valores.
 
 ## Instalación en local o hosting
 

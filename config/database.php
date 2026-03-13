@@ -18,7 +18,7 @@ class Database
             'port' => '3306',
             'dbName' => 'mseet_41369034_plotter_reportes',
             'username' => 'mseet_41369034',
-            'password' => '4016508a8b',
+            'password' => '4016508a8b',           
             'charset' => 'utf8mb4',
         ];
 

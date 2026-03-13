@@ -29,7 +29,7 @@ class ReporteController
             'fecha' => $fechaFilter,
         ];
 
-        $reportes = $fechaFilter !== ''
+$reportes = $fechaFilter !== ''
             ? $this->reporteModel->getByDateAndPlotter($fechaFilter)
             : $this->reporteModel->getAll();
 
@@ -47,6 +47,7 @@ class ReporteController
         }
 
         $csrfToken = $this->getCsrfToken();
+        
         include __DIR__ . '/../views/dashboard.php';
     }
 
