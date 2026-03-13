@@ -23,6 +23,7 @@ unset($_SESSION['flash']);
             <a href="index.php?action=pdf" class="btn btn-outline-light"><i class="bi bi-file-earmark-pdf"></i> Generar PDF</a>
             <a href="index.php?action=create" class="btn btn-success"><i class="bi bi-plus-circle"></i> Nuevo reporte</a>
         </div>
+        <a href="index.php?action=create" class="btn btn-success"><i class="bi bi-plus-circle"></i> Nuevo reporte</a>
     </div>
 </nav>
 
@@ -123,6 +124,54 @@ unset($_SESSION['flash']);
             </div>
         </div>
     <?php endif; ?>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Reportes por plotter (día <?= htmlspecialchars($dailyDate) ?>)</h5>
+    </div>
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <h5 class="mb-0">Listado de reportes</h5>
+                <a href="index.php?action=pdf" class="btn btn-outline-primary"><i class="bi bi-file-earmark-pdf"></i> Generar PDF</a>
+            </div>
+
+    <div class="row g-3">
+        <?php foreach ($plotters as $plotter): ?>
+            <?php $rows = $dailyReportsByPlotter[$plotter] ?? []; ?>
+            <div class="col-12 col-lg-4">
+                <div class="plotter-board h-100">
+                    <div class="plotter-board__title"><?= htmlspecialchars($plotter) ?></div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered plotter-board__table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>CAMPAÑA</th>
+                                    <th>DESCRIPCIÓN</th>
+                                    <th>CANT. IMPRESO</th>
+                                    <th>% IMPRESO</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if ($rows): ?>
+                                    <?php foreach ($rows as $row): ?>
+                                        <tr>
+                                            <td><?= htmlspecialchars((string) $row['observacion']) ?></td>
+                                            <td><?= htmlspecialchars((string) $row['descripcion']) ?></td>
+                                            <td><?= (int) ($row['cantidad_impreso'] ?? 0) ?></td>
+                                            <td><?= (int) ($row['porcentaje_impresion'] ?? 0) ?>%</td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted">Sin reportes de hoy.</td>
+                                    </tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
