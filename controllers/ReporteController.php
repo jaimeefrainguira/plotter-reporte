@@ -37,6 +37,33 @@ class ReporteController
         }
 
         $dailyReportsByPlotter = $this->reporteModel->getReportsByDateGroupedByPlotter($dailyDate, $plotters);
+        $selectedPlotterReports = [];
+        if ($selectedPlotter !== '') {
+            $selectedPlotterReports = $this->reporteModel->getByPlotter($selectedPlotter);
+        }
+
+        $dailyDate = date('Y-m-d');
+        $dailyReportsByPlotter = $this->reporteModel->getReportsByDateGroupedByPlotter($dailyDate, $plotters);
+        $filters = [
+            'plotter' => $plotterFilter,
+            'fecha' => $fechaFilter,
+        ];
+
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $perPage = 10;
+
+        $result = $this->reporteModel->getPaginated($filters, $page, $perPage);
+        $reportes = $result['items'];
+        $totalRows = $result['totalRows'];
+        $totalPages = (int) max(1, ceil($totalRows / $perPage));
+        if ($page > $totalPages) {
+            $page = $totalPages;
+            $result = $this->reporteModel->getPaginated($filters, $page, $perPage);
+            $reportes = $result['items'];
+        }
+
+        $dailyDate = date('Y-m-d');
+        $dailyReportsByPlotter = $this->reporteModel->getReportsByDateGroupedByPlotter($dailyDate, $plotters);
 
         $csrfToken = $this->getCsrfToken();
         include __DIR__ . '/../views/dashboard.php';

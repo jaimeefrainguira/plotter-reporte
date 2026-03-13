@@ -26,6 +26,21 @@ class Reporte
         $stmt->bindValue(':porcentaje_impresion', (int) $data['porcentaje_impresion'], PDO::PARAM_INT);
 
         return $stmt->execute();
+        $sql = 'INSERT INTO reportes (plotter, observacion, descripcion, cantidad, cantidad_impreso, porcentaje_impresion, fecha)
+                VALUES (:plotter, :observacion, :descripcion, :cantidad, :cantidad_impreso, :porcentaje_impresion, NOW())';
+        $sql = 'INSERT INTO reportes (plotter, observacion, descripcion, cantidad, porcentaje_impresion, fecha)
+                VALUES (:plotter, :observacion, :descripcion, :cantidad, :porcentaje_impresion, NOW())';
+
+        $stmt = $this->db->prepare($sql);
+
+        return $stmt->execute([
+            ':plotter' => $data['plotter'],
+            ':observacion' => $data['observacion'],
+            ':descripcion' => $data['descripcion'],
+            ':cantidad' => (int) $data['cantidad'],
+            ':cantidad_impreso' => (int) $data['cantidad_impreso'],
+            ':porcentaje_impresion' => (int) $data['porcentaje_impresion'],
+        ]);
     }
 
     public function getById(int $id): ?array
@@ -143,6 +158,8 @@ class Reporte
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
+        $stmt = $this->db->prepare('SELECT * FROM reportes WHERE plotter = :plotter ORDER BY fecha DESC, id DESC');
+        $stmt->execute([':plotter' => $plotter]);
 
         return $stmt->fetchAll();
     }

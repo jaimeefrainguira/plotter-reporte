@@ -33,6 +33,10 @@ body {
     padding: 14px 10px;
 }
 
+.plotter-board__table {
+    cursor: pointer;
+}
+
 .plotter-board__table thead th {
     background: #1f6a9f;
     color: #fff;
