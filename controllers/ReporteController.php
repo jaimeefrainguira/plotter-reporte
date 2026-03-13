@@ -20,35 +20,48 @@ class ReporteController
         $stats = $this->reporteModel->getDashboardStats();
         $plotters = $this->getPlotterOptions();
 
-        $plotterFilter = trim((string) ($_GET['plotter'] ?? ''));
         $fechaFilter = trim((string) ($_GET['fecha'] ?? ''));
-
-        if ($plotterFilter !== '' && !in_array($plotterFilter, $plotters, true)) {
-            $plotterFilter = '';
-        }
-
         if ($fechaFilter !== '' && !$this->isValidDate($fechaFilter)) {
             $fechaFilter = '';
         }
 
         $filters = [
-            'plotter' => $plotterFilter,
             'fecha' => $fechaFilter,
         ];
 
-        $page = max(1, (int) ($_GET['page'] ?? 1));
-        $perPage = 10;
+        $reportes = $fechaFilter !== ''
+            ? $this->reporteModel->getByDateAndPlotter($fechaFilter)
+            : $this->reporteModel->getAll();
 
-        $result = $this->reporteModel->getPaginated($filters, $page, $perPage);
-        $reportes = $result['items'];
-        $totalRows = $result['totalRows'];
-        $totalPages = (int) max(1, ceil($totalRows / $perPage));
-        if ($page > $totalPages) {
-            $page = $totalPages;
-            $result = $this->reporteModel->getPaginated($filters, $page, $perPage);
-            $reportes = $result['items'];
+        $reportesByPlotter = [];
+        foreach ($plotters as $plotter) {
+            $reportesByPlotter[$plotter] = [];
         }
 
+        foreach ($reportes as $reporte) {
+            $plotter = (string) $reporte['plotter'];
+            if (!array_key_exists($plotter, $reportesByPlotter)) {
+                $reportesByPlotter[$plotter] = [];
+            }
+            $reportesByPlotter[$plotter][] = $reporte;
+        }
+
+        $modalPlotter = trim((string) ($_GET['modal_plotter'] ?? ''));
+        if ($modalPlotter !== '' && !in_array($modalPlotter, $plotters, true)) {
+            $modalPlotter = '';
+        }
+
+        $modalDate = trim((string) ($_GET['modal_fecha'] ?? date('Y-m-d')));
+        if ($modalDate === '' || !$this->isValidDate($modalDate)) {
+            $modalDate = date('Y-m-d');
+        }
+
+        $modalReportes = [];
+        if ($modalPlotter !== '') {
+            $modalReportes = $this->reporteModel->getByDateAndPlotter($modalDate, $modalPlotter);
+        }
+
+        $modalShouldOpen = ($modalPlotter !== '');
         $csrfToken = $this->getCsrfToken();
         include __DIR__ . '/../views/dashboard.php';
     }
@@ -82,7 +95,6 @@ class ReporteController
             return;
         }
 
-        $this->reporteModel->create($data);
         $this->rotateCsrfToken();
         $this->redirectWithMessage('Reporte creado correctamente.');
     }
@@ -141,7 +153,7 @@ class ReporteController
             $this->showEditForm($id, $data, ['Error al actualizar reporte. ' . $exception->getMessage()]);
             return;
         }
-        $updated = $this->reporteModel->update($id, $data);
+
         $this->rotateCsrfToken();
 
         if (!$updated) {
@@ -190,18 +202,10 @@ class ReporteController
             return;
         }
 
-        if (!class_exists('Dompdf\Dompdf')) {
+        if (!class_exists('Dompdf\\Dompdf')) {
             $this->redirectWithMessage('DomPDF no está disponible. Verifica la instalación de la librería.', 'danger');
             return;
         }
-        $dompdfAutoload = __DIR__ . '/../vendor/autoload.php';
-        if (!file_exists($dompdfAutoload)) {
-            http_response_code(500);
-            echo 'No se encontró DomPDF. Sube la carpeta vendor o instala dompdf/dompdf.';
-            return;
-        }
-
-        require_once $dompdfAutoload;
 
         $reportId = ($id !== null && $id > 0) ? $id : null;
         $reportes = $this->reporteModel->getAllForPdf($reportId);
@@ -275,7 +279,6 @@ class ReporteController
                 <?php if (!$reportes): ?>
                     <tr>
                         <td colspan="7">No hay reportes disponibles.</td>
-                        <td colspan="6">No hay reportes disponibles.</td>
                     </tr>
                 <?php endif; ?>
                 </tbody>
@@ -348,7 +351,6 @@ class ReporteController
         header('Location: index.php?action=dashboard');
         exit;
     }
-
 
     private function getCsrfToken(): string
     {

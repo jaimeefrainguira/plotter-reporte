@@ -16,10 +16,6 @@ class Reporte
 
         $sql = 'INSERT INTO reportes (plotter, observacion, descripcion, cantidad, cantidad_impreso, porcentaje_impresion, fecha)
                 VALUES (:plotter, :observacion, :descripcion, :cantidad, :cantidad_impreso, :porcentaje_impresion, NOW())';
-        $sql = 'INSERT INTO reportes (plotter, observacion, descripcion, cantidad, cantidad_impreso, porcentaje_impresion, fecha)
-                VALUES (:plotter, :observacion, :descripcion, :cantidad, :cantidad_impreso, :porcentaje_impresion, NOW())';
-        $sql = 'INSERT INTO reportes (plotter, observacion, descripcion, cantidad, porcentaje_impresion, fecha)
-                VALUES (:plotter, :observacion, :descripcion, :cantidad, :porcentaje_impresion, NOW())';
 
         $stmt = $this->db->prepare($sql);
 
@@ -139,6 +135,29 @@ class Reporte
         }
 
         return $this->db->query('SELECT * FROM reportes ORDER BY fecha DESC, id DESC')->fetchAll();
+    }
+
+    public function getAll(): array
+    {
+        return $this->db->query('SELECT * FROM reportes ORDER BY fecha DESC, id DESC')->fetchAll();
+    }
+
+    public function getByDateAndPlotter(string $date, ?string $plotter = null): array
+    {
+        $sql = 'SELECT * FROM reportes WHERE DATE(fecha) = :fecha';
+        $params = [':fecha' => $date];
+
+        if ($plotter !== null && $plotter !== '') {
+            $sql .= ' AND plotter = :plotter';
+            $params[':plotter'] = $plotter;
+        }
+
+        $sql .= ' ORDER BY fecha DESC, id DESC';
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll();
     }
     private function ensureCantidadImpresoColumn(): void
     {
