@@ -49,6 +49,18 @@ class ReporteController
             $reportes = $result['items'];
         }
 
+        $dashboardRows = $this->reporteModel->getByDateAndPlotter($fechaFilter !== '' ? $fechaFilter : null, null);
+        $reportesByPlotter = array_fill_keys($plotters, []);
+
+        foreach ($dashboardRows as $reporte) {
+            $plotterName = (string) ($reporte['plotter'] ?? '');
+            if (!array_key_exists($plotterName, $reportesByPlotter)) {
+                continue;
+            }
+
+            $reportesByPlotter[$plotterName][] = $reporte;
+        }
+
         $csrfToken = $this->getCsrfToken();
         include __DIR__ . '/../views/dashboard.php';
     }
@@ -256,143 +268,6 @@ class ReporteController
         return false;
     }
 
-    private function buildPdfHtml(array $reportes, bool $isGeneral): string
-    {
-        if (!$isGeneral) {
-            return $this->buildSingleReportPdfHtml($reportes);
-        }
-
-        $plotters = $this->getPlotterOptions();
-        $reportesByPlotter = array_fill_keys($plotters, []);
-
-        foreach ($reportes as $reporte) {
-            $plotterName = (string) ($reporte['plotter'] ?? '');
-            if (!array_key_exists($plotterName, $reportesByPlotter)) {
-                continue;
-            }
-
-            $reportesByPlotter[$plotterName][] = $reporte;
-        }
-
-        $plotterChunks = array_chunk($plotters, 3);
-
-        ob_start();
-        ?>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <style>
-                body {
-                    font-family: DejaVu Sans, sans-serif;
-                    font-size: 11px;
-                    background: #ececec;
-                    margin: 0;
-                }
-                .page-title {
-                    text-align: center;
-                    margin: 0 0 10px;
-                    font-size: 18px;
-                }
-                .grid {
-                    width: 100%;
-                    border-collapse: separate;
-                    border-spacing: 8px;
-                }
-                .grid td {
-                    width: 33.33%;
-                    vertical-align: top;
-                }
-                .plotter-box {
-                    border: 1px solid #c9c9c9;
-                    background: #f1f1f1;
-                }
-                .plotter-title {
-                    background: #1d232c;
-                    color: #fff;
-                    text-align: center;
-                    padding: 8px 6px;
-                    font-size: 18px;
-                    letter-spacing: 0.04em;
-                }
-                .plotter-table {
-                    width: 100%;
-                    border-collapse: collapse;
-                }
-                .plotter-table th,
-                .plotter-table td {
-                    border: 1px solid #c8c8c8;
-                    padding: 6px;
-                    font-size: 11px;
-                    height: 24px;
-                }
-                .plotter-table thead th {
-                    background: #1e6297;
-                    color: #fff;
-                    font-weight: 700;
-                    text-align: left;
-                }
-                .plotter-table tbody tr:nth-child(odd) {
-                    background: #d6d6d6;
-                }
-                .plotter-table tbody tr:nth-child(even) {
-                    background: #e6e6e6;
-                }
-            </style>
-        </head>
-        <body>
-            <h2 class="page-title">Reporte General de Impresiones Plotter</h2>
-            <table class="grid">
-                <tbody>
-                <?php foreach ($plotterChunks as $plotterRow): ?>
-                    <tr>
-                        <?php foreach ($plotterRow as $plotter): ?>
-                            <?php $plotterRows = array_slice($reportesByPlotter[$plotter] ?? [], 0, 4); ?>
-                            <td>
-                                <div class="plotter-box">
-                                    <div class="plotter-title"><?= htmlspecialchars($plotter) ?></div>
-                                    <table class="plotter-table">
-                                        <thead>
-                                            <tr>
-                                                <th>CAMPAÑA</th>
-                                                <th>DESCRIPCIÓN</th>
-                                                <th>CANT. IMPRESO</th>
-                                                <th>% IMPRESO</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                        <?php foreach ($plotterRows as $row): ?>
-                                            <tr>
-                                                <td><?= htmlspecialchars((string) ($row['observacion'] ?? '')) ?></td>
-                                                <td><?= htmlspecialchars((string) ($row['descripcion'] ?? '')) ?></td>
-                                                <td><?= (int) ($row['cantidad_impreso'] ?? 0) ?></td>
-                                                <td><?= (int) ($row['porcentaje_impresion'] ?? 0) ?>%</td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                        <?php for ($i = count($plotterRows); $i < 4; $i++): ?>
-                                            <tr>
-                                                <td>&nbsp;</td>
-                                                <td></td>
-                                                <td></td>
-                                                <td></td>
-                                            </tr>
-                                        <?php endfor; ?>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </td>
-                        <?php endforeach; ?>
-                    </tr>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
-        </body>
-        </html>
-        <?php
-
-        return (string) ob_get_clean();
-    }
-
-    private function buildSingleReportPdfHtml(array $reportes): string
     private function buildPdfHtml(array $reportes, string $plotter = '', string $fecha = ''): string
     {
         $subtitle = [];
