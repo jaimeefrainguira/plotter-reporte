@@ -193,11 +193,20 @@ class Reporte
         $this->schemaChecked = true;
 
         foreach ($this->requiredColumns as $columnName => $alterSql) {
-            $stmt = $this->db->prepare("SHOW COLUMNS FROM reportes LIKE :column");
-            $stmt->execute([':column' => $columnName]);
-            $column = $stmt->fetch();
+            $stmt = $this->db->prepare(
+                'SELECT COUNT(*)
+                 FROM information_schema.COLUMNS
+                 WHERE TABLE_SCHEMA = DATABASE()
+                   AND TABLE_NAME = :table
+                   AND COLUMN_NAME = :column'
+            );
+            $stmt->execute([
+                ':table' => 'reportes',
+                ':column' => $columnName,
+            ]);
+            $columnExists = (int) $stmt->fetchColumn() > 0;
 
-            if ($column) {
+            if ($columnExists) {
                 continue;
             }
 
