@@ -227,8 +227,6 @@ class ReporteController
         }
 
         $reportId = ($id !== null && $id > 0) ? $id : null;
-        $reportes = $this->reporteModel->getAllForPdf($reportId);
-        $html = $this->buildPdfHtml($reportes, $reportId === null);
         $plotter = trim((string) ($_GET['plotter'] ?? ''));
         $fecha = trim((string) ($_GET['fecha'] ?? ''));
 
@@ -320,7 +318,7 @@ class ReporteController
                 <?php endforeach; ?>
                 <?php if (!$reportes): ?>
                     <tr>
-                        <td colspan="7">No hay reportes disponibles.</td>
+                        <td colspan="6">No hay reportes disponibles.</td>
                     </tr>
                 <?php endif; ?>
                 </tbody>
