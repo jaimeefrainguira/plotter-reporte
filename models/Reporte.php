@@ -16,6 +16,16 @@ class Reporte
 
         $sql = 'INSERT INTO reportes (plotter, observacion, descripcion, cantidad, cantidad_impreso, porcentaje_impresion, fecha)
                 VALUES (:plotter, :observacion, :descripcion, :cantidad, :cantidad_impreso, :porcentaje_impresion, NOW())';
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':plotter', $data['plotter']);
+        $stmt->bindValue(':observacion', $data['observacion']);
+        $stmt->bindValue(':descripcion', $data['descripcion']);
+        $stmt->bindValue(':cantidad', (int) $data['cantidad'], PDO::PARAM_INT);
+        $stmt->bindValue(':cantidad_impreso', (int) $data['cantidad_impreso'], PDO::PARAM_INT);
+        $stmt->bindValue(':porcentaje_impresion', (int) $data['porcentaje_impresion'], PDO::PARAM_INT);
+
+        return $stmt->execute();
         $sql = 'INSERT INTO reportes (plotter, observacion, descripcion, cantidad, cantidad_impreso, porcentaje_impresion, fecha)
                 VALUES (:plotter, :observacion, :descripcion, :cantidad, :cantidad_impreso, :porcentaje_impresion, NOW())';
         $sql = 'INSERT INTO reportes (plotter, observacion, descripcion, cantidad, porcentaje_impresion, fecha)
@@ -56,16 +66,14 @@ class Reporte
                 WHERE id = :id';
 
         $stmt = $this->db->prepare($sql);
-
-        $stmt->execute([
-            ':id' => $id,
-            ':plotter' => $data['plotter'],
-            ':observacion' => $data['observacion'],
-            ':descripcion' => $data['descripcion'],
-            ':cantidad' => (int) $data['cantidad'],
-            ':cantidad_impreso' => (int) $data['cantidad_impreso'],
-            ':porcentaje_impresion' => (int) $data['porcentaje_impresion'],
-        ]);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->bindValue(':plotter', $data['plotter']);
+        $stmt->bindValue(':observacion', $data['observacion']);
+        $stmt->bindValue(':descripcion', $data['descripcion']);
+        $stmt->bindValue(':cantidad', (int) $data['cantidad'], PDO::PARAM_INT);
+        $stmt->bindValue(':cantidad_impreso', (int) $data['cantidad_impreso'], PDO::PARAM_INT);
+        $stmt->bindValue(':porcentaje_impresion', (int) $data['porcentaje_impresion'], PDO::PARAM_INT);
+        $stmt->execute();
 
         return $stmt->rowCount() > 0;
     }
@@ -133,6 +141,23 @@ class Reporte
 
     public function getByPlotter(string $plotter): array
     {
+        return $this->getByPlotterAndDate($plotter, null);
+    }
+
+    public function getByPlotterAndDate(string $plotter, ?string $date = null): array
+    {
+        $sql = 'SELECT * FROM reportes WHERE plotter = :plotter';
+        $params = [':plotter' => $plotter];
+
+        if ($date !== null && $date !== '') {
+            $sql .= ' AND DATE(fecha) = :fecha';
+            $params[':fecha'] = $date;
+        }
+
+        $sql .= ' ORDER BY fecha DESC, id DESC';
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         $stmt = $this->db->prepare('SELECT * FROM reportes WHERE plotter = :plotter ORDER BY fecha DESC, id DESC');
         $stmt->execute([':plotter' => $plotter]);
 

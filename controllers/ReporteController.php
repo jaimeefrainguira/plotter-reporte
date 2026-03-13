@@ -25,6 +25,18 @@ class ReporteController
             $selectedPlotter = '';
         }
 
+        $dailyDate = date('Y-m-d');
+        $selectedDate = trim((string) ($_GET['selected_date'] ?? $dailyDate));
+        if ($selectedDate !== '' && !$this->isValidDate($selectedDate)) {
+            $selectedDate = $dailyDate;
+        }
+
+        $selectedPlotterReports = [];
+        if ($selectedPlotter !== '') {
+            $selectedPlotterReports = $this->reporteModel->getByPlotterAndDate($selectedPlotter, $selectedDate);
+        }
+
+        $dailyReportsByPlotter = $this->reporteModel->getReportsByDateGroupedByPlotter($dailyDate, $plotters);
         $selectedPlotterReports = [];
         if ($selectedPlotter !== '') {
             $selectedPlotterReports = $this->reporteModel->getByPlotter($selectedPlotter);

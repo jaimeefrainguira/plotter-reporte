@@ -51,6 +51,14 @@ unset($_SESSION['flash']);
     <div class="row g-3 mb-4">
         <?php foreach ($plotters as $plotter): ?>
             <?php $rows = $dailyReportsByPlotter[$plotter] ?? []; ?>
+            <?php $url = 'index.php?action=dashboard&selected_plotter=' . urlencode($plotter) . '&selected_date=' . urlencode($selectedDate); ?>
+            <div class="col-12 col-lg-4">
+                <div class="plotter-board h-100 <?= $selectedPlotter === $plotter ? 'plotter-board--active' : '' ?>">
+                    <div class="plotter-board__title">
+                        <a href="<?= htmlspecialchars($url) ?>" class="plotter-title-link">Plotter (número de plotter): <?= htmlspecialchars($plotter) ?></a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered plotter-board__table mb-0">
             <?php $url = 'index.php?action=dashboard&selected_plotter=' . urlencode($plotter); ?>
             <div class="col-12 col-lg-4">
                 <div class="plotter-board h-100 <?= $selectedPlotter === $plotter ? 'plotter-board--active' : '' ?>">
@@ -69,6 +77,19 @@ unset($_SESSION['flash']);
                             </tbody>
                         </table>
                     </div>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    </div>
+</div>
+
+<?php if ($selectedPlotter !== ''): ?>
+<div class="modal fade" id="plotterModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Reportes de <?= htmlspecialchars($selectedPlotter) ?></h5>
+                <a href="index.php?action=dashboard" class="btn-close"></a>
                     <div class="plotter-board__footer">
                         <a href="<?= htmlspecialchars($url) ?>" class="btn btn-sm btn-primary">Ver todos los reportes</a>
                     </div>
@@ -133,7 +154,62 @@ unset($_SESSION['flash']);
                 <h5 class="mb-0">Listado de reportes</h5>
                 <a href="index.php?action=pdf" class="btn btn-outline-primary"><i class="bi bi-file-earmark-pdf"></i> Generar PDF</a>
             </div>
+            <div class="modal-body">
+                <form method="get" class="row g-2 mb-3">
+                    <input type="hidden" name="action" value="dashboard">
+                    <input type="hidden" name="selected_plotter" value="<?= htmlspecialchars($selectedPlotter) ?>">
+                    <div class="col-md-4">
+                        <label class="form-label">Filtrar por fecha</label>
+                        <input type="date" name="selected_date" class="form-control" value="<?= htmlspecialchars($selectedDate) ?>">
+                    </div>
+                    <div class="col-md-8 d-flex align-items-end gap-2">
+                        <button class="btn btn-primary" type="submit">Aplicar</button>
+                        <a class="btn btn-outline-secondary" href="index.php?action=dashboard&selected_plotter=<?= urlencode($selectedPlotter) ?>&selected_date=<?= urlencode($dailyDate) ?>">Hoy</a>
+                    </div>
+                </form>
 
+                <div class="table-responsive">
+                    <table class="table elegant-table align-middle">
+                        <thead>
+                            <tr>
+                                <th>CAMPAÑA</th>
+                                <th>DESCRIPCIÓN</th>
+                                <th>CANT. IMPRESO</th>
+                                <th>% IMPRESO</th>
+                                <th>FECHA</th>
+                                <th>ACCIONES</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <?php if ($selectedPlotterReports): ?>
+                            <?php foreach ($selectedPlotterReports as $reporte): ?>
+                                <tr>
+                                    <td><?= htmlspecialchars((string) $reporte['observacion']) ?></td>
+                                    <td><?= htmlspecialchars((string) $reporte['descripcion']) ?></td>
+                                    <td><?= (int) ($reporte['cantidad_impreso'] ?? 0) ?></td>
+                                    <td><?= (int) ($reporte['porcentaje_impresion'] ?? 0) ?>%</td>
+                                    <td><?= htmlspecialchars((string) $reporte['fecha']) ?></td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="index.php?action=edit&id=<?= (int) $reporte['id'] ?>" class="btn btn-warning" title="Editar"><i class="bi bi-pencil-square"></i></a>
+                                            <a href="index.php?action=pdf&id=<?= (int) $reporte['id'] ?>" class="btn btn-info" title="Generar PDF por reporte"><i class="bi bi-filetype-pdf"></i></a>
+                                            <form action="index.php?action=delete" method="post" class="d-inline form-delete">
+                                                <input type="hidden" name="id" value="<?= (int) $reporte['id'] ?>">
+                                                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
+                                                <button type="submit" class="btn btn-danger" title="Eliminar"><i class="bi bi-trash"></i></button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr><td colspan="6" class="text-center text-muted">No hay reportes para este plotter en la fecha seleccionada.</td></tr>
+                        <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     <div class="row g-3">
         <?php foreach ($plotters as $plotter): ?>
             <?php $rows = $dailyReportsByPlotter[$plotter] ?? []; ?>
@@ -173,9 +249,16 @@ unset($_SESSION['flash']);
         <?php endforeach; ?>
     </div>
 </div>
+<?php endif; ?>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="public/js/app.js"></script>
 <script src="js/app.js"></script>
+<?php if ($selectedPlotter !== ''): ?>
+<script>
+    const plotterModal = new bootstrap.Modal(document.getElementById('plotterModal'));
+    plotterModal.show();
+</script>
+<?php endif; ?>
 </body>
 </html>

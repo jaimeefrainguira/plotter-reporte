@@ -74,3 +74,13 @@ body {
 .elegant-table tbody tr:hover {
     background: #eaf4ff;
 }
+
+.plotter-title-link {
+    color: #fff;
+    text-decoration: none;
+}
+
+.plotter-title-link:hover {
+    color: #cfe6ff;
+    text-decoration: underline;
+}
