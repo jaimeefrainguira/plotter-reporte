@@ -130,6 +130,29 @@ class Reporte
         ];
     }
 
+
+    public function getReportsByDateGroupedByPlotter(string $date, array $plotters): array
+    {
+        $grouped = [];
+
+        foreach ($plotters as $plotter) {
+            $grouped[(string) $plotter] = [];
+        }
+
+        $stmt = $this->db->prepare('SELECT * FROM reportes WHERE DATE(fecha) = :fecha ORDER BY plotter ASC, fecha DESC, id DESC');
+        $stmt->execute([':fecha' => $date]);
+
+        foreach ($stmt->fetchAll() as $row) {
+            $key = (string) ($row['plotter'] ?? '');
+            if (!array_key_exists($key, $grouped)) {
+                $grouped[$key] = [];
+            }
+
+            $grouped[$key][] = $row;
+        }
+
+        return $grouped;
+    }
     public function getAllForPdf(?int $id = null): array
     {
         if ($id !== null && $id > 0) {
