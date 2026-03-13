@@ -36,6 +36,7 @@ class Database
         ];
 
         try {
+            echo 'conectado';
             return new PDO($dsn, $this->username, $this->password, $options);
         } catch (PDOException $exception) {
             throw new RuntimeException('No fue posible conectar con la base de datos.', 0, $exception);
