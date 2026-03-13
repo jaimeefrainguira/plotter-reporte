@@ -23,6 +23,7 @@ unset($_SESSION['flash']);
             <a href="index.php?action=pdf" class="btn btn-outline-light"><i class="bi bi-file-earmark-pdf"></i> Generar PDF</a>
             <a href="index.php?action=create" class="btn btn-success"><i class="bi bi-plus-circle"></i> Nuevo reporte</a>
         </div>
+        <a href="index.php?action=create" class="btn btn-success"><i class="bi bi-plus-circle"></i> Nuevo reporte</a>
     </div>
 </nav>
 
@@ -76,6 +77,12 @@ unset($_SESSION['flash']);
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="mb-0">Reportes por plotter (día <?= htmlspecialchars($dailyDate) ?>)</h5>
     </div>
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <h5 class="mb-0">Listado de reportes</h5>
+                <a href="index.php?action=pdf" class="btn btn-outline-primary"><i class="bi bi-file-earmark-pdf"></i> Generar PDF</a>
+            </div>
 
     <div class="row g-3">
         <?php foreach ($plotters as $plotter): ?>
