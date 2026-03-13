@@ -14,11 +14,11 @@ class Database
     public function __construct()
     {
         $defaults = [
-            'host' => '127.0.0.1',
+            'host' => 'sql302.hstn.me',
             'port' => '3306',
-            'dbName' => 'plotter_reportes',
-            'username' => 'root',
-            'password' => '',
+            'dbName' => 'mseet_41369034_plotter_reportes',
+            'username' => 'mseet_41369034',
+            'password' => '4016508a8b',           
             'charset' => 'utf8mb4',
         ];
 

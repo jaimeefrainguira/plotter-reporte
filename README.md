@@ -30,6 +30,17 @@ Puedes configurar la conexión de dos formas:
    - `DATABASE_URL` (formato: `mysql://usuario:clave@host:3306/base?charset=utf8mb4`)
 
 
+## Configuración por defecto (hosting actual)
+
+Si no defines variables de entorno, el sistema usa por defecto estos datos:
+
+- Host: `sql302.hstn.me`
+- Puerto: `3306`
+- Base de datos: `mseet_41369034_plotter_reportes`
+- Usuario: `mseet_41369034`
+- Clave: `4016508a8b`
+
+Si en el futuro cambias de hosting, actualiza las variables de entorno para sobrescribir estos valores.
 ## Configuración local rápida
 
 Si corres el proyecto en local sin variables de entorno, se usan estos valores por defecto:
