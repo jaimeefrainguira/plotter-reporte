@@ -276,6 +276,20 @@ class ReporteController
             $subtitle[] = 'Fecha: ' . $fecha;
         }
 
+        $isGeneralPdf = $plotter === '';
+        $reportesByPlotter = [];
+        if ($isGeneralPdf) {
+            $reportesByPlotter = array_fill_keys($this->getPlotterOptions(), []);
+            foreach ($reportes as $reporte) {
+                $plotterName = (string) ($reporte['plotter'] ?? '');
+                if (!array_key_exists($plotterName, $reportesByPlotter)) {
+                    $reportesByPlotter[$plotterName] = [];
+                }
+
+                $reportesByPlotter[$plotterName][] = $reporte;
+            }
+        }
+
         ob_start();
         ?>
         <html>
@@ -284,9 +298,14 @@ class ReporteController
             <style>
                 body { font-family: DejaVu Sans, sans-serif; font-size: 12px; }
                 h2 { text-align: center; margin-bottom: 16px; }
-                table { width: 100%; border-collapse: collapse; }
-                th, td { border: 1px solid #444; padding: 6px; }
-                th { background: #eee; }
+                p { margin: 0 0 10px; }
+                .general-grid { font-size: 0; margin: 0 -6px; }
+                .general-grid__item { display: inline-block; width: 33.33%; padding: 0 6px 12px; box-sizing: border-box; font-size: 10px; vertical-align: top; }
+                .plotter-title { font-weight: bold; text-align: center; border: 1px solid #333; background: #f2f2f2; padding: 4px; margin-bottom: 4px; }
+                table { width: 100%; border-collapse: collapse; font-size: 9px; }
+                th, td { border: 1px solid #444; padding: 4px; }
+                th { background: #eee; text-align: left; }
+                td.empty-row { height: 16px; }
             </style>
         </head>
         <body>
@@ -294,35 +313,73 @@ class ReporteController
             <?php if ($subtitle): ?>
                 <p><strong><?= htmlspecialchars(implode(' | ', $subtitle)) ?></strong></p>
             <?php endif; ?>
-            <table>
-                <thead>
-                    <tr>                       
-                        <th>Observación</th>
-                        <th>Descripción</th>
-                        <th>Cantidad</th>
-                        <th>Cantidad Impreso</th>
-                        <th>% Impresión</th>
-                        <th>Fecha</th>
-                    </tr>
-                </thead>
-                <tbody>
-                <?php foreach ($reportes as $reporte): ?>
-                    <tr>
-                        <td><?= htmlspecialchars((string) $reporte['observacion']) ?></td>
-                        <td><?= htmlspecialchars((string) $reporte['descripcion']) ?></td>
-                        <td><?= (int) $reporte['cantidad'] ?></td>
-                        <td><?= (int) ($reporte['cantidad_impreso'] ?? 0) ?></td>
-                        <td><?= (int) $reporte['porcentaje_impresion'] ?>%</td>
-                        <td><?= htmlspecialchars((string) $reporte['fecha']) ?></td>
-                    </tr>
-                <?php endforeach; ?>
-                <?php if (!$reportes): ?>
-                    <tr>
-                        <td colspan="6">No hay reportes disponibles.</td>
-                    </tr>
-                <?php endif; ?>
-                </tbody>
-            </table>
+            <?php if ($isGeneralPdf): ?>
+                <div class="general-grid">
+                    <?php foreach ($reportesByPlotter as $plotterName => $plotterRows): ?>
+                        <div class="general-grid__item">
+                            <div class="plotter-title"><?= htmlspecialchars((string) $plotterName) ?></div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>CAMPAÑA</th>
+                                        <th>DESCRIPCIÓN</th>
+                                        <th>CANT. IMPRESO</th>
+                                        <th>% IMPRESO</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                <?php foreach (array_slice($plotterRows, 0, 4) as $row): ?>
+                                    <tr>
+                                        <td><?= htmlspecialchars((string) ($row['observacion'] ?? '')) ?></td>
+                                        <td><?= htmlspecialchars((string) ($row['descripcion'] ?? '')) ?></td>
+                                        <td><?= (int) ($row['cantidad_impreso'] ?? 0) ?></td>
+                                        <td><?= (int) ($row['porcentaje_impresion'] ?? 0) ?>%</td>
+                                    </tr>
+                                <?php endforeach; ?>
+                                <?php for ($i = count($plotterRows); $i < 4; $i++): ?>
+                                    <tr>
+                                        <td class="empty-row"></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                <?php endfor; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php else: ?>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Observación</th>
+                            <th>Descripción</th>
+                            <th>Cantidad</th>
+                            <th>Cantidad Impreso</th>
+                            <th>% Impresión</th>
+                            <th>Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($reportes as $reporte): ?>
+                        <tr>
+                            <td><?= htmlspecialchars((string) $reporte['observacion']) ?></td>
+                            <td><?= htmlspecialchars((string) $reporte['descripcion']) ?></td>
+                            <td><?= (int) $reporte['cantidad'] ?></td>
+                            <td><?= (int) ($reporte['cantidad_impreso'] ?? 0) ?></td>
+                            <td><?= (int) $reporte['porcentaje_impresion'] ?>%</td>
+                            <td><?= htmlspecialchars((string) $reporte['fecha']) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    <?php if (!$reportes): ?>
+                        <tr>
+                            <td colspan="6">No hay reportes disponibles.</td>
+                        </tr>
+                    <?php endif; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
         </body>
         </html>
         <?php
