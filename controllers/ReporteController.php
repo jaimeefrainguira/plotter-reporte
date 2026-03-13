@@ -85,7 +85,6 @@ class ReporteController
             return;
         }
 
-        $this->reporteModel->create($data);
         $this->rotateCsrfToken();
         $this->redirectWithMessage('Reporte creado correctamente.');
     }
@@ -144,7 +143,6 @@ class ReporteController
             $this->showEditForm($id, $data, ['Error al actualizar reporte. ' . $exception->getMessage()]);
             return;
         }
-        $updated = $this->reporteModel->update($id, $data);
         $this->rotateCsrfToken();
 
         if (!$updated) {
