@@ -6,6 +6,10 @@ document.querySelectorAll('.form-delete').forEach((form) => {
     });
 });
 
+const modalElement = document.getElementById('plotterModal');
+if (modalElement && window.bootstrap) {
+    const shouldOpen = modalElement.dataset.openOnLoad === '1';
+    if (shouldOpen) {
 if (window.DASHBOARD_MODAL?.shouldOpen) {
     const modalElement = document.getElementById('plotterModal');
     if (modalElement && window.bootstrap) {

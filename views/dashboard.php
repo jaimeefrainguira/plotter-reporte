@@ -5,6 +5,7 @@ $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
 
 $today = date('Y-m-d');
+$defaultModalDate = $filters['fecha'] !== '' ? $filters['fecha'] : $today;
 ?>
 <!doctype html>
 <html lang="es">
@@ -96,6 +97,7 @@ $today = date('Y-m-d');
             <?php $plotterRows = $reportesByPlotter[$plotter] ?? []; ?>
             <div class="plotter-box">
                 <div class="plotter-box__title">
+                    <a class="plotter-box__link" href="index.php?action=dashboard&modal_plotter=<?= urlencode($plotter) ?>&modal_fecha=<?= urlencode($defaultModalDate) ?>">
                     <a class="plotter-box__link" href="index.php?action=dashboard&modal_plotter=<?= urlencode($plotter) ?>&modal_fecha=<?= urlencode($today) ?>">
                         <?= htmlspecialchars($plotter) ?>
                     </a>
@@ -135,6 +137,7 @@ $today = date('Y-m-d');
     </div>
 </div>
 
+<div class="modal fade" id="plotterModal" tabindex="-1" aria-hidden="true" data-open-on-load="<?= $modalShouldOpen ? '1' : '0' ?>">
 <div class="modal fade" id="plotterModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
