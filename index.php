@@ -70,6 +70,10 @@ switch ($action) {
         $controller->generatePdf((int) ($_GET['id'] ?? 0));
         break;
 
+    case 'plotter':
+        $controller->showPlotterDetail();
+        break;
+
     default:
         http_response_code(404);
         echo 'Acción no válida.';

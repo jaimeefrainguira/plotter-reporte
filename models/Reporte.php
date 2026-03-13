@@ -6,13 +6,18 @@ class Reporte
 {
     private bool $schemaChecked = false;
 
+    private array $requiredColumns = [
+        "cantidad_impreso" => "ALTER TABLE reportes ADD COLUMN cantidad_impreso INT NOT NULL DEFAULT 0 AFTER cantidad",
+        "porcentaje_impresion" => "ALTER TABLE reportes ADD COLUMN porcentaje_impresion INT NOT NULL DEFAULT 0 AFTER cantidad_impreso",
+    ];
+
     public function __construct(private PDO $db)
     {
     }
 
     public function create(array $data): bool
     {
-        $this->ensureCantidadImpresoColumn();
+        $this->ensureRequiredColumns();
 
         $sql = 'INSERT INTO reportes (plotter, observacion, descripcion, cantidad, cantidad_impreso, porcentaje_impresion, fecha)
                 VALUES (:plotter, :observacion, :descripcion, :cantidad, :cantidad_impreso, :porcentaje_impresion, NOW())';
@@ -31,6 +36,8 @@ class Reporte
 
     public function getById(int $id): ?array
     {
+        $this->ensureRequiredColumns();
+
         $stmt = $this->db->prepare('SELECT * FROM reportes WHERE id = :id LIMIT 1');
         $stmt->execute([':id' => $id]);
         $result = $stmt->fetch();
@@ -40,7 +47,7 @@ class Reporte
 
     public function update(int $id, array $data): bool
     {
-        $this->ensureCantidadImpresoColumn();
+        $this->ensureRequiredColumns();
 
         $sql = 'UPDATE reportes
                 SET plotter = :plotter,
@@ -68,6 +75,8 @@ class Reporte
 
     public function delete(int $id): bool
     {
+        $this->ensureRequiredColumns();
+
         $stmt = $this->db->prepare('DELETE FROM reportes WHERE id = :id');
         $stmt->execute([':id' => $id]);
 
@@ -76,6 +85,8 @@ class Reporte
 
     public function getDashboardStats(): array
     {
+        $this->ensureRequiredColumns();
+
         $total = (int) $this->db->query('SELECT COUNT(*) FROM reportes')->fetchColumn();
         $latest = $this->db->query('SELECT * FROM reportes ORDER BY fecha DESC, id DESC LIMIT 1')->fetch();
         $perPlotter = $this->db->query('SELECT plotter, COUNT(*) AS total FROM reportes GROUP BY plotter ORDER BY plotter')->fetchAll();
@@ -89,6 +100,8 @@ class Reporte
 
     public function getPaginated(array $filters, int $page, int $perPage): array
     {
+        $this->ensureRequiredColumns();
+
         $where = [];
         $params = [];
 
@@ -128,6 +141,8 @@ class Reporte
 
     public function getAllForPdf(?int $id = null): array
     {
+        $this->ensureRequiredColumns();
+
         if ($id !== null && $id > 0) {
             $stmt = $this->db->prepare('SELECT * FROM reportes WHERE id = :id ORDER BY fecha DESC, id DESC');
             $stmt->execute([':id' => $id]);
@@ -139,11 +154,15 @@ class Reporte
 
     public function getAll(): array
     {
+        $this->ensureRequiredColumns();
+
         return $this->db->query('SELECT * FROM reportes ORDER BY fecha DESC, id DESC')->fetchAll();
     }
 
     public function getByDateAndPlotter(?string $date = null, ?string $plotter = null): array
     {
+        $this->ensureRequiredColumns();
+
         $where = [];
         $params = [];
 
@@ -165,7 +184,7 @@ class Reporte
 
         return $stmt->fetchAll();
     }
-    private function ensureCantidadImpresoColumn(): void
+    private function ensureRequiredColumns(): void
     {
         if ($this->schemaChecked) {
             return;
@@ -173,21 +192,24 @@ class Reporte
 
         $this->schemaChecked = true;
 
-        $stmt = $this->db->query("SHOW COLUMNS FROM reportes LIKE 'cantidad_impreso'");
-        $column = $stmt->fetch();
+        foreach ($this->requiredColumns as $columnName => $alterSql) {
+            $stmt = $this->db->prepare("SHOW COLUMNS FROM reportes LIKE :column");
+            $stmt->execute([':column' => $columnName]);
+            $column = $stmt->fetch();
 
-        if ($column) {
-            return;
-        }
+            if ($column) {
+                continue;
+            }
 
-        try {
-            $this->db->exec('ALTER TABLE reportes ADD COLUMN cantidad_impreso INT NOT NULL DEFAULT 0 AFTER cantidad');
-        } catch (PDOException $exception) {
-            throw new RuntimeException(
-                'No se pudo preparar la tabla reportes. Ejecuta: ALTER TABLE reportes ADD COLUMN cantidad_impreso INT NOT NULL DEFAULT 0 AFTER cantidad;',
-                0,
-                $exception
-            );
+            try {
+                $this->db->exec($alterSql);
+            } catch (PDOException $exception) {
+                throw new RuntimeException(
+                    'No se pudo preparar la tabla reportes. Ejecuta el script actualizado de database/script.sql.',
+                    0,
+                    $exception
+                );
+            }
         }
     }
 
