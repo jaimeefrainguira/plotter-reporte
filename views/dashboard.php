@@ -98,7 +98,6 @@ $defaultModalDate = $filters['fecha'] !== '' ? $filters['fecha'] : $today;
             <div class="plotter-box">
                 <div class="plotter-box__title">
                     <a class="plotter-box__link" href="index.php?action=dashboard&modal_plotter=<?= urlencode($plotter) ?>&modal_fecha=<?= urlencode($defaultModalDate) ?>">
-                    <a class="plotter-box__link" href="index.php?action=dashboard&modal_plotter=<?= urlencode($plotter) ?>&modal_fecha=<?= urlencode($today) ?>">
                         <?= htmlspecialchars($plotter) ?>
                     </a>
                 </div>
@@ -138,7 +137,6 @@ $defaultModalDate = $filters['fecha'] !== '' ? $filters['fecha'] : $today;
 </div>
 
 <div class="modal fade" id="plotterModal" tabindex="-1" aria-hidden="true" data-open-on-load="<?= $modalShouldOpen ? '1' : '0' ?>">
-<div class="modal fade" id="plotterModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
@@ -225,7 +223,6 @@ $defaultModalDate = $filters['fecha'] !== '' ? $filters['fecha'] : $today;
     };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="public/js/app.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
