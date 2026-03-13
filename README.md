@@ -22,12 +22,10 @@ Puedes configurar la conexión de dos formas:
 1. Editando `config/database.php` (valores por defecto).
 2. Definiendo variables de entorno (recomendado en hosting):
    - `DB_HOST`
-   - `DB_PORT` (opcional)
    - `DB_NAME`
    - `DB_USER`
    - `DB_PASS`
    - `DB_CHARSET`
-   - `APP_DEBUG` (`1` para ver detalle técnico temporalmente)
 
 ## Instalación en local o hosting
 
@@ -37,17 +35,6 @@ Puedes configurar la conexión de dos formas:
 2. Sube todos los archivos al hosting.
 3. En AeonFree y hostings similares, publica el proyecto en la raíz pública y usa `index.php` en la raíz (incluido en este repositorio).
 4. Los assets ahora viven en la raíz (`css/` y `js/`) y puedes abrir el sistema con `tudominio.com/index.php`.
-
-
-## Modo temporal sin base de datos
-
-Actualmente el CRUD está configurado en **modo datos fijos/en sesión** para evitar errores 500 del hosting mientras se valida el sistema:
-
-- No usa MySQL para listar/crear/editar/eliminar durante esta etapa.
-- Carga registros demo iniciales automáticamente.
-- Los cambios se guardan en `$_SESSION` (se reinician al cerrar sesión/expirar).
-
-> Este modo es temporal para diagnóstico.
 2. Sube todos los archivos al hosting.
 3. En AeonFree y hostings similares, publica el proyecto en la raíz pública y usa `index.php` en la raíz (incluido en este repositorio).
 4. Los assets ahora viven en la raíz (`css/` y `js/`) y puedes abrir el sistema con `tudominio.com/index.php`.
@@ -71,9 +58,6 @@ Para compatibilidad con hosting compartido sin CLI:
 El sistema detecta automáticamente cualquiera de estas rutas:
 - `vendor/autoload.php`
 - `dompdf/autoload.inc.php`
-- `dompdf*/autoload.inc.php` (acepta variantes de nombre, por ejemplo `dompdff`)
-
-> Si no encuentra ninguna, mostrará un mensaje en el dashboard indicando cómo instalar DomPDF.
 
 > Si no encuentra ninguna, mostrará un mensaje en el dashboard indicando cómo instalar DomPDF.
 1. En tu computadora local, descarga DomPDF con Composer:
@@ -130,17 +114,3 @@ ALTER TABLE reportes ADD COLUMN cantidad_impreso INT NOT NULL DEFAULT 0 AFTER ca
 ```
 
 Desde esta versión el sistema intenta agregar esa columna automáticamente al guardar, si el usuario MySQL tiene permisos `ALTER`.
-
-## Solución rápida error 500 en blanco (pantalla vacía)
-
-Si el hosting muestra HTTP 500 sin detalle:
-
-1. Verifica credenciales y host de MySQL en `config/database.php` o variables `DB_*`.
-2. Activa debug temporal en hosting con `APP_DEBUG=1` para ver el error técnico real.
-3. Revisa el `error_log` del hosting (la app ahora registra excepciones críticas allí).
-4. Confirma que estás ejecutando PHP 8+ y extensión `pdo_mysql` habilitada.
-
-
-## Nota técnica
-
-Si ves `SQLSTATE[HY093]: Invalid parameter number`, esta versión usa `bindValue` explícito en `create/update` para evitar desalineación de parámetros en algunos entornos de hosting compartido.
