@@ -51,9 +51,9 @@ class ReporteController
             $modalPlotter = '';
         }
 
-        $modalDate = trim((string) ($_GET['modal_fecha'] ?? date('Y-m-d')));
-        if ($modalDate === '' || !$this->isValidDate($modalDate)) {
-            $modalDate = date('Y-m-d');
+        $modalDate = trim((string) ($_GET['modal_fecha'] ?? ''));
+        if ($modalDate !== '' && !$this->isValidDate($modalDate)) {
+            $modalDate = '';
         }
 
         $modalReportes = [];

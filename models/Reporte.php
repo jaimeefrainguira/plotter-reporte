@@ -142,17 +142,23 @@ class Reporte
         return $this->db->query('SELECT * FROM reportes ORDER BY fecha DESC, id DESC')->fetchAll();
     }
 
-    public function getByDateAndPlotter(string $date, ?string $plotter = null): array
+    public function getByDateAndPlotter(?string $date = null, ?string $plotter = null): array
     {
-        $sql = 'SELECT * FROM reportes WHERE DATE(fecha) = :fecha';
-        $params = [':fecha' => $date];
+        $where = [];
+        $params = [];
+
+        if ($date !== null && $date !== '') {
+            $where[] = 'DATE(fecha) = :fecha';
+            $params[':fecha'] = $date;
+        }
 
         if ($plotter !== null && $plotter !== '') {
-            $sql .= ' AND plotter = :plotter';
+            $where[] = 'plotter = :plotter';
             $params[':plotter'] = $plotter;
         }
 
-        $sql .= ' ORDER BY fecha DESC, id DESC';
+        $whereSql = $where ? ' WHERE ' . implode(' AND ', $where) : '';
+        $sql = 'SELECT * FROM reportes' . $whereSql . ' ORDER BY fecha DESC, id DESC';
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);

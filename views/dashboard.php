@@ -4,8 +4,7 @@ declare(strict_types=1);
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
 
-$today = date('Y-m-d');
-$defaultModalDate = $filters['fecha'] !== '' ? $filters['fecha'] : $today;
+$defaultModalDate = $filters['fecha'];
 ?>
 <!doctype html>
 <html lang="es">
@@ -97,7 +96,7 @@ $defaultModalDate = $filters['fecha'] !== '' ? $filters['fecha'] : $today;
             <?php $plotterRows = $reportesByPlotter[$plotter] ?? []; ?>
             <div class="plotter-box">
                 <div class="plotter-box__title">
-                    <a class="plotter-box__link" href="index.php?action=dashboard&modal_plotter=<?= urlencode($plotter) ?>&modal_fecha=<?= urlencode($defaultModalDate) ?>">
+                    <a class="plotter-box__link" href="index.php?action=dashboard&modal_plotter=<?= urlencode($plotter) ?>&modal_fecha=<?= urlencode($defaultModalDate) ?>" title="Ver reportes de <?= htmlspecialchars($plotter) ?>">
                         <?= htmlspecialchars($plotter) ?>
                     </a>
                 </div>
@@ -136,7 +135,7 @@ $defaultModalDate = $filters['fecha'] !== '' ? $filters['fecha'] : $today;
     </div>
 </div>
 
-<div class="modal fade" id="plotterModal" tabindex="-1" aria-hidden="true" data-open-on-load="<?= $modalShouldOpen ? '1' : '0' ?>">
+<div class="modal fade<?= $modalShouldOpen ? ' show' : '' ?>" id="plotterModal" tabindex="-1" aria-hidden="<?= $modalShouldOpen ? 'false' : 'true' ?>" data-open-on-load="<?= $modalShouldOpen ? '1' : '0' ?>"<?= $modalShouldOpen ? ' style="display:block;"' : '' ?>>
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
@@ -155,6 +154,9 @@ $defaultModalDate = $filters['fecha'] !== '' ? $filters['fecha'] : $today;
                     </div>
                     <div class="col-md-8 d-flex align-items-end gap-2">
                         <button class="btn btn-primary" type="submit">Buscar</button>
+                        <?php if ($modalDate !== ''): ?>
+                            <a class="btn btn-outline-secondary" href="index.php?action=dashboard&modal_plotter=<?= urlencode($modalPlotter) ?>">Ver todos</a>
+                        <?php endif; ?>
                         <?php if ($modalPlotter !== ''): ?>
                             <a class="btn btn-success" href="index.php?action=create">Nuevo reporte para <?= htmlspecialchars($modalPlotter) ?></a>
                         <?php endif; ?>
@@ -206,7 +208,7 @@ $defaultModalDate = $filters['fecha'] !== '' ? $filters['fecha'] : $today;
                         <?php endforeach; ?>
                         <?php if (!$modalReportes): ?>
                             <tr>
-                                <td colspan="8" class="text-center text-muted">No hay reportes para este plotter y fecha.</td>
+                                <td colspan="8" class="text-center text-muted">No hay reportes para este plotter<?= $modalDate !== '' ? ' en la fecha seleccionada' : '' ?>.</td>
                             </tr>
                         <?php endif; ?>
                         </tbody>
@@ -217,11 +219,10 @@ $defaultModalDate = $filters['fecha'] !== '' ? $filters['fecha'] : $today;
     </div>
 </div>
 
-<script>
-    window.DASHBOARD_MODAL = {
-        shouldOpen: <?= $modalShouldOpen ? 'true' : 'false' ?>,
-    };
-</script>
+<?php if ($modalShouldOpen): ?>
+    <div class="modal-backdrop fade show"></div>
+<?php endif; ?>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="js/app.js"></script>
 </body>
