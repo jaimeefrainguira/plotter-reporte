@@ -1,6 +1,6 @@
 # Sistema de gestión de reportes de impresión de plotters (PHP MVC)
 
-Aplicación web en **PHP 8+** con arquitectura **MVC pura**, MySQL, Bootstrap 5 y exportación de PDF con DomPDF, preparada para hosting compartido como AeonFree.
+Aplicación web en **PHP 8+** con arquitectura **MVC pura**, MySQL y Bootstrap 5, preparada para hosting compartido como AeonFree.
 
 ## Estructura
 
@@ -58,31 +58,6 @@ Actualmente el CRUD está configurado en **modo datos fijos/en sesión** para ev
 3. Configura el dominio/document root para que apunte a la carpeta `public/`.
 4. Si tu hosting no permite cambiar document root, mueve el contenido de `public/` a la raíz pública y ajusta rutas `require_once`.
 
-## DomPDF (sin comandos de consola en hosting)
-
-Para compatibilidad con hosting compartido sin CLI:
-
-1. Opción recomendada (Composer en local):
-   - `composer require dompdf/dompdf`
-   - Sube la carpeta `vendor/` al proyecto en el hosting.
-2. Opción manual (sin Composer):
-   - Descarga DomPDF y sube la carpeta `dompdf/` a la raíz del proyecto.
-
-El sistema detecta automáticamente cualquiera de estas rutas:
-- `vendor/autoload.php`
-- `dompdf/autoload.inc.php`
-- `dompdf*/autoload.inc.php` (acepta variantes de nombre, por ejemplo `dompdff`)
-
-> Si no encuentra ninguna, mostrará un mensaje en el dashboard indicando cómo instalar DomPDF.
-
-> Si no encuentra ninguna, mostrará un mensaje en el dashboard indicando cómo instalar DomPDF.
-1. En tu computadora local, descarga DomPDF con Composer:
-   - `composer require dompdf/dompdf`
-2. Sube la carpeta `vendor/` generada al proyecto en el hosting.
-3. El sistema detecta automáticamente `vendor/autoload.php` para la opción **Generar PDF**.
-
-> Si no existe `vendor/autoload.php`, el sistema mostrará un mensaje indicando que falta DomPDF.
-
 ## Funcionalidades implementadas
 
 - Dashboard con métricas:
@@ -91,8 +66,8 @@ El sistema detecta automáticamente cualquiera de estas rutas:
   - Cantidad de reportes por plotter
 - CRUD completo de reportes
 - Validación de longitud para descripción (máx. 255 caracteres)
-- Campo adicional `cantidad_impreso` en formularios, tabla y PDF
-- Tabla responsive con acciones (editar/eliminar/generar PDF por registro)
+- Campo adicional `cantidad_impreso` en formularios, tabla
+- Tabla responsive con acciones (editar/eliminar)
 - Filtros por plotter y fecha (con validación estricta del formato)
 - Paginación
 - Confirmación de eliminación
@@ -101,7 +76,6 @@ El sistema detecta automáticamente cualquiera de estas rutas:
 - Protección básica CSRF en formularios de creación/edición/eliminación
 - Rotación de token CSRF tras operaciones mutables (crear/editar/eliminar)
 - Cabeceras básicas de seguridad HTTP (`nosniff`, `SAMEORIGIN`, `Referrer-Policy`, `Content-Security-Policy`) y cookies de sesión endurecidas (`HttpOnly`, `SameSite=Lax`)
-- Generación de PDF en formato horizontal con título y tabla de datos (global y por reporte)
 
 ## Rutas principales
 
@@ -111,7 +85,6 @@ El sistema detecta automáticamente cualquiera de estas rutas:
 - `index.php?action=edit&id=1`
 - `index.php?action=update&id=1`
 - `index.php?action=delete` (POST con `id`)
-- `index.php?action=pdf`
 
 
 ## Nota AeonFree (raíz pública)
