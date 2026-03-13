@@ -1,7 +1,4 @@
 <?php
-
-
-
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: SAMEORIGIN');
 header('Referrer-Policy: strict-origin-when-cross-origin');
@@ -9,16 +6,6 @@ header("Content-Security-Policy: default-src 'self'; style-src 'self' https://cd
 
 
 
-try {
-    $controller = new ReporteController();
-} catch (Throwable $exception) {
-    
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-}
-
-$action = $_GET['action'] ?? 'dashboard';
 
 switch ($action) {
     case 'dashboard':
