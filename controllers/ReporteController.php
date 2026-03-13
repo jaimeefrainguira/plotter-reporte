@@ -20,34 +20,36 @@ class ReporteController
         $stats = $this->reporteModel->getDashboardStats();
         $plotters = $this->getPlotterOptions();
 
+        $plotterFilter = trim((string) ($_GET['plotter'] ?? ''));
         $fechaFilter = trim((string) ($_GET['fecha'] ?? ''));
+
+        if ($plotterFilter !== '' && !in_array($plotterFilter, $plotters, true)) {
+            $plotterFilter = '';
+        }
+
         if ($fechaFilter !== '' && !$this->isValidDate($fechaFilter)) {
             $fechaFilter = '';
         }
 
         $filters = [
+            'plotter' => $plotterFilter,
             'fecha' => $fechaFilter,
         ];
 
-$reportes = $fechaFilter !== ''
-            ? $this->reporteModel->getByDateAndPlotter($fechaFilter)
-            : $this->reporteModel->getAll();
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $perPage = 10;
 
-        $reportesByPlotter = [];
-        foreach ($plotters as $plotter) {
-            $reportesByPlotter[$plotter] = [];
-        }
-
-        foreach ($reportes as $reporte) {
-            $plotter = (string) $reporte['plotter'];
-            if (!array_key_exists($plotter, $reportesByPlotter)) {
-                $reportesByPlotter[$plotter] = [];
-            }
-            $reportesByPlotter[$plotter][] = $reporte;
+        $result = $this->reporteModel->getPaginated($filters, $page, $perPage);
+        $reportes = $result['items'];
+        $totalRows = $result['totalRows'];
+        $totalPages = (int) max(1, ceil($totalRows / $perPage));
+        if ($page > $totalPages) {
+            $page = $totalPages;
+            $result = $this->reporteModel->getPaginated($filters, $page, $perPage);
+            $reportes = $result['items'];
         }
 
         $csrfToken = $this->getCsrfToken();
-        
         include __DIR__ . '/../views/dashboard.php';
     }
 
