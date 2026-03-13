@@ -29,24 +29,15 @@ class ReporteController
             'fecha' => $fechaFilter,
         ];
 
-        $reportes = $fechaFilter !== ''
-            ? $this->reporteModel->getByDateAndPlotter($fechaFilter)
-            : $this->reporteModel->getAll();
 
-        $reportesByPlotter = [];
-        foreach ($plotters as $plotter) {
-            $reportesByPlotter[$plotter] = [];
-        }
 
-        foreach ($reportes as $reporte) {
-            $plotter = (string) $reporte['plotter'];
-            if (!array_key_exists($plotter, $reportesByPlotter)) {
-                $reportesByPlotter[$plotter] = [];
-            }
-            $reportesByPlotter[$plotter][] = $reporte;
-        }
 
-        $csrfToken = $this->getCsrfToken();
+
+
+
+
+
+        
         include __DIR__ . '/../views/dashboard.php';
     }
 
