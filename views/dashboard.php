@@ -4,11 +4,7 @@ declare(strict_types=1);
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
 
-$queryBase = [
-    'action' => 'dashboard',
-    'plotter' => $filters['plotter'] ?? '',
-    'fecha' => $filters['fecha'] ?? '',
-];
+$today = date('Y-m-d');
 ?>
 <!doctype html>
 <html lang="es">
@@ -25,7 +21,10 @@ $queryBase = [
 <nav class="navbar navbar-dark bg-dark">
     <div class="container-fluid">
         <span class="navbar-brand mb-0 h1"><i class="bi bi-speedometer2"></i> Panel de Reportes Plotter</span>
-        <a href="index.php?action=create" class="btn btn-success"><i class="bi bi-plus-circle"></i> Nuevo reporte</a>
+        <div class="d-flex gap-2">
+            <a href="index.php?action=pdf" class="btn btn-outline-light"><i class="bi bi-file-earmark-pdf"></i> PDF general</a>
+            <a href="index.php?action=create" class="btn btn-success"><i class="bi bi-plus-circle"></i> Nuevo reporte</a>
+        </div>
     </div>
 </nav>
 
@@ -76,101 +75,152 @@ $queryBase = [
         </div>
     </div>
 
-    <div class="card shadow-sm">
+    <div class="card shadow-sm mb-4">
         <div class="card-body">
-            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-                <h5 class="mb-0">Listado de reportes</h5>
-                <a href="index.php?action=pdf" class="btn btn-outline-primary"><i class="bi bi-file-earmark-pdf"></i> Generar PDF</a>
-            </div>
-
-            <form method="get" class="row g-2 mb-3">
+            <form method="get" class="row g-2 align-items-end">
                 <input type="hidden" name="action" value="dashboard">
                 <div class="col-md-4">
-                    <select name="plotter" class="form-select">
-                        <option value="">Filtrar por plotter</option>
-                        <?php foreach ($plotters as $plotter): ?>
-                            <option value="<?= htmlspecialchars($plotter) ?>" <?= ($filters['plotter'] === $plotter) ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($plotter) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="col-md-3">
+                    <label class="form-label">Filtrar tablero por fecha</label>
                     <input type="date" name="fecha" class="form-control" value="<?= htmlspecialchars($filters['fecha']) ?>">
                 </div>
-                <div class="col-md-5 d-flex gap-2">
+                <div class="col-md-8 d-flex gap-2">
                     <button class="btn btn-primary" type="submit"><i class="bi bi-funnel"></i> Filtrar</button>
                     <a href="index.php?action=dashboard" class="btn btn-outline-secondary">Limpiar</a>
                 </div>
             </form>
+        </div>
+    </div>
 
-            <div class="table-responsive">
-                <table class="table table-striped table-hover align-middle">
-                    <thead class="table-dark">
-                    <tr>
-                        <th>Plotter</th>
-                        <th>Observación</th>
-                        <th>Descripción</th>
-                        <th>Cantidad</th>
-                        <th>Cantidad impreso</th>
-                        <th>% de impresión</th>
-                        <th>Fecha</th>
-                        <th>Acciones</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <?php foreach ($reportes as $reporte): ?>
+    <div class="plotter-grid">
+        <?php foreach ($plotters as $plotter): ?>
+            <?php $plotterRows = $reportesByPlotter[$plotter] ?? []; ?>
+            <div class="plotter-box">
+                <div class="plotter-box__title">
+                    <a class="plotter-box__link" href="index.php?action=dashboard&modal_plotter=<?= urlencode($plotter) ?>&modal_fecha=<?= urlencode($today) ?>">
+                        <?= htmlspecialchars($plotter) ?>
+                    </a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table plotter-table mb-0">
+                        <thead>
                         <tr>
-                            <td><?= htmlspecialchars($reporte['plotter']) ?></td>
-                            <td><?= nl2br(htmlspecialchars($reporte['observacion'])) ?></td>
-                            <td><?= htmlspecialchars($reporte['descripcion']) ?></td>
-                            <td><?= (int) $reporte['cantidad'] ?></td>
-                            <td><?= (int) ($reporte['cantidad_impreso'] ?? 0) ?></td>
-                            <td><?= (int) $reporte['porcentaje_impresion'] ?>%</td>
-                            <td><?= htmlspecialchars($reporte['fecha']) ?></td>
-                            <td>
-                                <div class="btn-group btn-group-sm">
-                                    <a href="index.php?action=edit&id=<?= (int) $reporte['id'] ?>" class="btn btn-warning" title="Editar">
-                                        <i class="bi bi-pencil-square"></i>
-                                    </a>
-                                    <a href="index.php?action=pdf&id=<?= (int) $reporte['id'] ?>" class="btn btn-info" title="Generar PDF por reporte">
-                                        <i class="bi bi-filetype-pdf"></i>
-                                    </a>
-                                    <form action="index.php?action=delete" method="post" class="d-inline form-delete">
-                                        <input type="hidden" name="id" value="<?= (int) $reporte['id'] ?>">
-                                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
-                                        <button type="submit" class="btn btn-danger" title="Eliminar">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
+                            <th>CAMPAÑA</th>
+                            <th>DESCRIPCIÓN</th>
+                            <th>CANT. IMPRESO</th>
+                            <th>% IMPRESO</th>
                         </tr>
-                    <?php endforeach; ?>
-                    <?php if (!$reportes): ?>
-                        <tr>
-                            <td colspan="8" class="text-center text-muted">No hay reportes registrados.</td>
-                            <td colspan="7" class="text-center text-muted">No hay reportes registrados.</td>
-                        </tr>
-                    <?php endif; ?>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                        <?php foreach (array_slice($plotterRows, 0, 4) as $row): ?>
+                            <tr>
+                                <td><?= htmlspecialchars($row['observacion']) ?></td>
+                                <td><?= htmlspecialchars($row['descripcion']) ?></td>
+                                <td><?= (int) ($row['cantidad_impreso'] ?? 0) ?></td>
+                                <td><?= (int) ($row['porcentaje_impresion'] ?? 0) ?>%</td>
+                            </tr>
+                        <?php endforeach; ?>
+                        <?php for ($i = count($plotterRows); $i < 4; $i++): ?>
+                            <tr>
+                                <td>&nbsp;</td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                        <?php endfor; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
+        <?php endforeach; ?>
+    </div>
+</div>
 
-            <nav>
-                <ul class="pagination justify-content-end mb-0">
-                    <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                        <?php $queryBase['page'] = $i; ?>
-                        <li class="page-item <?= $i === $page ? 'active' : '' ?>">
-                            <a class="page-link" href="index.php?<?= http_build_query($queryBase) ?>"><?= $i ?></a>
-                        </li>
-                    <?php endfor; ?>
-                </ul>
-            </nav>
+<div class="modal fade" id="plotterModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <?= $modalPlotter !== '' ? 'Reportes de ' . htmlspecialchars($modalPlotter) : 'Reportes por plotter' ?>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="get" class="row g-2 mb-3">
+                    <input type="hidden" name="action" value="dashboard">
+                    <input type="hidden" name="modal_plotter" value="<?= htmlspecialchars($modalPlotter) ?>">
+                    <div class="col-md-4">
+                        <label class="form-label">Fecha del reporte</label>
+                        <input type="date" class="form-control" name="modal_fecha" value="<?= htmlspecialchars($modalDate) ?>">
+                    </div>
+                    <div class="col-md-8 d-flex align-items-end gap-2">
+                        <button class="btn btn-primary" type="submit">Buscar</button>
+                        <?php if ($modalPlotter !== ''): ?>
+                            <a class="btn btn-success" href="index.php?action=create">Nuevo reporte para <?= htmlspecialchars($modalPlotter) ?></a>
+                        <?php endif; ?>
+                    </div>
+                </form>
+
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover align-middle">
+                        <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Observación</th>
+                            <th>Descripción</th>
+                            <th>Cantidad</th>
+                            <th>Cant. impreso</th>
+                            <th>% impreso</th>
+                            <th>Fecha</th>
+                            <th>CRUD</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php foreach ($modalReportes as $reporte): ?>
+                            <tr>
+                                <td><?= (int) $reporte['id'] ?></td>
+                                <td><?= htmlspecialchars($reporte['observacion']) ?></td>
+                                <td><?= htmlspecialchars($reporte['descripcion']) ?></td>
+                                <td><?= (int) $reporte['cantidad'] ?></td>
+                                <td><?= (int) ($reporte['cantidad_impreso'] ?? 0) ?></td>
+                                <td><?= (int) $reporte['porcentaje_impresion'] ?>%</td>
+                                <td><?= htmlspecialchars($reporte['fecha']) ?></td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="index.php?action=edit&id=<?= (int) $reporte['id'] ?>" class="btn btn-warning" title="Editar">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                        <a href="index.php?action=pdf&id=<?= (int) $reporte['id'] ?>" class="btn btn-info" title="PDF por reporte">
+                                            <i class="bi bi-filetype-pdf"></i>
+                                        </a>
+                                        <form action="index.php?action=delete" method="post" class="d-inline form-delete">
+                                            <input type="hidden" name="id" value="<?= (int) $reporte['id'] ?>">
+                                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
+                                            <button type="submit" class="btn btn-danger" title="Eliminar">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                        <?php if (!$modalReportes): ?>
+                            <tr>
+                                <td colspan="8" class="text-center text-muted">No hay reportes para este plotter y fecha.</td>
+                            </tr>
+                        <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
+<script>
+    window.DASHBOARD_MODAL = {
+        shouldOpen: <?= $modalShouldOpen ? 'true' : 'false' ?>,
+    };
+</script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="public/js/app.js"></script>
 <script src="js/app.js"></script>
