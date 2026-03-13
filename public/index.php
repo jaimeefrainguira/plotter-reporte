@@ -66,10 +66,6 @@ switch ($action) {
         header('Location: index.php?action=dashboard');
         break;
 
-    case 'pdf':
-        $controller->generatePdf((int) ($_GET['id'] ?? 0));
-        break;
-
     default:
         http_response_code(404);
         echo 'Acción no válida.';

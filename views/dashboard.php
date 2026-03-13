@@ -30,7 +30,6 @@ $queryBase = [
         <?php else: ?>
             <a href="index.php?action=create" class="btn btn-success"><i class="bi bi-plus-circle"></i> Nuevo reporte</a>
         <?php endif; ?>
-        <a href="index.php?action=create" class="btn btn-success"><i class="bi bi-plus-circle"></i> Nuevo reporte</a>
     </div>
 </nav>
 
@@ -91,12 +90,6 @@ $queryBase = [
         <div class="card-body">
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
                 <h5 class="mb-0">Listado de reportes</h5>
-                <?php if (!empty($loadError)): ?>
-                    <button class="btn btn-outline-secondary" type="button" disabled title="Disponible cuando la base de datos esté conectada."><i class="bi bi-file-earmark-pdf"></i> Generar PDF</button>
-                <?php else: ?>
-                    <a href="index.php?action=pdf" class="btn btn-outline-primary"><i class="bi bi-file-earmark-pdf"></i> Generar PDF</a>
-                <?php endif; ?>
-                <a href="index.php?action=pdf" class="btn btn-outline-primary"><i class="bi bi-file-earmark-pdf"></i> Generar PDF</a>
             </div>
 
             <form method="get" class="row g-2 mb-3">
@@ -149,9 +142,6 @@ $queryBase = [
                                     <a href="index.php?action=edit&id=<?= (int) $reporte['id'] ?>" class="btn btn-warning" title="Editar">
                                         <i class="bi bi-pencil-square"></i>
                                     </a>
-                                    <a href="index.php?action=pdf&id=<?= (int) $reporte['id'] ?>" class="btn btn-info" title="Generar PDF por reporte">
-                                        <i class="bi bi-filetype-pdf"></i>
-                                    </a>
                                     <form action="index.php?action=delete" method="post" class="d-inline form-delete">
                                         <input type="hidden" name="id" value="<?= (int) $reporte['id'] ?>">
                                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
@@ -165,7 +155,6 @@ $queryBase = [
                     <?php endforeach; ?>
                     <?php if (!$reportes): ?>
                         <tr>
-                            <td colspan="8" class="text-center text-muted">No hay reportes registrados.</td>
                             <td colspan="7" class="text-center text-muted">No hay reportes registrados.</td>
                         </tr>
                     <?php endif; ?>

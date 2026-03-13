@@ -148,17 +148,6 @@ class Reporte
             'totalRows' => $totalRows,
         ];
     }
-
-    public function getAllForPdf(?int $id = null): array
-    {
-        if ($id !== null && $id > 0) {
-            $stmt = $this->db->prepare('SELECT * FROM reportes WHERE id = :id ORDER BY fecha DESC, id DESC');
-            $stmt->execute([':id' => $id]);
-            return $stmt->fetchAll();
-        }
-
-        return $this->db->query('SELECT * FROM reportes ORDER BY fecha DESC, id DESC')->fetchAll();
-    }
     private function ensureCantidadImpresoColumn(): void
     {
         if ($this->schemaChecked) {
