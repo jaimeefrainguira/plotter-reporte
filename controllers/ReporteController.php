@@ -2,6 +2,18 @@
 
 declare(strict_types=1);
 
+class ReporteController
+{
+    public function __construct()
+    {
+        if (!isset($_SESSION['reportes_mock']) || !is_array($_SESSION['reportes_mock'])) {
+            $_SESSION['reportes_mock'] = $this->getSeedReports();
+        }
+
+        if (!isset($_SESSION['reportes_next_id'])) {
+            $ids = array_column($_SESSION['reportes_mock'], 'id');
+            $_SESSION['reportes_next_id'] = $ids ? (max($ids) + 1) : 1;
+        }
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../models/Reporte.php';
 
@@ -54,6 +66,42 @@ class ReporteController
             'fecha' => $fechaFilter,
         ];
 
+        $all = $this->getReports();
+        $filtered = array_values(array_filter($all, function (array $row) use ($filters): bool {
+            if ($filters['plotter'] !== '' && $row['plotter'] !== $filters['plotter']) {
+                return false;
+            }
+
+            if ($filters['fecha'] !== '' && substr((string) $row['fecha'], 0, 10) !== $filters['fecha']) {
+                return false;
+            }
+
+            return true;
+        }));
+
+        usort($filtered, static function (array $a, array $b): int {
+            if ($a['fecha'] === $b['fecha']) {
+                return ((int) $b['id']) <=> ((int) $a['id']);
+            }
+
+            return strcmp((string) $b['fecha'], (string) $a['fecha']);
+        });
+
+        $stats = $this->buildStats($all);
+
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $perPage = 10;
+        $totalRows = count($filtered);
+        $totalPages = (int) max(1, (int) ceil($totalRows / $perPage));
+        if ($page > $totalPages) {
+            $page = $totalPages;
+        }
+
+        $offset = ($page - 1) * $perPage;
+        $reportes = array_slice($filtered, $offset, $perPage);
+
+        $csrfToken = $this->getCsrfToken();
+        $loadError = null;
         $page = max(1, (int) ($_GET['page'] ?? 1));
         $perPage = 10;
 
@@ -126,6 +174,15 @@ class ReporteController
             return;
         }
 
+        $reports = $this->getReports();
+        $data['id'] = (int) $_SESSION['reportes_next_id'];
+        $_SESSION['reportes_next_id'] = $data['id'] + 1;
+        $data['fecha'] = date('Y-m-d H:i:s');
+        $reports[] = $data;
+        $this->saveReports($reports);
+
+        $this->rotateCsrfToken();
+        $this->redirectWithMessage('Reporte creado correctamente (modo datos fijos).');
         try {
             $this->reporteModel->create($data);
         } catch (Throwable $exception) {
@@ -150,6 +207,7 @@ class ReporteController
         }
 
         $plotters = $this->getPlotterOptions();
+        $reporte = $this->findReportById($id);
 
         try {
             $reporte = $this->reporteModel->getById($id);
@@ -184,6 +242,13 @@ class ReporteController
             return;
         }
 
+        if (!$this->isValidCsrfToken((string) ($_POST['csrf_token'] ?? ''))) {
+            $this->redirectWithMessage('Sesión expirada. Intenta nuevamente.', 'danger');
+            return;
+        }
+
+        $existing = $this->findReportById($id);
+        if ($existing === null) {
         try {
             $existing = $this->reporteModel->getById($id);
         } catch (Throwable $exception) {
@@ -211,6 +276,20 @@ class ReporteController
             return;
         }
 
+        $reports = $this->getReports();
+        $updated = false;
+        foreach ($reports as &$row) {
+            if ((int) $row['id'] === $id) {
+                $data['id'] = $id;
+                $data['fecha'] = (string) $row['fecha'];
+                $updated = ($row != $data);
+                $row = $data;
+                break;
+            }
+        }
+        unset($row);
+
+        $this->saveReports($reports);
         try {
             $updated = $this->reporteModel->update($id, $data);
         } catch (Throwable $exception) {
@@ -225,6 +304,7 @@ class ReporteController
             return;
         }
 
+        $this->redirectWithMessage('Reporte actualizado correctamente (modo datos fijos).');
         $this->redirectWithMessage('Reporte actualizado correctamente.');
     }
 
@@ -258,6 +338,20 @@ class ReporteController
             return;
         }
 
+        $reports = $this->getReports();
+        $before = count($reports);
+        $reports = array_values(array_filter($reports, static fn(array $row): bool => (int) $row['id'] !== $id));
+        $after = count($reports);
+
+        $this->saveReports($reports);
+        $this->rotateCsrfToken();
+
+        if ($before === $after) {
+            $this->redirectWithMessage('Reporte no encontrado.', 'danger');
+            return;
+        }
+
+        $this->redirectWithMessage('Reporte eliminado correctamente (modo datos fijos).');
         try {
             $deleted = $this->reporteModel->delete($id);
         } catch (Throwable $exception) {
@@ -279,6 +373,9 @@ class ReporteController
 
     public function generatePdf(?int $id = null): void
     {
+        if (!$this->loadDompdfLibrary()) {
+            $this->redirectWithMessage(
+                'No se encontró DomPDF. Verifica que exista vendor/autoload.php o una carpeta dompdf (ej: dompdf/) con autoload.inc.php en la raíz del proyecto.',
         if (!$this->ensureModelAvailable()) {
             return;
         }
@@ -295,10 +392,20 @@ class ReporteController
             return;
         }
 
+        if (!class_exists('Dompdf\\Dompdf')) {
         if (!class_exists('Dompdf\Dompdf')) {
             $this->redirectWithMessage('DomPDF no está disponible. Verifica la instalación de la librería.', 'danger');
             return;
         }
+
+        $reportes = $this->getReports();
+        if ($id !== null && $id > 0) {
+            $reportes = array_values(array_filter($reportes, static fn(array $row): bool => (int) $row['id'] === $id));
+        }
+
+        usort($reportes, static function (array $a, array $b): int {
+            return strcmp((string) $b['fecha'], (string) $a['fecha']);
+        });
 
         $reportId = ($id !== null && $id > 0) ? $id : null;
 
@@ -328,6 +435,91 @@ class ReporteController
         $dompdf->setPaper('A4', 'landscape');
         $dompdf->render();
         $dompdf->stream('reporte-impresiones-plotter.pdf', ['Attachment' => false]);
+    }
+
+    private function getReports(): array
+    {
+        $rows = $_SESSION['reportes_mock'] ?? [];
+
+        return is_array($rows) ? $rows : [];
+    }
+
+    private function saveReports(array $rows): void
+    {
+        $_SESSION['reportes_mock'] = array_values($rows);
+    }
+
+    private function findReportById(int $id): ?array
+    {
+        foreach ($this->getReports() as $row) {
+            if ((int) ($row['id'] ?? 0) === $id) {
+                return $row;
+            }
+        }
+
+        return null;
+    }
+
+    private function buildStats(array $all): array
+    {
+        $latest = null;
+        if ($all) {
+            usort($all, static function (array $a, array $b): int {
+                if ($a['fecha'] === $b['fecha']) {
+                    return ((int) $b['id']) <=> ((int) $a['id']);
+                }
+
+                return strcmp((string) $b['fecha'], (string) $a['fecha']);
+            });
+            $latest = $all[0] ?? null;
+        }
+
+        $totals = [];
+        foreach ($all as $row) {
+            $key = (string) $row['plotter'];
+            $totals[$key] = ($totals[$key] ?? 0) + 1;
+        }
+        ksort($totals);
+
+        $perPlotter = [];
+        foreach ($totals as $plotter => $total) {
+            $perPlotter[] = [
+                'plotter' => $plotter,
+                'total' => $total,
+            ];
+        }
+
+        return [
+            'total' => count($all),
+            'latest' => $latest,
+            'perPlotter' => $perPlotter,
+        ];
+    }
+
+    private function getSeedReports(): array
+    {
+        return [
+            [
+                'id' => 1,
+                'plotter' => 'PLOTTER 1',
+                'observacion' => 'Prueba inicial sin base de datos',
+                'descripcion' => 'Impresión de plano A1',
+                'cantidad' => 10,
+                'cantidad_impreso' => 8,
+                'porcentaje_impresion' => 80,
+                'fecha' => date('Y-m-d H:i:s', time() - 3600),
+            ],
+            [
+                'id' => 2,
+                'plotter' => 'PLOTTER 2',
+                'observacion' => 'Segundo registro demo',
+                'descripcion' => 'Impresión de banner',
+                'cantidad' => 5,
+                'cantidad_impreso' => 5,
+                'porcentaje_impresion' => 100,
+                'fecha' => date('Y-m-d H:i:s', time() - 1800),
+            ],
+        ];
     }
 
     private function loadDompdfLibrary(): bool

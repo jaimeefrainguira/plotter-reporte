@@ -37,6 +37,17 @@ Puedes configurar la conexión de dos formas:
 2. Sube todos los archivos al hosting.
 3. En AeonFree y hostings similares, publica el proyecto en la raíz pública y usa `index.php` en la raíz (incluido en este repositorio).
 4. Los assets ahora viven en la raíz (`css/` y `js/`) y puedes abrir el sistema con `tudominio.com/index.php`.
+
+
+## Modo temporal sin base de datos
+
+Actualmente el CRUD está configurado en **modo datos fijos/en sesión** para evitar errores 500 del hosting mientras se valida el sistema:
+
+- No usa MySQL para listar/crear/editar/eliminar durante esta etapa.
+- Carga registros demo iniciales automáticamente.
+- Los cambios se guardan en `$_SESSION` (se reinician al cerrar sesión/expirar).
+
+> Este modo es temporal para diagnóstico.
 2. Sube todos los archivos al hosting.
 3. En AeonFree y hostings similares, publica el proyecto en la raíz pública y usa `index.php` en la raíz (incluido en este repositorio).
 4. Los assets ahora viven en la raíz (`css/` y `js/`) y puedes abrir el sistema con `tudominio.com/index.php`.
