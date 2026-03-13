@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
-
-$defaultModalDate = $filters['fecha'];
 ?>
 <!doctype html>
 <html lang="es">
@@ -96,7 +94,7 @@ $defaultModalDate = $filters['fecha'];
             <?php $plotterRows = $reportesByPlotter[$plotter] ?? []; ?>
             <div class="plotter-box">
                 <div class="plotter-box__title">
-                    <a class="plotter-box__link" href="index.php?action=dashboard&modal_plotter=<?= urlencode($plotter) ?>&modal_fecha=<?= urlencode($defaultModalDate) ?>" title="Ver reportes de <?= htmlspecialchars($plotter) ?>">
+                    <a class="plotter-box__link" href="index.php?action=plotter&plotter=<?= urlencode($plotter) ?>&fecha=<?= urlencode($filters['fecha']) ?>" title="Ver reportes de <?= htmlspecialchars($plotter) ?>">
                         <?= htmlspecialchars($plotter) ?>
                     </a>
                 </div>
@@ -134,94 +132,6 @@ $defaultModalDate = $filters['fecha'];
         <?php endforeach; ?>
     </div>
 </div>
-
-<div class="modal fade<?= $modalShouldOpen ? ' show' : '' ?>" id="plotterModal" tabindex="-1" aria-hidden="<?= $modalShouldOpen ? 'false' : 'true' ?>" data-open-on-load="<?= $modalShouldOpen ? '1' : '0' ?>"<?= $modalShouldOpen ? ' style="display:block;"' : '' ?>>
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <?= $modalPlotter !== '' ? 'Reportes de ' . htmlspecialchars($modalPlotter) : 'Reportes por plotter' ?>
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form method="get" class="row g-2 mb-3">
-                    <input type="hidden" name="action" value="dashboard">
-                    <input type="hidden" name="modal_plotter" value="<?= htmlspecialchars($modalPlotter) ?>">
-                    <div class="col-md-4">
-                        <label class="form-label">Fecha del reporte</label>
-                        <input type="date" class="form-control" name="modal_fecha" value="<?= htmlspecialchars($modalDate) ?>">
-                    </div>
-                    <div class="col-md-8 d-flex align-items-end gap-2">
-                        <button class="btn btn-primary" type="submit">Buscar</button>
-                        <?php if ($modalDate !== ''): ?>
-                            <a class="btn btn-outline-secondary" href="index.php?action=dashboard&modal_plotter=<?= urlencode($modalPlotter) ?>">Ver todos</a>
-                        <?php endif; ?>
-                        <?php if ($modalPlotter !== ''): ?>
-                            <a class="btn btn-success" href="index.php?action=create">Nuevo reporte para <?= htmlspecialchars($modalPlotter) ?></a>
-                        <?php endif; ?>
-                    </div>
-                </form>
-
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover align-middle">
-                        <thead class="table-dark">
-                        <tr>
-                            <th>ID</th>
-                            <th>Observación</th>
-                            <th>Descripción</th>
-                            <th>Cantidad</th>
-                            <th>Cant. impreso</th>
-                            <th>% impreso</th>
-                            <th>Fecha</th>
-                            <th>CRUD</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <?php foreach ($modalReportes as $reporte): ?>
-                            <tr>
-                                <td><?= (int) $reporte['id'] ?></td>
-                                <td><?= htmlspecialchars($reporte['observacion']) ?></td>
-                                <td><?= htmlspecialchars($reporte['descripcion']) ?></td>
-                                <td><?= (int) $reporte['cantidad'] ?></td>
-                                <td><?= (int) ($reporte['cantidad_impreso'] ?? 0) ?></td>
-                                <td><?= (int) $reporte['porcentaje_impresion'] ?>%</td>
-                                <td><?= htmlspecialchars($reporte['fecha']) ?></td>
-                                <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <a href="index.php?action=edit&id=<?= (int) $reporte['id'] ?>" class="btn btn-warning" title="Editar">
-                                            <i class="bi bi-pencil-square"></i>
-                                        </a>
-                                        <a href="index.php?action=pdf&id=<?= (int) $reporte['id'] ?>" class="btn btn-info" title="PDF por reporte">
-                                            <i class="bi bi-filetype-pdf"></i>
-                                        </a>
-                                        <form action="index.php?action=delete" method="post" class="d-inline form-delete">
-                                            <input type="hidden" name="id" value="<?= (int) $reporte['id'] ?>">
-                                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
-                                            <button type="submit" class="btn btn-danger" title="Eliminar">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                        <?php if (!$modalReportes): ?>
-                            <tr>
-                                <td colspan="8" class="text-center text-muted">No hay reportes para este plotter<?= $modalDate !== '' ? ' en la fecha seleccionada' : '' ?>.</td>
-                            </tr>
-                        <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<?php if ($modalShouldOpen): ?>
-    <div class="modal-backdrop fade show"></div>
-<?php endif; ?>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="js/app.js"></script>
