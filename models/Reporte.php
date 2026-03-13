@@ -139,7 +139,7 @@ class Reporte
         ];
     }
 
-    public function getAllForPdf(?int $id = null): array
+    public function getAllForPdf(?int $id = null, ?string $plotter = null, ?string $date = null): array
     {
         $this->ensureRequiredColumns();
 
@@ -149,7 +149,26 @@ class Reporte
             return $stmt->fetchAll();
         }
 
-        return $this->db->query('SELECT * FROM reportes ORDER BY fecha DESC, id DESC')->fetchAll();
+        $where = [];
+        $params = [];
+
+        if ($plotter !== null && $plotter !== '') {
+            $where[] = 'plotter = :plotter';
+            $params[':plotter'] = $plotter;
+        }
+
+        if ($date !== null && $date !== '') {
+            $where[] = 'DATE(fecha) = :fecha';
+            $params[':fecha'] = $date;
+        }
+
+        $whereSql = $where ? ' WHERE ' . implode(' AND ', $where) : '';
+        $sql = 'SELECT * FROM reportes' . $whereSql . ' ORDER BY fecha DESC, id DESC';
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll();
     }
 
     public function getAll(): array
