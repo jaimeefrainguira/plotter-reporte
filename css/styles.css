@@ -1,0 +1,63 @@
+body {
+    background-color: #ececec;
+}
+
+.card {
+    border: none;
+    border-radius: 12px;
+}
+
+.table td,
+.table th {
+    vertical-align: middle;
+}
+
+.plotter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1rem;
+}
+
+.plotter-box {
+    border: 1px solid #c9c9c9;
+    background: #f1f1f1;
+}
+
+.plotter-box__title {
+    background: #1d232c;
+    text-align: center;
+    padding: 0.55rem;
+}
+
+.plotter-box__link {
+    color: #fff;
+    text-decoration: none;
+    display: inline-block;
+    width: 100%;
+    font-size: 1.4rem;
+    letter-spacing: 0.04em;
+}
+
+.plotter-box__link:hover {
+    color: #8fd0ff;
+}
+
+.plotter-table thead th {
+    background: #1e6297;
+    color: #fff;
+    font-weight: 500;
+    border-bottom: 1px solid #d5d5d5;
+}
+
+.plotter-table td,
+.plotter-table th {
+    border-color: #c8c8c8;
+}
+
+.plotter-table tbody tr:nth-child(odd) {
+    background: #d6d6d6;
+}
+
+.plotter-table tbody tr:nth-child(even) {
+    background: #e6e6e6;
+}
