@@ -299,10 +299,10 @@ class ReporteController
                 body { font-family: DejaVu Sans, sans-serif; font-size: 12px; }
                 h2 { text-align: center; margin-bottom: 16px; }
                 p { margin: 0 0 10px; }
-                .general-grid { font-size: 0; margin: 0 -6px; }
-                .general-grid__item { display: inline-block; width: 33.33%; padding: 0 6px 12px; box-sizing: border-box; font-size: 10px; vertical-align: top; }
-                .plotter-title { font-weight: bold; text-align: center; border: 1px solid #333; background: #f2f2f2; padding: 4px; margin-bottom: 4px; }
-                table { width: 100%; border-collapse: collapse; font-size: 9px; }
+                .general-grid { margin: 0; }
+                .general-grid__item { display: block; width: 100%; padding-bottom: 20px; box-sizing: border-box; font-size: 12px; }
+                .plotter-title { font-weight: bold; text-align: center; border: 1px solid #333; background: #f2f2f2; padding: 6px; margin-bottom: 4px; font-size: 14px; }
+                table { width: 100%; border-collapse: collapse; font-size: 11px; }
                 th, td { border: 1px solid #444; padding: 4px; }
                 th { background: #eee; text-align: left; }
                 td.empty-row { height: 16px; }
