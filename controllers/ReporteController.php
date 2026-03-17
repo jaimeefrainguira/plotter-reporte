@@ -328,7 +328,7 @@ class ReporteController
                                     </tr>
                                 </thead>
                                 <tbody>
-                                <?php foreach (array_slice($plotterRows, 0, 4) as $row): ?>
+                                <?php foreach ($plotterRows as $row): ?>
                                     <tr>
                                         <td><?= htmlspecialchars((string) ($row['observacion'] ?? '')) ?></td>
                                         <td><?= htmlspecialchars((string) ($row['descripcion'] ?? '')) ?></td>
@@ -336,14 +336,11 @@ class ReporteController
                                         <td><?= (int) ($row['porcentaje_impresion'] ?? 0) ?>%</td>
                                     </tr>
                                 <?php endforeach; ?>
-                                <?php for ($i = count($plotterRows); $i < 4; $i++): ?>
+                                <?php if (empty($plotterRows)): ?>
                                     <tr>
-                                        <td class="empty-row"></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
+                                        <td colspan="4" style="text-align: center; color: #666;">Sin reportes registrados.</td>
                                     </tr>
-                                <?php endfor; ?>
+                                <?php endif; ?>
                                 </tbody>
                             </table>
                         </div>

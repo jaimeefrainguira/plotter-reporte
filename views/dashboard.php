@@ -109,7 +109,7 @@ unset($_SESSION['flash']);
                         </tr>
                         </thead>
                         <tbody>
-                        <?php foreach (array_slice($plotterRows, 0, 4) as $row): ?>
+                        <?php foreach ($plotterRows as $row): ?>
                             <tr>
                                 <td><?= htmlspecialchars($row['observacion']) ?></td>
                                 <td><?= htmlspecialchars($row['descripcion']) ?></td>
@@ -117,14 +117,11 @@ unset($_SESSION['flash']);
                                 <td><?= (int) ($row['porcentaje_impresion'] ?? 0) ?>%</td>
                             </tr>
                         <?php endforeach; ?>
-                        <?php for ($i = count($plotterRows); $i < 4; $i++): ?>
+                        <?php if (empty($plotterRows)): ?>
                             <tr>
-                                <td>&nbsp;</td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
+                                <td colspan="4" class="text-center text-muted small">Sin reportes registrados.</td>
                             </tr>
-                        <?php endfor; ?>
+                        <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
