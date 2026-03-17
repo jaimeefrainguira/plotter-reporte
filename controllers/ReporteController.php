@@ -300,7 +300,7 @@ class ReporteController
                 h2 { text-align: center; margin-bottom: 16px; }
                 p { margin: 0 0 10px; }
                 .general-grid { margin: 0; }
-                .general-grid__item { display: block; width: 100%; padding-bottom: 20px; box-sizing: border-box; font-size: 12px; }
+                .general-grid__item { display: block; width: 100%; padding-bottom: 20px; box-sizing: border-box; font-size: 12px; page-break-inside: avoid; }
                 .plotter-title { font-weight: bold; text-align: center; border: 1px solid #333; background: #f2f2f2; padding: 6px; margin-bottom: 4px; font-size: 14px; }
                 table { width: 100%; border-collapse: collapse; font-size: 11px; }
                 th, td { border: 1px solid #444; padding: 4px; }
