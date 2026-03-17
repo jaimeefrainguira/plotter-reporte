@@ -21,7 +21,7 @@ class ReporteController
         $plotters = $this->getPlotterOptions();
 
         $plotterFilter = trim((string) ($_GET['plotter'] ?? ''));
-        $fechaFilter = trim((string) ($_GET['fecha'] ?? ''));
+        $fechaFilter = isset($_GET['fecha']) ? trim((string) $_GET['fecha']) : date('Y-m-d');
 
         if ($plotterFilter !== '' && !in_array($plotterFilter, $plotters, true)) {
             $plotterFilter = '';
