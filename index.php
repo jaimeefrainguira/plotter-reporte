@@ -15,11 +15,13 @@ header('Referrer-Policy: strict-origin-when-cross-origin');
 header("Content-Security-Policy: default-src 'self'; style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; script-src 'self' https://cdn.jsdelivr.net; img-src 'self' data:; font-src 'self' https://cdn.jsdelivr.net; object-src 'none'; frame-ancestors 'self';");
 
 require_once __DIR__ . '/controllers/ReporteController.php';
+require_once __DIR__ . '/controllers/CampanaController.php';
 
 $action = $_GET['action'] ?? 'dashboard';
 
 try {
     $controller = new ReporteController();
+    $campanaController = new CampanaController();
 } catch (Throwable $exception) {
     if (in_array($action, ['dashboard', 'plotter'], true)) {
         $errorMessage = 'No fue posible conectar con la base de datos. Verifica la configuración para habilitar todos los reportes.';
@@ -28,7 +30,7 @@ try {
     }
 
     http_response_code(500);
-    echo 'Error de configuración: verifica los datos de conexión a la base de datos.';
+    echo 'Error de configuración: ' . $exception->getMessage();
     exit;
 }
 
@@ -78,6 +80,27 @@ switch ($action) {
 
     case 'plotter':
         $controller->showPlotterDetail();
+        break;
+
+    // --- Módulo de Campañas ---
+    case 'campanas_list':
+        $campanaController->list();
+        break;
+
+    case 'campana_detail':
+        $campanaController->show((int)($_GET['id'] ?? 0));
+        break;
+
+    case 'campana_store':
+        $campanaController->store();
+        break;
+
+    case 'campana_save_trabajo':
+        $campanaController->saveTrabajo();
+        break;
+
+    case 'campana_delete_trabajo':
+        $campanaController->deleteTrabajo();
         break;
 
     default:

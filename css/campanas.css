@@ -1,0 +1,30 @@
+/* Estilos específicos para el módulo de Campañas e Industrial */
+.card {
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.progress {
+    background-color: #e9ecef;
+    border-radius: 10px;
+}
+
+.modal-header .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+.result-panel h6 {
+    font-size: 0.75rem;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.table thead th {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}

@@ -20,6 +20,7 @@ unset($_SESSION['flash']);
     <div class="container-fluid">
         <span class="navbar-brand mb-0 h1"><i class="bi bi-speedometer2"></i> Panel de Reportes Plotter</span>
         <div class="d-flex gap-2">
+            <a href="index.php?action=campanas_list" class="btn btn-outline-info"><i class="bi bi-megaphone"></i> Gestionar Campañas</a>
             <a href="index.php?action=pdf<?= $filters['fecha'] !== '' ? '&fecha=' . urlencode($filters['fecha']) : '' ?>" class="btn btn-outline-light"><i class="bi bi-file-earmark-pdf"></i> PDF general</a>
             <a href="index.php?action=create" class="btn btn-success"><i class="bi bi-plus-circle"></i> Nuevo reporte</a>
         </div>

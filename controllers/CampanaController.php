@@ -1,0 +1,88 @@
+<?php
+declare(strict_types=1);
+
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../models/Campana.php';
+require_once __DIR__ . '/../models/Trabajo.php';
+require_once __DIR__ . '/../models/Material.php';
+
+class CampanaController {
+    private Campana $campanaModel;
+    private Trabajo $trabajoModel;
+    private Material $materialModel;
+
+    public function __construct() {
+        $database = new Database();
+        $conn = $database->getConnection();
+        $this->campanaModel = new Campana($conn);
+        $this->trabajoModel = new Trabajo($conn);
+        $this->materialModel = new Material($conn);
+    }
+
+    public function list(): void {
+        $campanas = $this->campanaModel->getAll();
+        include __DIR__ . '/../views/campanas/lista.php';
+    }
+
+    public function show(int $id): void {
+        $campana = $this->campanaModel->getById($id);
+        if (!$campana) {
+            header('Location: index.php?action=campanas_list');
+            exit;
+        }
+        $trabajos = $this->campanaModel->getTrabajos($id);
+        $materiales = $this->materialModel->getAll();
+        include __DIR__ . '/../views/campanas/detalle.php';
+    }
+
+    public function store(): void {
+        $data = [
+            'nombre' => (string)($_POST['nombre'] ?? ''),
+            'requerimiento_nro' => (string)($_POST['requerimiento_nro'] ?? ''),
+            'estado' => 'PENDIENTE'
+        ];
+        if ($data['nombre'] !== '') {
+            $id = $this->campanaModel->create($data);
+            header('Location: index.php?action=campana_detail&id=' . $id);
+            exit;
+        }
+        header('Location: index.php?action=campanas_list');
+    }
+
+    public function saveTrabajo(): void {
+        $campanaId = (int)$_POST['campana_id'];
+        $trabajoId = (int)($_POST['trabajo_id'] ?? 0);
+        
+        $data = [
+            'campana_id' => $campanaId,
+            'descripcion' => (string)($_POST['descripcion'] ?? ''),
+            'cantidad' => (int)($_POST['cantidad'] ?? 0),
+            'ancho_panel' => (float)($_POST['ancho_panel'] ?? 0),
+            'alto_panel' => (float)($_POST['alto_panel'] ?? 0),
+            'material_id' => (int)($_POST['material_id'] ?? 0),
+            'separacion_h' => (float)($_POST['separacion_h'] ?? 0),
+            'separacion_v' => (float)($_POST['separacion_v'] ?? 0),
+            'consumo' => [
+                'total_metros' => (float)($_POST['total_metros'] ?? 0),
+                'total_planchas' => (float)($_POST['total_planchas'] ?? 0),
+                'distribucion_texto' => (string)($_POST['distribucion_texto'] ?? ''),
+                'unidades_por_unidad_venta' => (int)($_POST['unidades_por_rollo'] ?? 0)
+            ]
+        ];
+
+        if ($trabajoId > 0) {
+            $this->trabajoModel->update($trabajoId, $data);
+        } else {
+            $this->trabajoModel->create($data);
+        }
+
+        header('Location: index.php?action=campana_detail&id=' . $campanaId);
+    }
+    
+    public function deleteTrabajo(): void {
+        $id = (int)$_POST['id'];
+        $campanaId = (int)$_POST['campana_id'];
+        $this->trabajoModel->delete($id);
+        header('Location: index.php?action=campana_detail&id=' . $campanaId);
+    }
+}
