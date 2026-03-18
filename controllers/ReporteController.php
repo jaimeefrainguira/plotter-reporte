@@ -273,7 +273,16 @@ class ReporteController
             $fecha = '';
         }
 
-        $reportes = $this->reporteModel->getAllForPdf($reportId, $plotter, $fecha);
+        if ($reportId !== null) {
+            $reportes = $this->reporteModel->getAllForPdf($reportId, $plotter, $fecha);
+        } elseif ($plotter !== '' || $fecha !== '') {
+            $reportes = $this->reporteModel->getAllForPdf(null, $plotter, $fecha);
+        } else {
+            // Caso por defecto: Último reporte maestro completo
+            $latestMasterId = $this->reporteModel->getLatestMasterId();
+            $reportes = $latestMasterId ? $this->reporteModel->getByMasterId($latestMasterId) : [];
+        }
+
         $html = $this->buildPdfHtml($reportes, $plotter, $fecha);
 
         $dompdf = new Dompdf\Dompdf();
