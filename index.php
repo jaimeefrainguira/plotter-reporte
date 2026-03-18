@@ -82,6 +82,18 @@ switch ($action) {
         $controller->showPlotterDetail();
         break;
 
+    case 'plotter_report':
+        $controller->showPlotterReportForm();
+        break;
+
+    case 'store_bulk':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $controller->storeBulk();
+            break;
+        }
+        header('Location: index.php?action=dashboard');
+        break;
+
     // --- Módulo de Campañas ---
     case 'campanas_list':
         $campanaController->list();

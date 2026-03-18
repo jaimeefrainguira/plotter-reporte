@@ -15,16 +15,26 @@ class Reporte
     {
     }
 
+    public function createMaster(?string $observacion = null): int
+    {
+        $sql = 'INSERT INTO reportes_maestro (fecha_creacion, observacion_general)
+                VALUES (NOW(), :observacion)';
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':observacion' => $observacion]);
+        return (int) $this->db->lastInsertId();
+    }
+
     public function create(array $data): bool
     {
         $this->ensureRequiredColumns();
 
-        $sql = 'INSERT INTO reportes (plotter, observacion, descripcion, cantidad, cantidad_impreso, porcentaje_impresion, fecha)
-                VALUES (:plotter, :observacion, :descripcion, :cantidad, :cantidad_impreso, :porcentaje_impresion, NOW())';
+        $sql = 'INSERT INTO reportes (maestro_id, plotter, observacion, descripcion, cantidad, cantidad_impreso, porcentaje_impresion, fecha)
+                VALUES (:maestro_id, :plotter, :observacion, :descripcion, :cantidad, :cantidad_impreso, :porcentaje_impresion, NOW())';
 
         $stmt = $this->db->prepare($sql);
 
         return $stmt->execute([
+            ':maestro_id' => $data['maestro_id'] ?? null,
             ':plotter' => $data['plotter'],
             ':observacion' => $data['observacion'],
             ':descripcion' => $data['descripcion'],

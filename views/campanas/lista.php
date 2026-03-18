@@ -13,7 +13,10 @@
 <nav class="navbar navbar-dark bg-dark shadow-sm mb-4">
     <div class="container">
         <span class="navbar-brand mb-0 h1"><i class="bi bi-megaphone"></i> Gestor de Campañas</span>
-        <a href="index.php?action=dashboard" class="btn btn-outline-light btn-sm"><i class="bi bi-arrow-left"></i> Reportes Plotter</a>
+        <div class="d-flex gap-2">
+            <a href="index.php?action=plotter_report" class="btn btn-primary btn-sm"><i class="bi bi-file-earmark-plus"></i> CREAR REPORTE PLOTTER</a>
+            <a href="index.php?action=dashboard" class="btn btn-outline-light btn-sm"><i class="bi bi-arrow-left"></i> Reportes Plotter</a>
+        </div>
     </div>
 </nav>
 

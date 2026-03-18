@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../models/Reporte.php';
+require_once __DIR__ . '/../models/Campana.php';
 
 class ReporteController
 {
@@ -116,6 +117,46 @@ class ReporteController
 
         $this->rotateCsrfToken();
         $this->redirectWithMessage('Reporte creado correctamente.');
+    }
+
+    public function showPlotterReportForm(): void
+    {
+        $plotters = $this->getPlotterOptions();
+        $database = new Database();
+        $campanaModel = new Campana($database->getConnection());
+        $campanas = $campanaModel->getAll();
+        $csrfToken = $this->getCsrfToken();
+        include __DIR__ . '/../views/reporte_plotter_crear.php';
+    }
+
+    public function storeBulk(): void
+    {
+        if (!$this->isValidCsrfToken((string) ($_POST['csrf_token'] ?? ''))) {
+            $this->redirectWithMessage('Sesión expirada. Intenta nuevamente.', 'danger');
+            return;
+        }
+
+        $rows = $_POST['rows'] ?? [];
+        if (empty($rows)) {
+            $this->redirectWithMessage('No hay filas para guardar.', 'warning');
+            return;
+        }
+
+        try {
+            $maestroId = $this->reporteModel->createMaster('Reporte masivo de Plotters');
+            
+            foreach ($rows as $row) {
+                $data = $this->sanitizeData($row);
+                $data['maestro_id'] = $maestroId;
+                $this->reporteModel->create($data);
+            }
+        } catch (Throwable $exception) {
+            $this->redirectWithMessage('Error al guardar el reporte masivo: ' . $exception->getMessage(), 'danger');
+            return;
+        }
+
+        $this->rotateCsrfToken();
+        $this->redirectWithMessage('Reporte guardado con éxito.');
     }
 
     public function showEditForm(int $id, array $oldData = [], array $errors = []): void
@@ -388,7 +429,7 @@ class ReporteController
     {
         return [
             'plotter' => trim((string) ($input['plotter'] ?? '')),
-            'observacion' => trim((string) ($input['observacion'] ?? '')),
+            'observacion' => trim((string) ($input['campana'] ?? $input['observacion'] ?? '')),
             'descripcion' => trim((string) ($input['descripcion'] ?? '')),
             'cantidad' => (int) ($input['cantidad'] ?? 0),
             'cantidad_impreso' => (int) ($input['cantidad_impreso'] ?? 0),
