@@ -36,9 +36,11 @@ document.addEventListener('DOMContentLoaded', function() {
             <td>
                 <input type="number" name="rows[${rowCount}][cantidad_impreso]" class="form-control form-control-sm impreso-input" min="0" value="0" required>
             </td>
-            <td class="percentage-cell text-center">
-                <span class="percentage-text">0%</span>
-                <input type="hidden" name="rows[${rowCount}][porcentaje_impresion]" class="percentage-hidden" value="0">
+            <td class="percentage-cell">
+                <div class="input-group input-group-sm">
+                    <input type="number" name="rows[${rowCount}][porcentaje_impresion]" class="form-control text-center" min="0" max="100" value="0">
+                    <span class="input-group-text">%</span>
+                </div>
             </td>
             <td class="text-center">
                 <button type="button" class="btn-crud reset-row"><i class="bi bi-arrow-clockwise"></i></button>
@@ -47,26 +49,6 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
 
         tableBody.appendChild(tr);
-
-        const cantInput = tr.querySelector('.cantidad-input');
-        const impInput = tr.querySelector('.impreso-input');
-        const percentText = tr.querySelector('.percentage-text');
-        const percentHidden = tr.querySelector('.percentage-hidden');
-
-        const updatePercentage = () => {
-            const cant = parseFloat(cantInput.value) || 0;
-            const imp = parseFloat(impInput.value) || 0;
-            let percent = 0;
-            if (cant > 0) {
-                percent = Math.round((imp / cant) * 100);
-            }
-            if (percent > 100) percent = 100;
-            percentText.textContent = percent + '%';
-            percentHidden.value = percent;
-        };
-
-        cantInput.addEventListener('input', updatePercentage);
-        impInput.addEventListener('input', updatePercentage);
 
         // Delete row
         tr.querySelector('.delete-row').addEventListener('click', function() {
@@ -80,7 +62,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 else if (input.tagName === 'SELECT') input.selectedIndex = 0;
                 else if (input.type !== 'hidden') input.value = '';
             });
-            updatePercentage();
         });
 
         rowCount++;
