@@ -22,7 +22,7 @@ class ReporteController
         $plotters = $this->getPlotterOptions();
 
         $plotterFilter = trim((string) ($_GET['plotter'] ?? ''));
-        $fechaFilter = isset($_GET['fecha']) ? trim((string) $_GET['fecha']) : date('Y-m-d');
+        $fechaFilter = isset($_GET['fecha']) ? trim((string) $_GET['fecha']) : '';
 
         if ($plotterFilter !== '' && !in_array($plotterFilter, $plotters, true)) {
             $plotterFilter = '';
@@ -37,28 +37,22 @@ class ReporteController
             'fecha' => $fechaFilter,
         ];
 
-        $page = max(1, (int) ($_GET['page'] ?? 1));
-        $perPage = 10;
-
-        $result = $this->reporteModel->getPaginated($filters, $page, $perPage);
-        $reportes = $result['items'];
-        $totalRows = $result['totalRows'];
-        $totalPages = (int) max(1, ceil($totalRows / $perPage));
-        if ($page > $totalPages) {
-            $page = $totalPages;
-            $result = $this->reporteModel->getPaginated($filters, $page, $perPage);
-            $reportes = $result['items'];
+        // Determinar qué datos mostrar
+        if ($plotterFilter === '' && $fechaFilter === '' && !isset($_GET['page'])) {
+            // Caso por defecto: Mostrar el último reporte maestro completo
+            $latestMasterId = $this->reporteModel->getLatestMasterId();
+            $dashboardRows = $latestMasterId ? $this->reporteModel->getByMasterId($latestMasterId) : [];
+        } else {
+            // Caso con filtros o paginación
+            $dashboardRows = $this->reporteModel->getByDateAndPlotter($fechaFilter !== '' ? $fechaFilter : null, $plotterFilter !== '' ? $plotterFilter : null);
         }
 
-        $dashboardRows = $this->reporteModel->getByDateAndPlotter($fechaFilter !== '' ? $fechaFilter : null, null);
         $reportesByPlotter = array_fill_keys($plotters, []);
-
         foreach ($dashboardRows as $reporte) {
             $plotterName = (string) ($reporte['plotter'] ?? '');
             if (!array_key_exists($plotterName, $reportesByPlotter)) {
                 continue;
             }
-
             $reportesByPlotter[$plotterName][] = $reporte;
         }
 

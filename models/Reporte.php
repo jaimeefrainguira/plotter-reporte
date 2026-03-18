@@ -15,6 +15,18 @@ class Reporte
     {
     }
 
+    public function getLatestMasterId(): ?int
+    {
+        return (int) $this->db->query('SELECT MAX(id) FROM reportes_maestro')->fetchColumn() ?: null;
+    }
+
+    public function getByMasterId(int $masterId): array
+    {
+        $stmt = $this->db->prepare('SELECT * FROM reportes WHERE maestro_id = :masterId ORDER BY plotter ASC, id ASC');
+        $stmt->execute([':masterId' => $masterId]);
+        return $stmt->fetchAll();
+    }
+
     public function createMaster(?string $observacion = null): int
     {
         $sql = 'INSERT INTO reportes_maestro (fecha_creacion, observacion_general)
