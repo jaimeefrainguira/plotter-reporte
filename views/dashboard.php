@@ -88,97 +88,58 @@ unset($_SESSION['flash']);
                 </div>
             </form>
         </div>
-    </div>
-
-    <style>
-        .plotter-container {
-            margin-bottom: 2rem;
-            border: 1px solid #dee2e6;
-            background: #fff;
-        }
-        .plotter-header {
-            background-color: #1e252d;
-            color: #fff;
-            padding: 8px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 1.1rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .table-custom thead {
-            background-color: #2c5d8f;
-            color: #fff;
-        }
-        .table-custom th {
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            font-weight: 600;
-            border: none;
-            padding: 10px;
-        }
-        .table-custom td {
-            font-size: 0.9rem;
-            vertical-align: middle;
-            border-bottom: 1px solid #eee;
-        }
-        .percentage-badge {
-            font-weight: bold;
-            color: #2c5d8f;
-        }
-    </style>
-
-    <div class="row">
+    </div>    <div class="plotter-grid">
         <?php foreach ($plotters as $plotter): ?>
             <?php $plotterRows = $reportesByPlotter[$plotter] ?? []; ?>
-            <div class="col-12">
-                <div class="plotter-container shadow-sm">
-                    <div class="plotter-header">
+            <div class="plotter-box">
+                <div class="plotter-box__title">
+                    <a class="plotter-box__link" href="index.php?action=plotter&plotter=<?= urlencode($plotter) ?>&fecha=<?= urlencode($filters['fecha']) ?>" title="Ver reportes de <?= htmlspecialchars($plotter) ?>">
                         <?= htmlspecialchars($plotter) ?>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-custom mb-0">
-                            <thead>
-                                <tr>
-                                    <th style="width: 35%;">CAMPAÑA</th>
-                                    <th style="width: 35%;">DESCRIPCIÓN</th>
-                                    <th style="width: 15%; text-align: center;">CANT. IMPRESO</th>
-                                    <th style="width: 15%; text-align: center;">% IMPRESO</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($plotterRows as $row): ?>
-                                    <tr>
-                                        <td><?= htmlspecialchars($row['observacion']) ?></td>
-                                        <td><?= htmlspecialchars($row['descripcion']) ?></td>
-                                        <td class="text-center"><?= (int) ($row['cantidad_impreso'] ?? 0) ?></td>
-                                        <td class="text-center">
-                                            <form action="index.php?action=update_percentage" method="POST" class="d-flex align-items-center justify-content-center gap-1">
-                                                <input type="hidden" name="id" value="<?= $row['id'] ?>">
-                                                <input type="number" name="percentage" value="<?= (int) ($row['porcentaje_impresion'] ?? 0) ?>" 
-                                                       class="form-control form-control-sm text-center p-0" 
-                                                       style="width: 45px; height: 25px; font-weight: bold; border: none; background: transparent;"
-                                                       min="0" max="100">
-                                                <span class="small font-weight-bold">%</span>
-                                                <button type="submit" class="btn btn-link p-0 text-success" title="Guardar">
-                                                    <i class="bi bi-check-lg" style="font-size: 1.2rem;"></i>
-                                                </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                                <?php if (empty($plotterRows)): ?>
-                                    <tr>
-                                        <td colspan="4" class="text-center text-muted py-3 small italic">No hay registros para este plotter en el reporte actual.</td>
-                                    </tr>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
+                    </a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table plotter-table mb-0">
+                        <thead>
+                        <tr>
+                            <th>CAMPAÑA</th>
+                            <th>DESCRIPCIÓN</th>
+                            <th>CANT. IMPRESO</th>
+                            <th>% IMPRESO</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php foreach ($plotterRows as $row): ?>
+                            <tr>
+                                <td><?= htmlspecialchars($row['observacion']) ?></td>
+                                <td><?= htmlspecialchars($row['descripcion']) ?></td>
+                                <td><?= (int) ($row['cantidad_impreso'] ?? 0) ?></td>
+                                <td class="text-center">
+                                    <form action="index.php?action=update_percentage" method="POST" class="d-flex align-items-center justify-content-center gap-1">
+                                        <input type="hidden" name="id" value="<?= $row['id'] ?>">
+                                        <input type="number" name="percentage" value="<?= (int) ($row['porcentaje_impresion'] ?? 0) ?>" 
+                                               class="form-control form-control-sm text-center p-0" 
+                                               style="width: 40px; height: 22px; font-weight: bold; border: none; background: transparent;"
+                                               min="0" max="100">
+                                        <span class="small">%</span>
+                                        <button type="submit" class="btn btn-link p-0 text-success" title="Guardar">
+                                            <i class="bi bi-check-lg"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                        <?php if (empty($plotterRows)): ?>
+                            <tr>
+                                <td colspan="4" class="text-center text-muted small">Sin reportes registrados.</td>
+                            </tr>
+                        <?php endif; ?>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         <?php endforeach; ?>
     </div>
+iv>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
