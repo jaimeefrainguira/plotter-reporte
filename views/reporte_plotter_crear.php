@@ -141,6 +141,6 @@
     </div>
 </div>
 
-<script src="js/reporte_plotter.js"></script>
+<script src="js/reporte_plotter.js?v=<?= time() ?>"></script>
 </body>
 </html>
