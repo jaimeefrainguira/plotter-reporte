@@ -218,32 +218,14 @@ class ReporteController
         $this->redirectWithMessage('Reporte actualizado correctamente.');
     }
 
-    public function destroy(int $id): void
+    public function updatePercentage(int $id, int $percentage): void
     {
         if ($id <= 0) {
-            $this->redirectWithMessage('ID de reporte inválido.', 'danger');
+            $this->redirectWithMessage('ID inválido.', 'danger');
             return;
         }
-
-        if ($this->reporteModel->getById($id) === null) {
-            $this->redirectWithMessage('Reporte no encontrado.', 'danger');
-            return;
-        }
-
-        if (!$this->isValidCsrfToken((string) ($_POST['csrf_token'] ?? ''))) {
-            $this->redirectWithMessage('Sesión expirada. Intenta nuevamente.', 'danger');
-            return;
-        }
-
-        $deleted = $this->reporteModel->delete($id);
-        $this->rotateCsrfToken();
-
-        if (!$deleted) {
-            $this->redirectWithMessage('No fue posible eliminar el reporte.', 'danger');
-            return;
-        }
-
-        $this->redirectWithMessage('Reporte eliminado correctamente.');
+        $this->reporteModel->updatePercentage($id, $percentage);
+        $this->redirectWithMessage('Porcentaje actualizado.');
     }
 
     public function generatePdf(?int $id = null): void

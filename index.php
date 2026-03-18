@@ -70,7 +70,14 @@ switch ($action) {
             $controller->destroy((int) ($_POST['id'] ?? 0));
             break;
         }
+        header('Location: index.php?action=dashboard');
+        break;
 
+    case 'update_percentage':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $controller->updatePercentage((int) ($_POST['id'] ?? 0), (int) ($_POST['percentage'] ?? 0));
+            break;
+        }
         header('Location: index.php?action=dashboard');
         break;
 

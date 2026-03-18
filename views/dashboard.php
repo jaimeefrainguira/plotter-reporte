@@ -153,7 +153,17 @@ unset($_SESSION['flash']);
                                         <td><?= htmlspecialchars($row['descripcion']) ?></td>
                                         <td class="text-center"><?= (int) ($row['cantidad_impreso'] ?? 0) ?></td>
                                         <td class="text-center">
-                                            <span class="percentage-badge"><?= (int) ($row['porcentaje_impresion'] ?? 0) ?>%</span>
+                                            <form action="index.php?action=update_percentage" method="POST" class="d-flex align-items-center justify-content-center gap-1">
+                                                <input type="hidden" name="id" value="<?= $row['id'] ?>">
+                                                <input type="number" name="percentage" value="<?= (int) ($row['porcentaje_impresion'] ?? 0) ?>" 
+                                                       class="form-control form-control-sm text-center p-0" 
+                                                       style="width: 45px; height: 25px; font-weight: bold; border: none; background: transparent;"
+                                                       min="0" max="100">
+                                                <span class="small font-weight-bold">%</span>
+                                                <button type="submit" class="btn btn-link p-0 text-success" title="Guardar">
+                                                    <i class="bi bi-check-lg" style="font-size: 1.2rem;"></i>
+                                                </button>
+                                            </form>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>

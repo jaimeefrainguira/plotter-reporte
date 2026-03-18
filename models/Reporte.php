@@ -95,6 +95,13 @@ class Reporte
         return $stmt->rowCount() > 0;
     }
 
+    public function updatePercentage(int $id, int $percentage): bool
+    {
+        $sql = 'UPDATE reportes SET porcentaje_impresion = :percentage WHERE id = :id';
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([':id' => $id, ':percentage' => $percentage]);
+    }
+
     public function delete(int $id): bool
     {
         $this->ensureRequiredColumns();
