@@ -114,17 +114,7 @@ unset($_SESSION['flash']);
                                 <td><?= htmlspecialchars($row['descripcion']) ?></td>
                                 <td><?= (int) ($row['cantidad_impreso'] ?? 0) ?></td>
                                 <td class="text-center">
-                                    <form action="index.php?action=update_percentage" method="POST" class="d-flex align-items-center justify-content-center gap-1">
-                                        <input type="hidden" name="id" value="<?= $row['id'] ?>">
-                                        <input type="number" name="percentage" value="<?= (int) ($row['porcentaje_impresion'] ?? 0) ?>" 
-                                               class="form-control form-control-sm text-center p-0" 
-                                               style="width: 40px; height: 22px; font-weight: bold; border: none; background: transparent;"
-                                               min="0" max="100">
-                                        <span class="small">%</span>
-                                        <button type="submit" class="btn btn-link p-0 text-success" title="Guardar">
-                                            <i class="bi bi-check-lg"></i>
-                                        </button>
-                                    </form>
+                                    <strong><?= (int) ($row['porcentaje_impresion'] ?? 0) ?>%</strong>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -139,7 +129,6 @@ unset($_SESSION['flash']);
             </div>
         <?php endforeach; ?>
     </div>
-iv>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
