@@ -167,9 +167,6 @@ document.addEventListener('DOMContentLoaded', function() {
             </td>
             <td>
                 <input list="campanasList" name="rows[${rowCount}][campana]" class="form-control form-control-sm" required placeholder="Campaña...">
-                <datalist id="campanasList">
-                    ${campanaOptions}
-                </datalist>
             </td>
             <td>
                 <input type="text" name="rows[${rowCount}][descripcion]" class="form-control form-control-sm" required placeholder="Descripción...">
@@ -192,7 +189,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         tableBody.appendChild(tr);
 
-        // Event listeners for calculations
+        // Event listeners (rest of the code...)
         const cantInput = tr.querySelector('.cantidad-input');
         const impInput = tr.querySelector('.impreso-input');
         const percentText = tr.querySelector('.percentage-text');
@@ -223,13 +220,19 @@ document.addEventListener('DOMContentLoaded', function() {
             tr.querySelectorAll('input, select').forEach(input => {
                 if (input.type === 'number') input.value = 0;
                 else if (input.tagName === 'SELECT') input.selectedIndex = 0;
-                else input.value = '';
+                else if (input.type !== 'hidden') input.value = '';
             });
             updatePercentage();
         });
 
         rowCount++;
     }
+
+    // Add datalist once to the form
+    const datalist = document.createElement('datalist');
+    datalist.id = 'campanasList';
+    datalist.innerHTML = campanas.map(c => `<option value="${c.nombre}">${c.nombre}</option>`).join('');
+    document.getElementById('reportForm').appendChild(datalist);
 
     addRowBtn.addEventListener('click', createRow);
 
