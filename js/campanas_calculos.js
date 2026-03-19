@@ -20,8 +20,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Auto-cálculo en cualquier cambio
     document.querySelectorAll('.calc-trigger').forEach(el => {
         el.addEventListener('input', calcular);
-        if (el.tagName === 'SELECT') el.addEventListener('change', calcular);
+        el.addEventListener('change', calcular);
     });
+
+    // Trigger inicial al abrir el modal (Bootstrap event)
+    const modalEl = document.getElementById('modalTrabajo');
+    if (modalEl) {
+        modalEl.addEventListener('shown.bs.modal', calcular);
+    }
 
     // Editar trabajo existente
     document.querySelectorAll('.btn-edit-trabajo').forEach(btn => {
@@ -66,18 +72,29 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function calcular() {
+        const resEl = document.getElementById('resultado');
+        if (!resEl) return;
 
-        let ancho  = parseFloat(document.getElementById('field_ancho_panel').value);
-        let alto   = parseFloat(document.getElementById('field_alto_panel').value);
-        let copias = parseInt(document.getElementById('field_cantidad').value);
+        let ancho  = parseFloat(document.getElementById('field_ancho_panel').value) || 0;
+        let alto   = parseFloat(document.getElementById('field_alto_panel').value) || 0;
+        let copias = parseInt(document.getElementById('field_cantidad').value) || 0;
 
         // Leer material del select
-        let matSel = document.getElementById('field_material_id');
-        let matOpt = matSel.options[matSel.selectedIndex];
-        if (!matOpt || matSel.value === '') return;
+        const matSel = document.getElementById('field_material_id');
+        const matOpt = matSel.options[matSel.selectedIndex];
+        
+        if (!matOpt || matSel.value === '') {
+            resEl.innerHTML = '<span class="text-muted">Selecciona un material para calcular...</span>';
+            return;
+        }
 
-        let anchoMat = parseFloat(matOpt.dataset.ancho);
-        let largoMat = parseFloat(matOpt.dataset.largo);
+        let anchoMat = parseFloat(matOpt.dataset.ancho) || 0;
+        let largoMat = parseFloat(matOpt.dataset.largo) || 0;
+
+        if (!ancho || !alto || !copias || !anchoMat) {
+            resEl.innerHTML = '<span class="text-muted">Completa los datos (Ancho, Alto, Copias) para calcular...</span>';
+            return;
+        }
 
         let orient     = document.getElementById('field_orientacion').value;
         let usarPanel  = document.getElementById('usarPanelado').checked;
@@ -86,8 +103,6 @@ document.addEventListener('DOMContentLoaded', () => {
         let preview = document.getElementById('preview');
         preview.innerHTML = '';
         preview.style.display = 'none';
-
-        if (!ancho || !alto || !copias || !anchoMat) return;
 
         let escala = 0.4;
 
@@ -132,8 +147,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             preview.style.display = 'block';
 
-            let panelAncho = parseFloat(document.getElementById('field_panel_ancho').value);
-            let gap = parseFloat(document.getElementById('field_panel_gap').value);
+            let panelAncho = parseFloat(document.getElementById('field_panel_ancho').value) || 120;
+            let gap = parseFloat(document.getElementById('field_panel_gap').value) || 0;
 
             let paneles = Math.ceil(w / panelAncho);
             let altoCopia = paneles * h;
@@ -142,17 +157,17 @@ document.addEventListener('DOMContentLoaded', () => {
             rollos = Math.floor(largoTotal / largoMat);
             sobrante = largoTotal % largoMat;
 
-            copiasPorRollo = Math.floor(largoMat / altoCopia);
-            copiasExtra = Math.floor(sobrante / altoCopia);
+            copiasPorRollo = Math.floor(largoMat / (altoCopia || 1));
+            copiasExtra = Math.floor(sobrante / (altoCopia || 1));
 
             if (rollos === 0) {
-                textoMaterial = `${sobrante} cm (${copiasExtra} copias)`;
+                textoMaterial = `${sobrante.toFixed(2)} cm (${copiasExtra} copias)`;
             } else {
-                textoMaterial = `${rollos} rollo(s) + ${sobrante} cm
+                textoMaterial = `${rollos} rollo(s) + ${sobrante.toFixed(2)} cm
             (${copiasPorRollo} copias/rollo + ${copiasExtra} copias adicionales)`;
             }
 
-            document.getElementById('resultado').innerHTML = `
+            resEl.innerHTML = `
                 <b>Modo:</b> Panelado<br>
                 <b>Orientación:</b> ${modoFinal}<br>
                 Paneles por copia: ${paneles}<br><br>
@@ -182,6 +197,17 @@ document.addEventListener('DOMContentLoaded', () => {
             // SIN PANELADO
             // ===============================
             let piezasPorFila = Math.floor(anchoMat / w);
+
+            if (piezasPorFila === 0) {
+                resEl.innerHTML = `
+                    <div class="alert alert-warning py-2 small mb-0">
+                        <i class="bi bi-exclamation-triangle"></i> El material es más angosto (${anchoMat}cm) que el diseño (${w}cm). 
+                        <b>Activa el Panelado</b> o rota la pieza.
+                    </div>
+                `;
+                return;
+            }
+
             let filas = Math.ceil(copias / piezasPorFila);
             let largoTotal = filas * h;
 
@@ -192,13 +218,13 @@ document.addEventListener('DOMContentLoaded', () => {
             copiasExtra = Math.floor(sobrante / h) * piezasPorFila;
 
             if (rollos === 0) {
-                textoMaterial = `${sobrante} cm (${copiasExtra} copias)`;
+                textoMaterial = `${sobrante.toFixed(2)} cm (${copiasExtra} copias)`;
             } else {
-                textoMaterial = `${rollos} rollo(s) + ${sobrante} cm
+                textoMaterial = `${rollos} rollo(s) + ${sobrante.toFixed(2)} cm
             (${copiasPorRollo} copias/rollo + ${copiasExtra} copias adicionales)`;
             }
 
-            document.getElementById('resultado').innerHTML = `
+            resEl.innerHTML = `
                 <b>Modo:</b> Sin panelado<br>
                 <b>Orientación:</b> ${modoFinal}<br>
                 <b>Material:</b><br>${textoMaterial}
@@ -209,16 +235,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // 🧱 SINTRA
         // ===============================
         if (usarSintra) {
-
             let anchoPl = 122;
             let altoPl = 244;
 
             let n1 = Math.floor(anchoPl / w) * Math.floor(altoPl / h);
             let n2 = Math.floor(anchoPl / h) * Math.floor(altoPl / w);
 
-            let mejor = Math.max(n1, n2);
+            let mejor = Math.max(n1, n2) || 0;
             let orientSintra = (n2 > n1) ? 'Rotado' : 'Normal';
-            let planchas = Math.ceil(copias / mejor);
+            let planchas = mejor > 0 ? Math.ceil(copias / mejor) : 0;
 
             document.getElementById('sintraTexto').innerHTML = `
                 Piezas por plancha: ${mejor}<br>
@@ -235,8 +260,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (usarSintra) {
             let n1 = Math.floor(122 / w) * Math.floor(244 / h);
             let n2 = Math.floor(122 / h) * Math.floor(244 / w);
-            let mejor = Math.max(n1, n2);
-            planchasTotales = Math.ceil(copias / (mejor || 1));
+            let mejor = Math.max(n1, n2) || 0;
+            planchasTotales = mejor > 0 ? Math.ceil(copias / mejor) : 0;
         }
         document.getElementById('field_total_planchas').value = planchasTotales;
 
