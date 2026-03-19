@@ -47,14 +47,14 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', function () {
             const d = JSON.parse(this.dataset.trabajo);
             document.getElementById('modalTitle').textContent = 'Editar Item de Trabajo';
-            document.getElementById('field_trabajo_id').value   = d.id;
-            document.getElementById('field_descripcion').value   = d.descripcion;
-            document.getElementById('field_cantidad').value      = d.cantidad;
-            document.getElementById('field_ancho_panel').value   = d.ancho_panel;
-            document.getElementById('field_alto_panel').value    = d.alto_panel;
-            document.getElementById('field_material_id').value   = d.material_id;
-            document.getElementById('field_separacion_h').value  = d.separacion_h;
-            document.getElementById('field_separacion_v').value  = d.separacion_v;
+            document.getElementById('field_trabajo_id').value = d.id;
+            document.getElementById('field_descripcion').value = d.descripcion;
+            document.getElementById('field_cantidad').value = d.cantidad;
+            document.getElementById('field_ancho_panel').value = d.ancho_panel;
+            document.getElementById('field_alto_panel').value = d.alto_panel;
+            document.getElementById('field_material_id').value = d.material_id;
+            document.getElementById('field_separacion_h').value = d.separacion_h;
+            document.getElementById('field_separacion_v').value = d.separacion_v;
             if (checkRotar) checkRotar.checked = false;
             runCalculations();
         });
@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnNuevoTrabajo').addEventListener('click', () => {
         document.getElementById('modalTitle').textContent = 'Nuevo Item de Trabajo';
         document.getElementById('formTrabajo').reset();
-        document.getElementById('field_trabajo_id').value        = '';
+        document.getElementById('field_trabajo_id').value = '';
         document.getElementById('field_unidades_por_rollo').value = '';
         resetUI();
         if (checkRotar) checkRotar.checked = false;
@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── Swap orientación (USAR ESTA) ──
     document.getElementById('btnSwapOrientacion')?.addEventListener('click', () => {
         const ancho = document.getElementById('field_ancho_panel');
-        const alto  = document.getElementById('field_alto_panel');
+        const alto = document.getElementById('field_alto_panel');
         [ancho.value, alto.value] = [alto.value, ancho.value];
         runCalculations();
     });
@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const matLargoMM = materialLargoCM * 10;
 
         const anchoUsado = anchoPiezaMM + gapH_MM;   // mm por pieza+gap horizontal
-        const altoUsado  = altoPiezaMM  + gapV_MM;   // mm por pieza+gap vertical
+        const altoUsado = altoPiezaMM + gapV_MM;   // mm por pieza+gap vertical
 
         let r = {
             piezasPorFila: 0,
@@ -120,13 +120,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (piezasPorFila <= 0) { r.error = 'Pieza excede ancho del material'; return r; }
 
             // ── copiasPorRollo = floor(largoMaterial / altoUsado) × piezasPorFila ──
-            const filasPorRollo  = Math.floor(matLargoMM / altoUsado);
+            const filasPorRollo = Math.floor(matLargoMM / altoUsado);
             const copiasPorRollo = filasPorRollo * piezasPorFila;
 
             // ── largo total necesario ──
             const filasNecesarias = Math.ceil(totalUds / piezasPorFila);
-            const largoTotalMM   = filasNecesarias * altoUsado;
-            const largoTotalCM   = largoTotalMM / 10;
+            const largoTotalMM = filasNecesarias * altoUsado;
+            const largoTotalCM = largoTotalMM / 10;
 
             // ── rollos = floor(largoTotal / largoMaterial) ──
             const rollos = Math.floor(largoTotalCM / materialLargoCM);
@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const sobranteCM = largoTotalCM % materialLargoCM;
 
             // ── copiasExtra = floor(sobrante / altoUsado) × piezasPorFila ──
-            const sobranteMM  = sobranteCM * 10;
+            const sobranteMM = sobranteCM * 10;
             const copiasExtra = Math.floor(sobranteMM / altoUsado) * piezasPorFila;
 
             // ── materialSobrante (cm) = lo que queda después de las copiasExtra ──
@@ -147,16 +147,16 @@ document.addEventListener('DOMContentLoaded', () => {
             // Consumo total en metros
             const metrosTotales = largoTotalCM / 100;
 
-            r.piezasPorFila    = piezasPorFila;
-            r.copiasPorRollo   = copiasPorRollo;
-            r.rollos           = rollos;
-            r.sobrante         = sobranteCM;
-            r.copiasExtra      = copiasExtra;
+            r.piezasPorFila = piezasPorFila;
+            r.copiasPorRollo = copiasPorRollo;
+            r.rollos = rollos;
+            r.sobrante = sobranteCM;
+            r.copiasExtra = copiasExtra;
             r.materialSobrante = materialSobranteCM;
-            r.panelesPorCopia  = panelesPorCopia;
-            r.udsPorUnidad     = copiasPorRollo;
-            r.valConsumo       = metrosTotales;
-            r.consumoTotal     = metrosTotales.toFixed(2) + ' m';
+            r.panelesPorCopia = panelesPorCopia;
+            r.udsPorUnidad = copiasPorRollo;
+            r.valConsumo = metrosTotales;
+            r.consumoTotal = metrosTotales.toFixed(2) + ' m';
 
             if (rollos > 0) {
                 r.distribucion = `${rollos} rollo(s) + ${sobranteCM.toFixed(1)} cm`;
@@ -165,27 +165,27 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
         } else if (tipoMaterial === 'PLANCHA') {
-            const panelesAncho   = Math.floor(matAnchoMM / anchoUsado);
-            const panelesAlto    = Math.floor(matLargoMM / altoUsado);
-            const udsPorPlancha  = panelesAncho * panelesAlto;
+            const panelesAncho = Math.floor(matAnchoMM / anchoUsado);
+            const panelesAlto = Math.floor(matLargoMM / altoUsado);
+            const udsPorPlancha = panelesAncho * panelesAlto;
 
             if (udsPorPlancha <= 0) { r.error = 'Pieza excede tamaño de plancha'; return r; }
 
             const planchasExactas = totalUds / udsPorPlancha;
-            const planchas        = Math.ceil(planchasExactas);
+            const planchas = Math.ceil(planchasExactas);
             const panelesPorCopia = Math.ceil(anchoUsado / matAnchoMM);
 
-            r.piezasPorFila    = panelesAncho;
-            r.copiasPorRollo   = 0;          // no aplica
-            r.rollos           = 0;           // no aplica
-            r.sobrante         = 0;
-            r.copiasExtra      = 0;
+            r.piezasPorFila = panelesAncho;
+            r.copiasPorRollo = 0;          // no aplica
+            r.rollos = 0;           // no aplica
+            r.sobrante = 0;
+            r.copiasExtra = 0;
             r.materialSobrante = 0;
-            r.panelesPorCopia  = panelesPorCopia;
-            r.udsPorUnidad     = udsPorPlancha;
-            r.valConsumo       = planchas;
-            r.consumoTotal     = planchas + ' plancha(s)';
-            r.distribucion     = `${planchas} plancha(s) — ${udsPorPlancha} uds/plancha`;
+            r.panelesPorCopia = panelesPorCopia;
+            r.udsPorUnidad = udsPorPlancha;
+            r.valConsumo = planchas;
+            r.consumoTotal = planchas + ' plancha(s)';
+            r.distribucion = `${planchas} plancha(s) — ${udsPorPlancha} uds/plancha`;
         }
 
         return r;
@@ -200,14 +200,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!opt || sel.value === '') return;
 
         const base = {
-            tipoMaterial:   opt.dataset.tipo,
+            tipoMaterial: opt.dataset.tipo,
             materialAnchoCM: parseFloat(opt.dataset.ancho),
             materialLargoCM: parseFloat(opt.dataset.largo),
-            anchoPiezaMM:   parseFloat(document.getElementById('field_ancho_panel').value)  || 0,
-            altoPiezaMM:    parseFloat(document.getElementById('field_alto_panel').value)   || 0,
-            gapH_MM:        parseFloat(document.getElementById('field_separacion_h').value) || 0,
-            gapV_MM:        parseFloat(document.getElementById('field_separacion_v').value) || 0,
-            totalUds:       parseInt(document.getElementById('field_cantidad').value)       || 0
+            anchoPiezaMM: parseFloat(document.getElementById('field_ancho_panel').value) || 0,
+            altoPiezaMM: parseFloat(document.getElementById('field_alto_panel').value) || 0,
+            gapH_MM: parseFloat(document.getElementById('field_separacion_h').value) || 0,
+            gapV_MM: parseFloat(document.getElementById('field_separacion_v').value) || 0,
+            totalUds: parseInt(document.getElementById('field_cantidad').value) || 0
         };
 
         if (base.anchoPiezaMM <= 0 || base.altoPiezaMM <= 0 || base.totalUds <= 0) return;
@@ -226,15 +226,15 @@ document.addEventListener('DOMContentLoaded', () => {
         fillResults(r1, '');
 
         // Guardar en campos ocultos para enviar al servidor
-        document.getElementById('field_total_metros').value       = (base.tipoMaterial === 'ROLLO')   ? r1.valConsumo : 0;
-        document.getElementById('field_total_planchas').value     = (base.tipoMaterial === 'PLANCHA') ? r1.valConsumo : 0;
+        document.getElementById('field_total_metros').value = (base.tipoMaterial === 'ROLLO') ? r1.valConsumo : 0;
+        document.getElementById('field_total_planchas').value = (base.tipoMaterial === 'PLANCHA') ? r1.valConsumo : 0;
         document.getElementById('field_distribucion_texto').value = r1.distribucion;
         document.getElementById('field_unidades_por_rollo').value = r1.udsPorUnidad;
 
         // Etiquetas dinámicas según tipo
         const lbl = document.getElementById('res_label_unidad');
         const lblC = document.getElementById('res_label_consumo');
-        if (lbl)  lbl.textContent  = base.tipoMaterial === 'ROLLO' ? 'uds por rollo' : 'uds por plancha';
+        if (lbl) lbl.textContent = base.tipoMaterial === 'ROLLO' ? 'uds por rollo' : 'uds por plancha';
         if (lblC) lblC.textContent = base.tipoMaterial === 'ROLLO' ? 'Metros lineales' : 'Planchas';
 
         const panelTxt = document.getElementById('res_paneles_copia');
@@ -285,16 +285,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const s = suffix;  // '' ó '_rot'
 
         // Tarjetas de fórmulas
-        setTxt('res_piezas_fila'   + s, r.piezasPorFila);
-        setTxt('res_copias_rollo'  + s, r.copiasPorRollo);
-        setTxt('res_rollos'        + s, r.rollos);
-        setTxt('res_sobrante'      + s, r.sobrante.toFixed(1) + ' cm');
-        setTxt('res_copias_extra'  + s, r.copiasExtra);
-        setTxt('res_mat_sobrante'  + s, r.materialSobrante.toFixed(1) + ' cm');
+        setTxt('res_piezas_fila' + s, r.piezasPorFila);
+        setTxt('res_copias_rollo' + s, r.copiasPorRollo);
+        setTxt('res_rollos' + s, r.rollos);
+        setTxt('res_sobrante' + s, r.sobrante.toFixed(1) + ' cm');
+        setTxt('res_copias_extra' + s, r.copiasExtra);
+        setTxt('res_mat_sobrante' + s, r.materialSobrante.toFixed(1) + ' cm');
 
         // Totales principales
         setTxt('res_unidades_unidad' + s, r.udsPorUnidad);
-        setTxt('res_consumo_total'   + s, r.consumoTotal);
+        setTxt('res_consumo_total' + s, r.consumoTotal);
         if (!suffix) setTxt('res_distribucion', r.distribucion);
     }
 
@@ -305,15 +305,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function showError(msg) {
         setTxt('res_unidades_unidad', 'ERR');
-        setTxt('res_consumo_total',   msg);
-        setTxt('res_distribucion',    '--');
+        setTxt('res_consumo_total', msg);
+        setTxt('res_distribucion', '--');
         // Limpiar tarjetas
-        ['res_piezas_fila','res_copias_rollo','res_rollos','res_sobrante','res_copias_extra','res_mat_sobrante'].forEach(id => setTxt(id, '--'));
+        ['res_piezas_fila', 'res_copias_rollo', 'res_rollos', 'res_sobrante', 'res_copias_extra', 'res_mat_sobrante'].forEach(id => setTxt(id, '--'));
     }
 
     function resetUI() {
-        ['res_piezas_fila','res_copias_rollo','res_rollos','res_sobrante','res_copias_extra','res_mat_sobrante',
-         'res_unidades_unidad','res_consumo_total','res_distribucion'].forEach(id => setTxt(id, '--'));
+        ['res_piezas_fila', 'res_copias_rollo', 'res_rollos', 'res_sobrante', 'res_copias_extra', 'res_mat_sobrante',
+            'res_unidades_unidad', 'res_consumo_total', 'res_distribucion'].forEach(id => setTxt(id, '--'));
         const p = document.getElementById('res_paneles_copia');
         if (p) p.textContent = '';
     }

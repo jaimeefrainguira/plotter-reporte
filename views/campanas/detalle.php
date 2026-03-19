@@ -122,7 +122,7 @@
 
 <!-- Modal Detallado de Consumo y Trabajo -->
 <div class="modal fade" id="modalTrabajo" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
         <form id="formTrabajo" method="POST" action="index.php?action=campana_save_trabajo">
             <input type="hidden" name="campana_id" value="<?= $campana['id'] ?>">
             <input type="hidden" name="trabajo_id" id="field_trabajo_id" value="">
@@ -137,33 +137,42 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-9">
-                            <label class="form-label">Descripción</label>
+                    <!-- Fila 1: Descripción + Cantidad -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label fw-bold">Descripción</label>
                             <input type="text" name="descripcion" id="field_descripcion" class="form-control" placeholder="Ej: Carteles Navidad 60x120" required>
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Cantidad</label>
-                            <input type="number" name="cantidad" id="field_cantidad" class="form-control" value="0" required>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Copias / Cantidad</label>
+                            <input type="number" name="cantidad" id="field_cantidad" class="form-control calc-trigger" value="0" min="1" required>
                         </div>
                     </div>
 
-                    <div class="alert alert-info py-2"><i class="bi bi-info-circle"></i> Configuración de Panelado y Material</div>
-                    
-                    <div class="row g-3">
+                    <div class="alert alert-info py-2 mb-3"><i class="bi bi-rulers"></i> Configuración de Material y Medidas</div>
+
+                    <!-- Fila 2: Configuración principal -->
+                    <div class="row g-3 mb-3">
+                        <!-- COL IZQUIERDA: Medidas pieza + Material -->
                         <div class="col-md-6 border-end">
-                            <label class="form-label fw-bold">Medidas del Panel (mm)</label>
-                            <div class="input-group mb-2">
-                                <span class="input-group-text">Ancho</span>
-                                <input type="number" name="ancho_panel" id="field_ancho_panel" class="form-control calc-trigger" placeholder="0">
-                            </div>
-                            <div class="input-group mb-2">
-                                <span class="input-group-text">Alto</span>
-                                <input type="number" name="alto_panel" id="field_alto_panel" class="form-control calc-trigger" placeholder="0">
+                            <label class="form-label fw-bold">Medidas de la Pieza (cm)</label>
+                            <div class="row g-2 mb-2">
+                                <div class="col-6">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">Ancho</span>
+                                        <input type="number" step="0.1" name="ancho_panel" id="field_ancho_panel" class="form-control calc-trigger" placeholder="0">
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">Alto</span>
+                                        <input type="number" step="0.1" name="alto_panel" id="field_alto_panel" class="form-control calc-trigger" placeholder="0">
+                                    </div>
+                                </div>
                             </div>
 
                             <label class="form-label mt-2">Material</label>
-                            <select name="material_id" id="field_material_id" class="form-select calc-trigger" required>
+                            <select name="material_id" id="field_material_id" class="form-select form-select-sm calc-trigger" required>
                                 <option value="">-- SELECCIONAR --</option>
                                 <?php foreach ($materiales as $mat): ?>
                                     <option value="<?= $mat['id'] ?>" 
@@ -174,157 +183,147 @@
                                     </option>
                                 <?php endforeach; ?>
                             </select>
+
+                            <label class="form-label mt-2">Orientación</label>
+                            <select id="field_orientacion" class="form-select form-select-sm calc-trigger">
+                                <option value="auto">Automático (mejor aprovechamiento)</option>
+                                <option value="horizontal">Horizontal (Normal)</option>
+                                <option value="vertical">Vertical (Rotado 90°)</option>
+                            </select>
                         </div>
 
+                        <!-- COL DERECHA: Separación + Panelado + Sintra -->
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">Separación entre piezas (mm)</label>
-                            <div class="input-group mb-2">
-                                <span class="input-group-text">Horizontal</span>
-                                <input type="number" name="separacion_h" id="field_separacion_h" class="form-control calc-trigger" value="3">
-                            </div>
-                            <div class="input-group mb-2">
-                                <span class="input-group-text">Vertical</span>
-                                <input type="number" name="separacion_v" id="field_separacion_v" class="form-control calc-trigger" value="3">
+                            <label class="form-label fw-bold">Separación entre piezas (cm)</label>
+                            <div class="row g-2 mb-2">
+                                <div class="col-6">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">H</span>
+                                        <input type="number" step="0.1" name="separacion_h" id="field_separacion_h" class="form-control calc-trigger" value="0">
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">V</span>
+                                        <input type="number" step="0.1" name="separacion_v" id="field_separacion_v" class="form-control calc-trigger" value="0">
+                                    </div>
+                                </div>
                             </div>
 
-                            <div class="mt-4">
-                                <div class="form-check form-switch mt-2">
-                                    <input class="form-check-input calc-trigger" type="checkbox" id="checkRotar">
-                                    <label class="form-check-label" for="checkRotar">Permitir rotación (Girar pieza)</label>
+                            <!-- Panelado -->
+                            <div class="form-check form-switch mt-3">
+                                <input class="form-check-input" type="checkbox" id="usarPanelado">
+                                <label class="form-check-label fw-bold" for="usarPanelado">Usar Panelado</label>
+                            </div>
+                            <div id="panelConfig" style="display:none;" class="mt-2 p-2 border rounded bg-white">
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">Ancho Panel</span>
+                                            <input type="number" step="0.1" id="field_panel_ancho" class="form-control calc-trigger" value="150">
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">Gap</span>
+                                            <input type="number" step="0.1" id="field_panel_gap" class="form-control calc-trigger" value="0">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sintra -->
+                            <div class="form-check form-switch mt-3">
+                                <input class="form-check-input" type="checkbox" id="usarSintra">
+                                <label class="form-check-label fw-bold" for="usarSintra">Calcular Sintra</label>
+                            </div>
+                            <div id="sintraConfig" style="display:none;" class="mt-2 p-2 border rounded bg-white">
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">Ancho</span>
+                                            <input type="number" step="0.1" id="field_sintra_ancho" class="form-control calc-trigger" value="122">
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">Largo</span>
+                                            <input type="number" step="0.1" id="field_sintra_largo" class="form-control calc-trigger" value="244">
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Panel Inferior de Resultados — Desglose de Fórmulas -->
-                    <div class="result-panel mt-4">
-                        <div id="resultsOriginal">
-                            <div class="text-center mb-2"><span class="badge bg-dark rounded-pill" id="labelOrientacionUno">Orientación por Defecto</span></div>
+                    <!-- RESULTADOS -->
+                    <div class="result-panel mt-3">
+                        <div class="row g-3">
+                            <!-- Texto resultado -->
+                            <div class="col-md-7">
+                                <h6 class="mb-2"><i class="bi bi-clipboard-data"></i> Resultado del Cálculo</h6>
+                                <div id="resultado" class="p-3 bg-white border rounded small" style="min-height:120px;">
+                                    <span class="text-muted">Ingresa los datos y se calculará automáticamente...</span>
+                                </div>
 
-                            <!-- Detalle de fórmulas -->
-                            <div class="row g-2 mb-3" id="formulaDetails">
-                                <div class="col-4 col-md-2">
-                                    <div class="summary-card text-center py-2">
-                                        <div style="font-size:.65rem;opacity:.7;">Piezas/Fila</div>
-                                        <div class="h5 mb-0" id="res_piezas_fila">--</div>
+                                <!-- Tarjetas de fórmulas -->
+                                <div class="row g-2 mt-2" id="formulaCards">
+                                    <div class="col-4 col-md-2">
+                                        <div class="summary-card text-center py-1">
+                                            <div style="font-size:.6rem;opacity:.7;">Piezas/Fila</div>
+                                            <div class="h6 mb-0" id="res_piezas_fila">--</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4 col-md-2">
+                                        <div class="summary-card text-center py-1">
+                                            <div style="font-size:.6rem;opacity:.7;">Copias/Rollo</div>
+                                            <div class="h6 mb-0" id="res_copias_rollo">--</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4 col-md-2">
+                                        <div class="summary-card text-center py-1">
+                                            <div style="font-size:.6rem;opacity:.7;">Rollos</div>
+                                            <div class="h6 mb-0" id="res_rollos">--</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4 col-md-2">
+                                        <div class="summary-card text-center py-1">
+                                            <div style="font-size:.6rem;opacity:.7;">Sobrante</div>
+                                            <div class="h6 mb-0" id="res_sobrante">--</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4 col-md-2">
+                                        <div class="summary-card text-center py-1">
+                                            <div style="font-size:.6rem;opacity:.7;">C. Extra</div>
+                                            <div class="h6 mb-0" id="res_copias_extra">--</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4 col-md-2">
+                                        <div class="summary-card text-center py-1">
+                                            <div style="font-size:.6rem;opacity:.7;">Paneles/Cop</div>
+                                            <div class="h6 mb-0" id="res_paneles_copia">--</div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="col-4 col-md-2">
-                                    <div class="summary-card text-center py-2">
-                                        <div style="font-size:.65rem;opacity:.7;">Copias/Rollo</div>
-                                        <div class="h5 mb-0" id="res_copias_rollo">--</div>
-                                    </div>
-                                </div>
-                                <div class="col-4 col-md-2">
-                                    <div class="summary-card text-center py-2">
-                                        <div style="font-size:.65rem;opacity:.7;">Rollos</div>
-                                        <div class="h5 mb-0" id="res_rollos">--</div>
-                                    </div>
-                                </div>
-                                <div class="col-4 col-md-2">
-                                    <div class="summary-card text-center py-2">
-                                        <div style="font-size:.65rem;opacity:.7;">Sobrante</div>
-                                        <div class="h6 mb-0" id="res_sobrante">--</div>
-                                    </div>
-                                </div>
-                                <div class="col-4 col-md-2">
-                                    <div class="summary-card text-center py-2">
-                                        <div style="font-size:.65rem;opacity:.7;">Copias Extra</div>
-                                        <div class="h5 mb-0" id="res_copias_extra">--</div>
-                                    </div>
-                                </div>
-                                <div class="col-4 col-md-2">
-                                    <div class="summary-card text-center py-2">
-                                        <div style="font-size:.65rem;opacity:.7;">Mat. Sobrante</div>
-                                        <div class="h6 mb-0" id="res_mat_sobrante">--</div>
-                                    </div>
+
+                                <!-- Sintra resultado -->
+                                <div id="resultadoSintra" style="display:none;" class="mt-2 p-2 border rounded bg-white small">
+                                    <strong><i class="bi bi-grid-3x3"></i> Sintra:</strong>
+                                    <span id="sintraTexto">--</span>
                                 </div>
                             </div>
 
-                            <!-- Totales principales -->
-                            <div class="row text-center">
-                                <div class="col-md-4 border-end">
-                                    <h6 class="text-muted small">COPIAS POR UNIDAD</h6>
-                                    <p class="h4 mb-0" id="res_unidades_unidad">--</p>
-                                    <small class="text-muted" id="res_label_unidad">uds por rollo/plancha</small>
-                                </div>
-                                <div class="col-md-4 border-end">
-                                    <h6 class="text-muted small">CONSUMO TOTAL</h6>
-                                    <p class="h4 mb-0 text-primary" id="res_consumo_total">--</p>
-                                    <small class="text-muted" id="res_label_consumo">Metros / Planchas</small>
-                                </div>
-                                <div class="col-md-4">
-                                    <h6 class="text-muted small">DISTRIBUCIÓN</h6>
-                                    <p class="h5 mb-0" id="res_distribucion">--</p>
-                                    <small class="text-muted" id="res_paneles_copia"></small>
+                            <!-- Preview Visual -->
+                            <div class="col-md-5">
+                                <h6 class="mb-2"><i class="bi bi-grid"></i> Vista Previa</h6>
+                                <div class="border rounded bg-white p-2 text-center" style="min-height:150px;overflow:auto;">
+                                    <div id="preview" style="position:relative;margin:0 auto;border:2px dashed #adb5bd;display:none;"></div>
+                                    <small class="text-muted d-block mt-1" id="previewLabel">--</small>
                                 </div>
                             </div>
-                        </div>
-
-                        <div id="resultsRotated" class="mt-3 pt-3 border-top" style="display:none;">
-                            <div class="text-center mb-2"><span class="badge bg-secondary rounded-pill" id="labelOrientacionDos">Orientación Rotada (90°)</span></div>
-                            
-                            <!-- Detalle fórmulas rotada -->
-                            <div class="row g-2 mb-3">
-                                <div class="col-4 col-md-2">
-                                    <div class="summary-card text-center py-2" style="background:#3a4552;">
-                                        <div style="font-size:.65rem;opacity:.7;">Piezas/Fila</div>
-                                        <div class="h5 mb-0" id="res_piezas_fila_rot">--</div>
-                                    </div>
-                                </div>
-                                <div class="col-4 col-md-2">
-                                    <div class="summary-card text-center py-2" style="background:#3a4552;">
-                                        <div style="font-size:.65rem;opacity:.7;">Copias/Rollo</div>
-                                        <div class="h5 mb-0" id="res_copias_rollo_rot">--</div>
-                                    </div>
-                                </div>
-                                <div class="col-4 col-md-2">
-                                    <div class="summary-card text-center py-2" style="background:#3a4552;">
-                                        <div style="font-size:.65rem;opacity:.7;">Rollos</div>
-                                        <div class="h5 mb-0" id="res_rollos_rot">--</div>
-                                    </div>
-                                </div>
-                                <div class="col-4 col-md-2">
-                                    <div class="summary-card text-center py-2" style="background:#3a4552;">
-                                        <div style="font-size:.65rem;opacity:.7;">Sobrante</div>
-                                        <div class="h6 mb-0" id="res_sobrante_rot">--</div>
-                                    </div>
-                                </div>
-                                <div class="col-4 col-md-2">
-                                    <div class="summary-card text-center py-2" style="background:#3a4552;">
-                                        <div style="font-size:.65rem;opacity:.7;">Copias Extra</div>
-                                        <div class="h5 mb-0" id="res_copias_extra_rot">--</div>
-                                    </div>
-                                </div>
-                                <div class="col-4 col-md-2">
-                                    <div class="summary-card text-center py-2" style="background:#3a4552;">
-                                        <div style="font-size:.65rem;opacity:.7;">Mat. Sobrante</div>
-                                        <div class="h6 mb-0" id="res_mat_sobrante_rot">--</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="row text-center">
-                                <div class="col-md-4 border-end">
-                                    <h6 class="text-muted small">COPIAS POR UNIDAD</h6>
-                                    <p class="h4 mb-0" id="res_unidades_unidad_rot">--</p>
-                                </div>
-                                <div class="col-md-4 border-end">
-                                    <h6 class="text-muted small">CONSUMO TOTAL</h6>
-                                    <p class="h4 mb-0" id="res_consumo_total_rot">--</p>
-                                </div>
-                                <div class="col-md-4 d-flex align-items-center justify-content-center">
-                                    <button type="button" class="btn btn-sm btn-outline-success" id="btnSwapOrientacion">
-                                        <i class="bi bi-arrow-left-right"></i> USAR ESTA
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div id="mejorOpcionMsg" class="alert alert-success mt-2 py-1 small text-center" style="display:none;">
-                            <i class="bi bi-star-fill"></i> ¡Esta es la orientación más eficiente!
                         </div>
                     </div>
+
                 </div>
                 <div class="modal-footer justify-content-center border-0 pb-4">
                     <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">CANCELAR</button>
