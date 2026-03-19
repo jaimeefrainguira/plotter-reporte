@@ -3,8 +3,9 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../models/Reporte.php';
 require_once __DIR__ . '/../models/Campana.php';
+require_once __DIR__ . '/../models/Material.php';
+require_once __DIR__ . '/../models/Reporte.php';
 
 class ReporteController
 {
@@ -118,7 +119,9 @@ class ReporteController
         $plotters = $this->getPlotterOptions();
         $database = new Database();
         $campanaModel = new Campana($database->getConnection());
+        $materialModel = new Material($database->getConnection());
         $campanas = $campanaModel->getAll();
+        $materiales = $materialModel->getAll();
         $csrfToken = $this->getCsrfToken();
         include __DIR__ . '/../views/reporte_plotter_crear.php';
     }
@@ -351,6 +354,7 @@ class ReporteController
                                         <th>DESCRIPCIÓN</th>
                                         <th>CANT. IMPRESO</th>
                                         <th>% IMPRESO</th>
+                                        <th>SOBRANTE</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -360,11 +364,12 @@ class ReporteController
                                         <td><?= htmlspecialchars((string) ($row['descripcion'] ?? '')) ?></td>
                                         <td><?= (int) ($row['cantidad_impreso'] ?? 0) ?></td>
                                         <td><?= (int) ($row['porcentaje_impresion'] ?? 0) ?>%</td>
+                                        <td><?= (int) ($row['material_sobrante'] ?? 0) ?> cm</td>
                                     </tr>
                                 <?php endforeach; ?>
                                 <?php if (empty($plotterRows)): ?>
                                     <tr>
-                                        <td colspan="4" style="text-align: center; color: #666;">Sin reportes registrados.</td>
+                                        <td colspan="5" style="text-align: center; color: #666;">Sin reportes registrados.</td>
                                     </tr>
                                 <?php endif; ?>
                                 </tbody>
@@ -381,6 +386,7 @@ class ReporteController
                             <th>Cantidad</th>
                             <th>Cantidad Impreso</th>
                             <th>% Impresión</th>
+                            <th>Sobrante</th>
                             <th>Fecha</th>
                         </tr>
                     </thead>
@@ -392,12 +398,13 @@ class ReporteController
                             <td><?= (int) $reporte['cantidad'] ?></td>
                             <td><?= (int) ($reporte['cantidad_impreso'] ?? 0) ?></td>
                             <td><?= (int) $reporte['porcentaje_impresion'] ?>%</td>
+                            <td><?= (int) ($reporte['material_sobrante'] ?? 0) ?> cm</td>
                             <td><?= htmlspecialchars((string) $reporte['fecha']) ?></td>
                         </tr>
                     <?php endforeach; ?>
                     <?php if (!$reportes): ?>
                         <tr>
-                            <td colspan="6">No hay reportes disponibles.</td>
+                            <td colspan="7">No hay reportes disponibles.</td>
                         </tr>
                     <?php endif; ?>
                     </tbody>
@@ -419,6 +426,7 @@ class ReporteController
             'cantidad' => (int) ($input['cantidad'] ?? 0),
             'cantidad_impreso' => (int) ($input['cantidad_impreso'] ?? 0),
             'porcentaje_impresion' => (int) ($input['porcentaje_impresion'] ?? 0),
+            'material_sobrante' => (int) ($input['material_sobrante'] ?? 0),
         ];
     }
 

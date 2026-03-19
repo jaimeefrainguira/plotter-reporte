@@ -9,6 +9,7 @@ class Reporte
     private array $requiredColumns = [
         "cantidad_impreso" => "ALTER TABLE reportes ADD COLUMN cantidad_impreso INT NOT NULL DEFAULT 0 AFTER cantidad",
         "porcentaje_impresion" => "ALTER TABLE reportes ADD COLUMN porcentaje_impresion INT NOT NULL DEFAULT 0 AFTER cantidad_impreso",
+        "material_sobrante" => "ALTER TABLE reportes ADD COLUMN material_sobrante INT NOT NULL DEFAULT 0 AFTER porcentaje_impresion",
     ];
 
     public function __construct(private PDO $db)
@@ -40,8 +41,8 @@ class Reporte
     {
         $this->ensureRequiredColumns();
 
-        $sql = 'INSERT INTO reportes (maestro_id, plotter, observacion, descripcion, cantidad, cantidad_impreso, porcentaje_impresion, fecha)
-                VALUES (:maestro_id, :plotter, :observacion, :descripcion, :cantidad, :cantidad_impreso, :porcentaje_impresion, NOW())';
+        $sql = 'INSERT INTO reportes (maestro_id, plotter, observacion, descripcion, cantidad, cantidad_impreso, porcentaje_impresion, material_sobrante, fecha)
+                VALUES (:maestro_id, :plotter, :observacion, :descripcion, :cantidad, :cantidad_impreso, :porcentaje_impresion, :material_sobrante, NOW())';
 
         $stmt = $this->db->prepare($sql);
 
@@ -53,6 +54,7 @@ class Reporte
             ':cantidad' => (int) $data['cantidad'],
             ':cantidad_impreso' => (int) $data['cantidad_impreso'],
             ':porcentaje_impresion' => (int) $data['porcentaje_impresion'],
+            ':material_sobrante' => (int) $data['material_sobrante'],
         ]);
     }
 
@@ -77,7 +79,8 @@ class Reporte
                     descripcion = :descripcion,
                     cantidad = :cantidad,
                     cantidad_impreso = :cantidad_impreso,
-                    porcentaje_impresion = :porcentaje_impresion
+                    porcentaje_impresion = :porcentaje_impresion,
+                    material_sobrante = :material_sobrante
                 WHERE id = :id';
 
         $stmt = $this->db->prepare($sql);
@@ -90,6 +93,7 @@ class Reporte
             ':cantidad' => (int) $data['cantidad'],
             ':cantidad_impreso' => (int) $data['cantidad_impreso'],
             ':porcentaje_impresion' => (int) $data['porcentaje_impresion'],
+            ':material_sobrante' => (int) $data['material_sobrante'],
         ]);
 
         return $stmt->rowCount() > 0;

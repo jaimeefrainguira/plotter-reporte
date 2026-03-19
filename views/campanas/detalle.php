@@ -188,8 +188,8 @@
                             </div>
 
                             <div class="mt-4">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="checkRotar" class="calc-trigger">
+                                <div class="form-check form-switch mt-2">
+                                    <input class="form-check-input calc-trigger" type="checkbox" id="checkRotar">
                                     <label class="form-check-label" for="checkRotar">Permitir rotación (Girar pieza)</label>
                                 </div>
                             </div>
@@ -197,22 +197,48 @@
                     </div>
 
                     <!-- Panel Inferior de Resultados (BASADO EN IMAGEN REAL) -->
-                    <div class="result-panel">
-                        <div class="row text-center">
-                            <div class="col-md-4 border-end">
-                                <h6 class="text-muted">CANTIDAD POR UNIDAD</h6>
-                                <p class="h4 mb-0" id="res_unidades_unidad">--</p>
-                                <small class="text-muted" id="res_label_unidad">uds por rollo/plancha</small>
+                    <div class="result-panel mt-4">
+                        <div id="resultsOriginal">
+                            <div class="text-center mb-1"><span class="badge bg-dark rounded-pill" id="labelOrientacionUno">Orientación por Defecto</span></div>
+                            <div class="row text-center">
+                                <div class="col-md-4 border-end">
+                                    <h6 class="text-muted small">CANTIDAD POR UNIDAD</h6>
+                                    <p class="h4 mb-0" id="res_unidades_unidad">--</p>
+                                    <small class="text-muted" id="res_label_unidad">uds por rollo/plancha</small>
+                                </div>
+                                <div class="col-md-4 border-end">
+                                    <h6 class="text-muted small">CONSUMO TOTAL</h6>
+                                    <p class="h4 mb-0 text-primary" id="res_consumo_total">--</p>
+                                    <small class="text-muted" id="res_label_consumo">Metros / Planchas</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <h6 class="text-muted small">DISTRIBUCIÓN</h6>
+                                    <p class="h5 mb-0" id="res_distribucion">--</p>
+                                </div>
                             </div>
-                            <div class="col-md-4 border-end">
-                                <h6 class="text-muted">CONSUMO TOTAL</h6>
-                                <p class="h4 mb-0 text-primary" id="res_consumo_total">--</p>
-                                <small class="text-muted" id="res_label_consumo">Metros / Planchas</small>
+                        </div>
+
+                        <div id="resultsRotated" class="mt-3 pt-3 border-top" style="display:none;">
+                            <div class="text-center mb-1"><span class="badge bg-secondary rounded-pill" id="labelOrientacionDos">Orientación Rotada (90°)</span></div>
+                            <div class="row text-center">
+                                <div class="col-md-4 border-end">
+                                    <h6 class="text-muted small">CANTIDAD POR UNIDAD</h6>
+                                    <p class="h4 mb-0" id="res_unidades_unidad_rot">--</p>
+                                </div>
+                                <div class="col-md-4 border-end">
+                                    <h6 class="text-muted small">CONSUMO TOTAL</h6>
+                                    <p class="h4 mb-0" id="res_consumo_total_rot">--</p>
+                                </div>
+                                <div class="col-md-4 d-flex align-items-center justify-content-center">
+                                    <button type="button" class="btn btn-sm btn-outline-success" id="btnSwapOrientacion">
+                                        <i class="bi bi-arrow-left-right"></i> USAR ESTA
+                                    </button>
+                                </div>
                             </div>
-                            <div class="col-md-4">
-                                <h6 class="text-muted">DISTRIBUCIÓN</h6>
-                                <p class="h5 mb-0" id="res_distribucion">--</p>
-                            </div>
+                        </div>
+                        
+                        <div id="mejorOpcionMsg" class="alert alert-success mt-2 py-1 small text-center" style="display:none;">
+                            <i class="bi bi-star-fill"></i> ¡Esta es la orientación más eficiente!
                         </div>
                     </div>
                 </div>
