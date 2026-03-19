@@ -221,9 +221,9 @@
                         <input type="checkbox" name="usar_sintra" id="usarSintra" value="1" class="form-check-input me-1"> Usar Sintra 122x244
                     </h6>
 
-                    <!-- Hidden: separacion (default 0 si no se muestra) -->
-                    <input type="hidden" name="separacion_h" id="field_separacion_h" value="0">
-                    <input type="hidden" name="separacion_v" id="field_separacion_v" value="0">
+                    <br>
+                    <button type="button" id="btnCalcular" class="btn btn-dark w-100 py-2">CALCULAR</button>
+                    <br><br>
 
                     <!-- ===== RESULTADO ===== -->
                     <div class="mt-3 p-3 bg-light border rounded" id="resultado">
@@ -231,10 +231,7 @@
                     </div>
 
                     <!-- Sintra resultado -->
-                    <div id="resultadoSintra" style="display:none;" class="mt-2 p-3 bg-light border rounded">
-                        🧱 <b>Sintra 122x244</b><br>
-                        <span id="sintraTexto">--</span>
-                    </div>
+                    <div id="resultadoSintra" style="display:none;" class="mt-2 p-3 bg-light border rounded"></div>
 
                     <!-- ===== PREVIEW ===== -->
                     <div id="preview" style="margin-top:20px; border:2px solid #333; position:relative; background:#eee; display:none;"></div>

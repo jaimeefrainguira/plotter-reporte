@@ -8,19 +8,24 @@ document.addEventListener('DOMContentLoaded', () => {
     // mostrar panelado config
     document.getElementById('usarPanelado').onchange = function () {
         document.getElementById('panelConfig').style.display = this.checked ? 'block' : 'none';
-        calcular();
     };
 
     // mostrar/ocultar sintra
     document.getElementById('usarSintra').onchange = function () {
         document.getElementById('resultadoSintra').style.display = this.checked ? 'block' : 'none';
-        calcular();
     };
 
-    // Auto-cálculo en cualquier cambio
+    // Botón Calcular (Unico disparador oficial igual que calcular.html)
+    const btnCalcular = document.getElementById('btnCalcular');
+    if (btnCalcular) {
+        btnCalcular.onclick = calcular;
+    }
+
+    // Auto-cálculo opcional en cualquier cambio (mejorando calcular.html pero manteniendo consistencia)
     document.querySelectorAll('.calc-trigger').forEach(el => {
-        el.addEventListener('input', calcular);
         el.addEventListener('change', calcular);
+        // Si es input de número, también en 'input' para feedback inmediato
+        if (el.type === 'number') el.addEventListener('input', calcular);
     });
 
     // Trigger inicial al abrir el modal (Bootstrap event)
@@ -40,8 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('field_ancho_panel').value  = d.ancho_panel;
             document.getElementById('field_alto_panel').value   = d.alto_panel;
             document.getElementById('field_material_id').value  = d.material_id;
-            document.getElementById('field_separacion_h').value = d.separacion_h;
-            document.getElementById('field_separacion_v').value = d.separacion_v;
             
             // Nuevos campos
             document.getElementById('field_orientacion').value = d.orientacion || 'auto';
@@ -52,7 +55,8 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('usarSintra').checked   = parseInt(d.usar_sintra) === 1;
             document.getElementById('resultadoSintra').style.display = document.getElementById('usarSintra').checked ? 'block' : 'none';
 
-            calcular();
+            // Al cargar edición, calculamos inmediatamente
+            setTimeout(calcular, 100); 
         });
     });
 
@@ -79,7 +83,11 @@ document.addEventListener('DOMContentLoaded', () => {
         let matSel = document.getElementById('field_material_id');
         let matOpt = matSel.options[matSel.selectedIndex];
         
-        if (!matOpt || matSel.value === '') return;
+        // Si no hay material, limpiar resultados y salir
+        if (!matOpt || matSel.value === '') {
+            document.getElementById('resultado').innerHTML = '<span class="text-muted">Selecciona un material...</span>';
+            return;
+        }
 
         let anchoMat = parseFloat(matOpt.dataset.ancho);
         let largoMat = parseFloat(matOpt.dataset.largo);
@@ -97,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let escala = 0.4;
 
         // ===============================
-        // ORIENTACIÓN VICEVERSA
+        // ORIENTACIÓN (Lógica literal de calcular.html)
         // ===============================
         let w, h, modoFinal;
 
@@ -147,8 +155,8 @@ document.addEventListener('DOMContentLoaded', () => {
             rollos = Math.floor(largoTotal / largoMat);
             sobrante = largoTotal % largoMat;
 
-            copiasPorRollo = Math.floor(largoMat / altoCopia);
-            copiasExtra = Math.floor(sobrante / altoCopia);
+            copiasPorRollo = Math.floor(largoMat / (altoCopia || 1));
+            copiasExtra = Math.floor(sobrante / (altoCopia || 1));
 
             if (rollos === 0) {
                 textoMaterial = `${sobrante} cm (${copiasExtra} copias)`;
@@ -172,12 +180,14 @@ document.addEventListener('DOMContentLoaded', () => {
             for (let i = 0; i < paneles; i++) {
                 let div = document.createElement('div');
                 div.className = 'panel';
-                div.style.position = 'absolute';
-                div.style.border = '2px solid red';
-                div.style.background = 'rgba(255,0,0,0.1)';
-                div.style.width = (panelAncho * escala) + 'px';
-                div.style.height = (h * escala) + 'px';
-                div.style.left = ((i * (panelAncho + gap)) * escala) + 'px';
+                div.style.cssText = `
+                    position: absolute;
+                    border: 2px solid red;
+                    background: rgba(255,0,0,0.1);
+                    width: ${panelAncho * escala}px;
+                    height: ${h * escala}px;
+                    left: ${(i * (panelAncho + gap)) * escala}px;
+                `;
                 preview.appendChild(div);
             }
 
@@ -187,6 +197,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // SIN PANELADO
             // ===============================
             let piezasPorFila = Math.floor(anchoMat / w);
+            if (piezasPorFila === 0) {
+                document.getElementById('resultado').innerHTML = `
+                    <div class="alert alert-warning py-2 mb-0">El material es muy angosto para el diseño. Activa panelado o rota la pieza.</div>
+                `;
+                return;
+            }
+
             let filas = Math.ceil(copias / piezasPorFila);
             let largoTotal = filas * h;
 
@@ -222,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let mejor = Math.max(n1, n2);
             let orientSintra = (n2 > n1) ? 'Rotado' : 'Normal';
-            let planchas = Math.ceil(copias / mejor);
+            let planchas = mejor > 0 ? Math.ceil(copias / mejor) : 0;
 
             document.getElementById('resultadoSintra').innerHTML = `
                 🧱 <b>Sintra 122x244</b><br><br>
