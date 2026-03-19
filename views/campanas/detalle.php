@@ -72,7 +72,7 @@
                     <tr>
                         <th>DESCRIPCIÓN</th>
                         <th>CANTIDAD</th>
-                        <th>TAMAÑO (mm)</th>
+                        <th>TAMAÑO (cm)</th>
                         <th>MATERIAL</th>
                         <th>CONSUMO ESTIMADO</th>
                         <th class="text-center">ACCIONES</th>
@@ -83,10 +83,13 @@
                     <tr>
                         <td><strong><?= htmlspecialchars($trabajo['descripcion']) ?></strong></td>
                         <td><?= $trabajo['cantidad'] ?> uds</td>
-                        <td><?= (float)$trabajo['ancho_panel'] ?> x <?= (float)$trabajo['alto_panel'] ?></td>
-                        <td><span class="badge bg-info text-dark"><?= htmlspecialchars($trabajo['material_nombre']) ?></span></td>
+                        <td><?= (float)$trabajo['ancho_panel'] ?> × <?= (float)$trabajo['alto_panel'] ?> cm</td>
+                        <td><span class="badge bg-info text-dark"><?= htmlspecialchars($trabajo['material_nombre'] ?? 'Sin material') ?></span></td>
                         <td>
-                             <small class="text-muted"><?= htmlspecialchars($trabajo['distribucion_texto'] ?: 'No calculado') ?></small>
+                            <?php if (!empty($trabajo['total_metros']) && $trabajo['total_metros'] > 0): ?>
+                                <strong><?= number_format((float)$trabajo['total_metros'], 2) ?> m</strong><br>
+                            <?php endif; ?>
+                            <small class="text-muted"><?= htmlspecialchars($trabajo['distribucion_texto'] ?: 'No calculado') ?></small>
                         </td>
                         <td class="text-center">
                             <div class="btn-group btn-group-sm">
@@ -137,192 +140,104 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <!-- Fila 1: Descripción + Cantidad -->
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-8">
-                            <label class="form-label fw-bold">Descripción</label>
-                            <input type="text" name="descripcion" id="field_descripcion" class="form-control" placeholder="Ej: Carteles Navidad 60x120" required>
+                    <!-- Descripción (solo para BD, no en calcular.html) -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Descripción</label>
+                        <input type="text" name="descripcion" id="field_descripcion" class="form-control form-control-sm" placeholder="Ej: Carteles Navidad 60x120" required>
+                    </div>
+
+                    <!-- ===== DISEÑO (igual que calcular.html) ===== -->
+                    <h6 class="fw-bold mt-3">Diseño</h6>
+                    <div class="row g-2 mb-2">
+                        <div class="col-auto">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">Ancho:</span>
+                                <input type="number" name="ancho_panel" id="field_ancho_panel" class="form-control calc-trigger" value="300" style="width:80px;">
+                                <span class="input-group-text">cm</span>
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-bold">Copias / Cantidad</label>
-                            <input type="number" name="cantidad" id="field_cantidad" class="form-control calc-trigger" value="0" min="1" required>
+                        <div class="col-auto">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">Alto:</span>
+                                <input type="number" name="alto_panel" id="field_alto_panel" class="form-control calc-trigger" value="120" style="width:80px;">
+                                <span class="input-group-text">cm</span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">Copias:</span>
+                                <input type="number" name="cantidad" id="field_cantidad" class="form-control calc-trigger" value="1" min="1" required style="width:80px;">
+                            </div>
                         </div>
                     </div>
 
-                    <div class="alert alert-info py-2 mb-3"><i class="bi bi-rulers"></i> Configuración de Material y Medidas</div>
-
-                    <!-- Fila 2: Configuración principal -->
-                    <div class="row g-3 mb-3">
-                        <!-- COL IZQUIERDA: Medidas pieza + Material -->
-                        <div class="col-md-6 border-end">
-                            <label class="form-label fw-bold">Medidas de la Pieza (cm)</label>
-                            <div class="row g-2 mb-2">
-                                <div class="col-6">
-                                    <div class="input-group input-group-sm">
-                                        <span class="input-group-text">Ancho</span>
-                                        <input type="number" step="0.1" name="ancho_panel" id="field_ancho_panel" class="form-control calc-trigger" placeholder="0">
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="input-group input-group-sm">
-                                        <span class="input-group-text">Alto</span>
-                                        <input type="number" step="0.1" name="alto_panel" id="field_alto_panel" class="form-control calc-trigger" placeholder="0">
-                                    </div>
+                    <!-- ===== ACTIVAR PANELADO ===== -->
+                    <h6 class="fw-bold mt-3">
+                        <input type="checkbox" name="usar_panelado" id="usarPanelado" value="1" class="form-check-input me-1"> Activar Panelado
+                    </h6>
+                    <div id="panelConfig" style="display:none;" class="mb-3 ps-3">
+                        <div class="row g-2">
+                            <div class="col-auto">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">Ancho panel:</span>
+                                    <input type="number" name="panel_ancho" id="field_panel_ancho" class="form-control calc-trigger" value="120" style="width:80px;">
+                                    <span class="input-group-text">cm</span>
                                 </div>
                             </div>
-
-                            <label class="form-label mt-2">Material</label>
-                            <select name="material_id" id="field_material_id" class="form-select form-select-sm calc-trigger" required>
-                                <option value="">-- SELECCIONAR --</option>
-                                <?php foreach ($materiales as $mat): ?>
-                                    <option value="<?= $mat['id'] ?>" 
-                                        data-tipo="<?= $mat['tipo'] ?>" 
-                                        data-ancho="<?= (float)$mat['medida_ancho'] ?>" 
-                                        data-largo="<?= (float)$mat['medida_largo'] ?>">
-                                        <?= htmlspecialchars($mat['nombre']) ?> (<?= $mat['tipo'] ?>)
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-
-                            <label class="form-label mt-2">Orientación</label>
-                            <select id="field_orientacion" class="form-select form-select-sm calc-trigger">
-                                <option value="auto">Automático (mejor aprovechamiento)</option>
-                                <option value="horizontal">Horizontal (Normal)</option>
-                                <option value="vertical">Vertical (Rotado 90°)</option>
-                            </select>
-                        </div>
-
-                        <!-- COL DERECHA: Separación + Panelado + Sintra -->
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Separación entre piezas (cm)</label>
-                            <div class="row g-2 mb-2">
-                                <div class="col-6">
-                                    <div class="input-group input-group-sm">
-                                        <span class="input-group-text">H</span>
-                                        <input type="number" step="0.1" name="separacion_h" id="field_separacion_h" class="form-control calc-trigger" value="0">
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="input-group input-group-sm">
-                                        <span class="input-group-text">V</span>
-                                        <input type="number" step="0.1" name="separacion_v" id="field_separacion_v" class="form-control calc-trigger" value="0">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Panelado -->
-                            <div class="form-check form-switch mt-3">
-                                <input class="form-check-input" type="checkbox" id="usarPanelado">
-                                <label class="form-check-label fw-bold" for="usarPanelado">Usar Panelado</label>
-                            </div>
-                            <div id="panelConfig" style="display:none;" class="mt-2 p-2 border rounded bg-white">
-                                <div class="row g-2">
-                                    <div class="col-6">
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text">Ancho Panel</span>
-                                            <input type="number" step="0.1" id="field_panel_ancho" class="form-control calc-trigger" value="150">
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text">Gap</span>
-                                            <input type="number" step="0.1" id="field_panel_gap" class="form-control calc-trigger" value="0">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Sintra -->
-                            <div class="form-check form-switch mt-3">
-                                <input class="form-check-input" type="checkbox" id="usarSintra">
-                                <label class="form-check-label fw-bold" for="usarSintra">Calcular Sintra</label>
-                            </div>
-                            <div id="sintraConfig" style="display:none;" class="mt-2 p-2 border rounded bg-white">
-                                <div class="row g-2">
-                                    <div class="col-6">
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text">Ancho</span>
-                                            <input type="number" step="0.1" id="field_sintra_ancho" class="form-control calc-trigger" value="122">
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text">Largo</span>
-                                            <input type="number" step="0.1" id="field_sintra_largo" class="form-control calc-trigger" value="244">
-                                        </div>
-                                    </div>
+                            <div class="col-auto">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">Gap:</span>
+                                    <input type="number" name="panel_gap" id="field_panel_gap" class="form-control calc-trigger" value="2" style="width:80px;">
+                                    <span class="input-group-text">cm</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- RESULTADOS -->
-                    <div class="result-panel mt-3">
-                        <div class="row g-3">
-                            <!-- Texto resultado -->
-                            <div class="col-md-7">
-                                <h6 class="mb-2"><i class="bi bi-clipboard-data"></i> Resultado del Cálculo</h6>
-                                <div id="resultado" class="p-3 bg-white border rounded small" style="min-height:120px;">
-                                    <span class="text-muted">Ingresa los datos y se calculará automáticamente...</span>
-                                </div>
+                    <!-- ===== MATERIAL ROLLOS ===== -->
+                    <h6 class="fw-bold mt-3">Material Rollos</h6>
+                    <select name="material_id" id="field_material_id" class="form-select form-select-sm mb-3 calc-trigger" required style="max-width:300px;">
+                        <option value="">-- SELECCIONAR --</option>
+                        <?php foreach ($materiales as $mat): ?>
+                            <option value="<?= $mat['id'] ?>" 
+                                data-tipo="<?= $mat['tipo'] ?>" 
+                                data-ancho="<?= (float)$mat['medida_ancho'] ?>" 
+                                data-largo="<?= (float)$mat['medida_largo'] ?>">
+                                <?= htmlspecialchars($mat['nombre']) ?> <?= (float)$mat['medida_ancho'] ?>x<?= (float)$mat['medida_largo'] ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
 
-                                <!-- Tarjetas de fórmulas -->
-                                <div class="row g-2 mt-2" id="formulaCards">
-                                    <div class="col-4 col-md-2">
-                                        <div class="summary-card text-center py-1">
-                                            <div style="font-size:.6rem;opacity:.7;">Piezas/Fila</div>
-                                            <div class="h6 mb-0" id="res_piezas_fila">--</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-4 col-md-2">
-                                        <div class="summary-card text-center py-1">
-                                            <div style="font-size:.6rem;opacity:.7;">Copias/Rollo</div>
-                                            <div class="h6 mb-0" id="res_copias_rollo">--</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-4 col-md-2">
-                                        <div class="summary-card text-center py-1">
-                                            <div style="font-size:.6rem;opacity:.7;">Rollos</div>
-                                            <div class="h6 mb-0" id="res_rollos">--</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-4 col-md-2">
-                                        <div class="summary-card text-center py-1">
-                                            <div style="font-size:.6rem;opacity:.7;">Sobrante</div>
-                                            <div class="h6 mb-0" id="res_sobrante">--</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-4 col-md-2">
-                                        <div class="summary-card text-center py-1">
-                                            <div style="font-size:.6rem;opacity:.7;">C. Extra</div>
-                                            <div class="h6 mb-0" id="res_copias_extra">--</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-4 col-md-2">
-                                        <div class="summary-card text-center py-1">
-                                            <div style="font-size:.6rem;opacity:.7;">Paneles/Cop</div>
-                                            <div class="h6 mb-0" id="res_paneles_copia">--</div>
-                                        </div>
-                                    </div>
-                                </div>
+                    <!-- ===== ORIENTACIÓN ===== -->
+                    <h6 class="fw-bold mt-3">Orientación</h6>
+                    <select name="orientacion" id="field_orientacion" class="form-select form-select-sm mb-3 calc-trigger" style="max-width:250px;">
+                        <option value="auto">Automático</option>
+                        <option value="vertical">Forzar Vertical</option>
+                        <option value="horizontal">Forzar Horizontal</option>
+                    </select>
 
-                                <!-- Sintra resultado -->
-                                <div id="resultadoSintra" style="display:none;" class="mt-2 p-2 border rounded bg-white small">
-                                    <strong><i class="bi bi-grid-3x3"></i> Sintra:</strong>
-                                    <span id="sintraTexto">--</span>
-                                </div>
-                            </div>
+                    <!-- ===== SINTRA ===== -->
+                    <h6 class="fw-bold mt-3">
+                        <input type="checkbox" name="usar_sintra" id="usarSintra" value="1" class="form-check-input me-1"> Usar Sintra 122x244
+                    </h6>
 
-                            <!-- Preview Visual -->
-                            <div class="col-md-5">
-                                <h6 class="mb-2"><i class="bi bi-grid"></i> Vista Previa</h6>
-                                <div class="border rounded bg-white p-2 text-center" style="min-height:150px;overflow:auto;">
-                                    <div id="preview" style="position:relative;margin:0 auto;border:2px dashed #adb5bd;display:none;"></div>
-                                    <small class="text-muted d-block mt-1" id="previewLabel">--</small>
-                                </div>
-                            </div>
-                        </div>
+                    <!-- Hidden: separacion (default 0 si no se muestra) -->
+                    <input type="hidden" name="separacion_h" id="field_separacion_h" value="0">
+                    <input type="hidden" name="separacion_v" id="field_separacion_v" value="0">
+
+                    <!-- ===== RESULTADO ===== -->
+                    <div class="mt-3 p-3 bg-light border rounded" id="resultado">
+                        <span class="text-muted">Completa los datos para ver el resultado...</span>
                     </div>
+
+                    <!-- Sintra resultado -->
+                    <div id="resultadoSintra" style="display:none;" class="mt-2 p-3 bg-light border rounded">
+                        🧱 <b>Sintra 122x244</b><br>
+                        <span id="sintraTexto">--</span>
+                    </div>
+
+                    <!-- ===== PREVIEW ===== -->
+                    <div id="preview" style="margin-top:20px; border:2px solid #333; position:relative; background:#eee; display:none;"></div>
 
                 </div>
                 <div class="modal-footer justify-content-center border-0 pb-4">

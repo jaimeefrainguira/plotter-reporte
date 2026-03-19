@@ -62,6 +62,12 @@ class CampanaController {
             'material_id' => (int)($_POST['material_id'] ?? 0),
             'separacion_h' => (float)($_POST['separacion_h'] ?? 0),
             'separacion_v' => (float)($_POST['separacion_v'] ?? 0),
+            // Nuevos campos
+            'orientacion' => (string)($_POST['orientacion'] ?? 'auto'),
+            'usar_panelado' => isset($_POST['usar_panelado']) ? 1 : 0,
+            'panel_ancho' => (float)($_POST['panel_ancho'] ?? 0),
+            'panel_gap' => (float)($_POST['panel_gap'] ?? 0),
+            'usar_sintra' => isset($_POST['usar_sintra']) ? 1 : 0,
             'consumo' => [
                 'total_metros' => (float)($_POST['total_metros'] ?? 0),
                 'total_planchas' => (float)($_POST['total_planchas'] ?? 0),

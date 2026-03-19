@@ -3,17 +3,42 @@ declare(strict_types=1);
 
 class Trabajo {
     private PDO $db;
+    private bool $schemaChecked = false;
+    private array $requiredColumns = [
+        "orientacion" => "ALTER TABLE trabajos ADD COLUMN orientacion VARCHAR(20) DEFAULT 'auto' AFTER separacion_v",
+        "usar_panelado" => "ALTER TABLE trabajos ADD COLUMN usar_panelado TINYINT(1) DEFAULT 0 AFTER orientacion",
+        "panel_ancho" => "ALTER TABLE trabajos ADD COLUMN panel_ancho DECIMAL(10,2) DEFAULT 0 AFTER usar_panelado",
+        "panel_gap" => "ALTER TABLE trabajos ADD COLUMN panel_gap DECIMAL(10,2) DEFAULT 0 AFTER panel_ancho",
+        "usar_sintra" => "ALTER TABLE trabajos ADD COLUMN usar_sintra TINYINT(1) DEFAULT 0 AFTER panel_gap"
+    ];
 
     public function __construct(PDO $db) {
         $this->db = $db;
     }
 
+    private function ensureSchema(): void {
+        if ($this->schemaChecked) return;
+        $this->schemaChecked = true;
+        foreach ($this->requiredColumns as $col => $sql) {
+            $stmt = $this->db->prepare("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'trabajos' AND COLUMN_NAME = ?");
+            $stmt->execute([$col]);
+            if ($stmt->fetchColumn() == 0) {
+                try {
+                    $this->db->exec($sql);
+                } catch (Exception $e) {
+                    // Ignorar si ya existe o hay error menor
+                }
+            }
+        }
+    }
+
     public function create(array $data): int {
+        $this->ensureSchema();
         $this->db->beginTransaction();
         try {
             $stmt = $this->db->prepare("
-                INSERT INTO trabajos (campana_id, descripcion, cantidad, ancho_panel, alto_panel, material_id, separacion_h, separacion_v)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO trabajos (campana_id, descripcion, cantidad, ancho_panel, alto_panel, material_id, separacion_h, separacion_v, orientacion, usar_panelado, panel_ancho, panel_gap, usar_sintra)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
             $stmt->execute([
                 $data['campana_id'],
@@ -23,7 +48,12 @@ class Trabajo {
                 $data['alto_panel'],
                 $data['material_id'],
                 $data['separacion_h'],
-                $data['separacion_v']
+                $data['separacion_v'],
+                $data['orientacion'] ?? 'auto',
+                $data['usar_panelado'] ?? 0,
+                $data['panel_ancho'] ?? 0,
+                $data['panel_gap'] ?? 0,
+                $data['usar_sintra'] ?? 0
             ]);
             $trabajoId = (int)$this->db->lastInsertId();
 
@@ -40,11 +70,13 @@ class Trabajo {
     }
 
     public function update(int $id, array $data): bool {
+        $this->ensureSchema();
         $this->db->beginTransaction();
         try {
             $stmt = $this->db->prepare("
                 UPDATE trabajos 
-                SET descripcion = ?, cantidad = ?, ancho_panel = ?, alto_panel = ?, material_id = ?, separacion_h = ?, separacion_v = ?
+                SET descripcion = ?, cantidad = ?, ancho_panel = ?, alto_panel = ?, material_id = ?, separacion_h = ?, separacion_v = ?,
+                    orientacion = ?, usar_panelado = ?, panel_ancho = ?, panel_gap = ?, usar_sintra = ?
                 WHERE id = ?
             ");
             $stmt->execute([
@@ -55,6 +87,11 @@ class Trabajo {
                 $data['material_id'],
                 $data['separacion_h'],
                 $data['separacion_v'],
+                $data['orientacion'] ?? 'auto',
+                $data['usar_panelado'] ?? 0,
+                $data['panel_ancho'] ?? 0,
+                $data['panel_gap'] ?? 0,
+                $data['usar_sintra'] ?? 0,
                 $id
             ]);
 
@@ -71,7 +108,6 @@ class Trabajo {
     }
 
     private function saveConsumo(int $trabajoId, array $consumo): void {
-        // Upsert logically
         $stmtCheck = $this->db->prepare("SELECT id FROM consumos WHERE trabajo_id = ?");
         $stmtCheck->execute([$trabajoId]);
         
