@@ -196,13 +196,55 @@
                         </div>
                     </div>
 
-                    <!-- Panel Inferior de Resultados (BASADO EN IMAGEN REAL) -->
+                    <!-- Panel Inferior de Resultados — Desglose de Fórmulas -->
                     <div class="result-panel mt-4">
                         <div id="resultsOriginal">
-                            <div class="text-center mb-1"><span class="badge bg-dark rounded-pill" id="labelOrientacionUno">Orientación por Defecto</span></div>
+                            <div class="text-center mb-2"><span class="badge bg-dark rounded-pill" id="labelOrientacionUno">Orientación por Defecto</span></div>
+
+                            <!-- Detalle de fórmulas -->
+                            <div class="row g-2 mb-3" id="formulaDetails">
+                                <div class="col-4 col-md-2">
+                                    <div class="summary-card text-center py-2">
+                                        <div style="font-size:.65rem;opacity:.7;">Piezas/Fila</div>
+                                        <div class="h5 mb-0" id="res_piezas_fila">--</div>
+                                    </div>
+                                </div>
+                                <div class="col-4 col-md-2">
+                                    <div class="summary-card text-center py-2">
+                                        <div style="font-size:.65rem;opacity:.7;">Copias/Rollo</div>
+                                        <div class="h5 mb-0" id="res_copias_rollo">--</div>
+                                    </div>
+                                </div>
+                                <div class="col-4 col-md-2">
+                                    <div class="summary-card text-center py-2">
+                                        <div style="font-size:.65rem;opacity:.7;">Rollos</div>
+                                        <div class="h5 mb-0" id="res_rollos">--</div>
+                                    </div>
+                                </div>
+                                <div class="col-4 col-md-2">
+                                    <div class="summary-card text-center py-2">
+                                        <div style="font-size:.65rem;opacity:.7;">Sobrante</div>
+                                        <div class="h6 mb-0" id="res_sobrante">--</div>
+                                    </div>
+                                </div>
+                                <div class="col-4 col-md-2">
+                                    <div class="summary-card text-center py-2">
+                                        <div style="font-size:.65rem;opacity:.7;">Copias Extra</div>
+                                        <div class="h5 mb-0" id="res_copias_extra">--</div>
+                                    </div>
+                                </div>
+                                <div class="col-4 col-md-2">
+                                    <div class="summary-card text-center py-2">
+                                        <div style="font-size:.65rem;opacity:.7;">Mat. Sobrante</div>
+                                        <div class="h6 mb-0" id="res_mat_sobrante">--</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Totales principales -->
                             <div class="row text-center">
                                 <div class="col-md-4 border-end">
-                                    <h6 class="text-muted small">CANTIDAD POR UNIDAD</h6>
+                                    <h6 class="text-muted small">COPIAS POR UNIDAD</h6>
                                     <p class="h4 mb-0" id="res_unidades_unidad">--</p>
                                     <small class="text-muted" id="res_label_unidad">uds por rollo/plancha</small>
                                 </div>
@@ -214,15 +256,57 @@
                                 <div class="col-md-4">
                                     <h6 class="text-muted small">DISTRIBUCIÓN</h6>
                                     <p class="h5 mb-0" id="res_distribucion">--</p>
+                                    <small class="text-muted" id="res_paneles_copia"></small>
                                 </div>
                             </div>
                         </div>
 
                         <div id="resultsRotated" class="mt-3 pt-3 border-top" style="display:none;">
-                            <div class="text-center mb-1"><span class="badge bg-secondary rounded-pill" id="labelOrientacionDos">Orientación Rotada (90°)</span></div>
+                            <div class="text-center mb-2"><span class="badge bg-secondary rounded-pill" id="labelOrientacionDos">Orientación Rotada (90°)</span></div>
+                            
+                            <!-- Detalle fórmulas rotada -->
+                            <div class="row g-2 mb-3">
+                                <div class="col-4 col-md-2">
+                                    <div class="summary-card text-center py-2" style="background:#3a4552;">
+                                        <div style="font-size:.65rem;opacity:.7;">Piezas/Fila</div>
+                                        <div class="h5 mb-0" id="res_piezas_fila_rot">--</div>
+                                    </div>
+                                </div>
+                                <div class="col-4 col-md-2">
+                                    <div class="summary-card text-center py-2" style="background:#3a4552;">
+                                        <div style="font-size:.65rem;opacity:.7;">Copias/Rollo</div>
+                                        <div class="h5 mb-0" id="res_copias_rollo_rot">--</div>
+                                    </div>
+                                </div>
+                                <div class="col-4 col-md-2">
+                                    <div class="summary-card text-center py-2" style="background:#3a4552;">
+                                        <div style="font-size:.65rem;opacity:.7;">Rollos</div>
+                                        <div class="h5 mb-0" id="res_rollos_rot">--</div>
+                                    </div>
+                                </div>
+                                <div class="col-4 col-md-2">
+                                    <div class="summary-card text-center py-2" style="background:#3a4552;">
+                                        <div style="font-size:.65rem;opacity:.7;">Sobrante</div>
+                                        <div class="h6 mb-0" id="res_sobrante_rot">--</div>
+                                    </div>
+                                </div>
+                                <div class="col-4 col-md-2">
+                                    <div class="summary-card text-center py-2" style="background:#3a4552;">
+                                        <div style="font-size:.65rem;opacity:.7;">Copias Extra</div>
+                                        <div class="h5 mb-0" id="res_copias_extra_rot">--</div>
+                                    </div>
+                                </div>
+                                <div class="col-4 col-md-2">
+                                    <div class="summary-card text-center py-2" style="background:#3a4552;">
+                                        <div style="font-size:.65rem;opacity:.7;">Mat. Sobrante</div>
+                                        <div class="h6 mb-0" id="res_mat_sobrante_rot">--</div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="row text-center">
                                 <div class="col-md-4 border-end">
-                                    <h6 class="text-muted small">CANTIDAD POR UNIDAD</h6>
+                                    <h6 class="text-muted small">COPIAS POR UNIDAD</h6>
                                     <p class="h4 mb-0" id="res_unidades_unidad_rot">--</p>
                                 </div>
                                 <div class="col-md-4 border-end">
