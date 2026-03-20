@@ -29,6 +29,33 @@ class Campana {
         return (int)$this->db->lastInsertId();
     }
 
+    public function update(int $id, array $data): bool {
+        $stmt = $this->db->prepare("
+            UPDATE campanas
+            SET nombre = ?, requerimiento_nro = ?, estado = ?
+            WHERE id = ?
+        ");
+        return $stmt->execute([
+            $data['nombre'],
+            $data['requerimiento_nro'] ?? null,
+            $data['estado'] ?? 'PENDIENTE',
+            $id,
+        ]);
+    }
+
+    public function delete(int $id): bool {
+        // Borrar consumos → trabajos → campaña (orden por FK)
+        $this->db->prepare("
+            DELETE c FROM consumos c
+            INNER JOIN trabajos t ON c.trabajo_id = t.id
+            WHERE t.campana_id = ?
+        ")->execute([$id]);
+
+        $this->db->prepare("DELETE FROM trabajos WHERE campana_id = ?")->execute([$id]);
+        $stmt = $this->db->prepare("DELETE FROM campanas WHERE id = ?");
+        return $stmt->execute([$id]);
+    }
+
     public function getTrabajos(int $campanaId): array {
         $stmt = $this->db->prepare("
             SELECT t.*, m.nombre as material_nombre, m.tipo as material_tipo,

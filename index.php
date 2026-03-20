@@ -124,6 +124,22 @@ switch ($action) {
         $campanaController->deleteTrabajo();
         break;
 
+    case 'campana_update':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $campanaController->updateCampana((int)($_POST['id'] ?? 0));
+            break;
+        }
+        header('Location: index.php?action=campanas_list');
+        break;
+
+    case 'campana_delete':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $campanaController->deleteCampana((int)($_POST['id'] ?? 0));
+            break;
+        }
+        header('Location: index.php?action=campanas_list');
+        break;
+
     // --- Módulo de Materia Prima ---
     case 'materiales_list':
         $materialController->list();

@@ -90,5 +90,61 @@ class CampanaController {
         $campanaId = (int)$_POST['campana_id'];
         $this->trabajoModel->delete($id);
         header('Location: index.php?action=campana_detail&id=' . $campanaId);
+        exit;
+    }
+
+    /* ─── EDITAR CAMPAÑA ────────────────────────────────────────────── */
+
+    public function editCampana(int $id): void {
+        $campana = $this->campanaModel->getById($id);
+        if (!$campana) {
+            $_SESSION['flash'] = ['type' => 'warning', 'message' => 'Campaña no encontrada.'];
+            header('Location: index.php?action=campanas_list');
+            exit;
+        }
+        // Se renderiza inline en el listado vía modal, no necesita vista propia.
+        // Este método no se usa directamente — la edición ocurre por modal en lista.php
+    }
+
+    public function updateCampana(int $id): void {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: index.php?action=campanas_list');
+            exit;
+        }
+
+        $nombre = trim((string)($_POST['nombre'] ?? ''));
+        $req    = trim((string)($_POST['requerimiento_nro'] ?? ''));
+        $estado = trim((string)($_POST['estado'] ?? 'PENDIENTE'));
+
+        if ($nombre === '') {
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'El nombre no puede estar vacío.'];
+            header('Location: index.php?action=campanas_list');
+            exit;
+        }
+
+        $this->campanaModel->update($id, [
+            'nombre'           => $nombre,
+            'requerimiento_nro'=> $req,
+            'estado'           => $estado,
+        ]);
+
+        $_SESSION['flash'] = ['type' => 'success', 'message' => "Campaña <strong>" . htmlspecialchars($nombre) . "</strong> actualizada."];
+        header('Location: index.php?action=campanas_list');
+        exit;
+    }
+
+    public function deleteCampana(int $id): void {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: index.php?action=campanas_list');
+            exit;
+        }
+
+        $campana = $this->campanaModel->getById($id);
+        $nombre  = $campana ? $campana['nombre'] : "#{$id}";
+        $this->campanaModel->delete($id);
+
+        $_SESSION['flash'] = ['type' => 'success', 'message' => "Campaña <strong>" . htmlspecialchars($nombre) . "</strong> eliminada."];
+        header('Location: index.php?action=campanas_list');
+        exit;
     }
 }
