@@ -610,6 +610,8 @@
 
                 try {
                     const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
+                    console.log("IA: Llamando a Google con clave:", GEMINI_KEY.substring(0, 5) + "...");
+                    
                     const resp = await fetch(url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -621,8 +623,15 @@
                         })
                     });
 
-                    if (!resp.ok) throw new Error("Error API Google");
                     const res = await resp.json();
+
+                    if (!resp.ok) {
+                        // Mostrar el error real de Google (esto es clave)
+                        const msg = res.error?.message || "Error desconocido";
+                        alert("Google dice: " + msg);
+                        throw new Error(msg);
+                    }
+
                     let raw = res.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
                     const items = JSON.parse(raw);
 
