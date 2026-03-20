@@ -7,7 +7,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="css/campanas.css">
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
 <body class="bg-light">
 
@@ -573,38 +572,35 @@
                     ctx.putImageData(imgData, 0, 0);
                     const processedImgBase64 = canvas.toDataURL('image/png');
 
-                    // PASO 1: OCR con Tesseract.js (V5)
-                    console.log("Iniciando OCR con Tesseract.js v5...");
-                    ocrStatus.textContent = "Preparando motor de OCR...";
-                    
-                    // Tiempo de espera para informar si demora mucho
-                    const timeoutMsg = setTimeout(() => {
-                        ocrStatus.textContent = "Sigue cargando (primera vez puede demorar)...";
-                    }, 8000);
+                    // PASO 1: OCR con OCR.space API
+                    console.log("Iniciando OCR con OCR.space API...");
+                    ocrStatus.textContent = "Enviando imagen a OCR.space...";
+                    progressBar.style.width = '40%';
+                    ocrPercent.textContent = '40%';
 
-                    // Pasamos la imagen en blanco y negro de máximo contraste
-                    const { data: { text } } = await Tesseract.recognize(processedImgBase64, 'spa', {
-                        langPath: 'https://tessdata.projectnaptha.com/4.0.0_best/',
-                        tessedit_pageseg_mode: '6', // PSM 6: Assume a single uniform block of text. (ideal para tablas)
-                        logger: m => {
-                            clearTimeout(timeoutMsg);
-                            console.log("Tesseract Log:", m);
-                            if (m.status === 'recognizing text') {
-                                const prog = Math.round(m.progress * 100);
-                                progressBar.style.width = prog + '%';
-                                ocrPercent.textContent = prog + '%';
-                                ocrStatus.textContent = `Analizando imagen (${prog}%)...`;
-                            } else {
-                                // Traducir estados para el usuario
-                                let statusEs = "Procesando...";
-                                if (m.status === 'loading tesseract core')      statusEs = "Cargando motor...";
-                                if (m.status === 'initializing tesseract core') statusEs = "Iniciando motor...";
-                                if (m.status === 'loading language traineddata') statusEs = "Descargando idioma (15MB)...";
-                                if (m.status === 'initializing api')             statusEs = "Inicializando API...";
-                                ocrStatus.textContent = statusEs;
-                            }
-                        }
+                    const formData = new FormData();
+                    formData.append('base64Image', processedImgBase64);
+                    formData.append('language', 'spa');
+                    formData.append('apikey', 'helloworld'); // Llave pública de prueba
+                    formData.append('isTable', 'true');
+                    formData.append('scale', 'true');
+
+                    const response = await fetch('https://api.ocr.space/parse/image', {
+                        method: 'POST',
+                        body: formData
                     });
+                    
+                    ocrStatus.textContent = "Recibiendo respuesta de OCR.space...";
+                    progressBar.style.width = '80%';
+                    ocrPercent.textContent = '80%';
+
+                    const result = await response.json();
+
+                    if (result.IsErroredOnProcessing || !result.ParsedResults || result.ParsedResults.length === 0) {
+                        throw new Error("Error en OCR.space: " + (result.ErrorMessage || "No se pudo extraer texto."));
+                    }
+
+                    const text = result.ParsedResults[0].ParsedText;
 
                     if (!text || text.trim().length < 5) {
                         throw new Error("No se pudo extraer texto suficiente para procesar.");
