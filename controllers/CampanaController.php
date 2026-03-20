@@ -147,4 +147,51 @@ class CampanaController {
         header('Location: index.php?action=campanas_list');
         exit;
     }
+
+    public function bulkSaveTrabajos(): void {
+        header('Content-Type: application/json');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['ok' => false, 'error' => 'Metodo no permitido']);
+            exit;
+        }
+
+        $inputData = json_decode(file_get_contents('php://input'), true);
+        $campanaId = (int)($inputData['campana_id'] ?? 0);
+        $items     = $inputData['items'] ?? [];
+
+        if ($campanaId <= 0 || empty($items)) {
+            echo json_encode(['ok' => false, 'error' => 'Datos invalidos']);
+            exit;
+        }
+
+        try {
+            foreach ($items as $item) {
+                $this->trabajoModel->create([
+                    'campana_id'   => $campanaId,
+                    'descripcion'  => (string)($item['descripcion'] ?? 'Sin nombre'),
+                    'cantidad'     => (int)($item['cantidad'] ?? 1),
+                    'ancho_panel'  => 0,
+                    'alto_panel'   => 0,
+                    'material_id'  => 0,
+                    'separacion_h' => 0,
+                    'separacion_v' => 0,
+                    'orientacion'  => 'auto',
+                    'usar_panelado'=> 0,
+                    'panel_ancho'  => 0,
+                    'panel_gap'    => 0,
+                    'usar_sintra'  => 0,
+                    'consumo' => [
+                        'total_metros'   => 0,
+                        'total_planchas' => 0,
+                        'distribucion_texto' => '',
+                        'unidades_por_unidad_venta' => 0
+                    ]
+                ]);
+            }
+            echo json_encode(['ok' => true]);
+        } catch (Exception $e) {
+            echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
+        }
+        exit;
+    }
 }

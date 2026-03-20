@@ -31,6 +31,9 @@
         <span class="navbar-brand h1 mb-0"><i class="bi bi- megaphone"></i> <?= htmlspecialchars($campana['nombre']) ?></span>
         <div class="d-flex gap-2">
             <a href="index.php?action=campanas_list" class="btn btn-outline-light btn-sm"><i class="bi bi-arrow-left"></i> Volver a Lista</a>
+            <button class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target="#modalMultiIA">
+                <i class="bi bi-robot"></i> AÑADIR MÚLTIPLES (IA)
+            </button>
             <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalTrabajo" id="btnNuevoTrabajo">
                 <i class="bi bi-plus-circle"></i> AÑADIR TRABAJO
             </button>
@@ -437,6 +440,122 @@
                 </div>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- ═══════════════ MODAL: AÑADIR MÚLTIPLES (IA) ═══════════════ -->
+<div class="modal fade" id="modalMultiIA" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-robot me-2 text-primary"></i>Carga Masiva con IA</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Paso 1: Carga -->
+                <div id="multiIA-step-upload">
+                    <p class="text-muted small">Carga una imagen de tu lista de trabajos (foto de cuaderno, pedido impreso, etc.) y la IA extraerá los datos automáticamente.</p>
+                    <div class="border border-2 border-dashed rounded-4 p-5 text-center bg-light mb-3" id="dropAreaIA">
+                        <i class="bi bi-image text-primary" style="font-size:3rem; opacity:.5"></i>
+                        <h6 class="mt-3">Arrastra tu imagen aquí</h6>
+                        <p class="small text-muted">o haz clic para seleccionar archivo</p>
+                        <input type="file" id="fileInputIA" accept="image/*" class="d-none">
+                        <div id="imgPreviewIA" class="mt-3 d-none">
+                            <img src="" class="img-fluid rounded border shadow-sm" style="max-height:200px">
+                        </div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="button" class="btn btn-primary" id="btnProcesarIA" disabled>
+                            <span class="spinner-border spinner-border-sm d-none" id="spinIA"></span>
+                            <span id="txtIA">PROCESAR CON IA</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Paso 2: Revisión (Oculto al inicio) -->
+                <div id="multiIA-step-review" class="d-none">
+                    <div class="alert alert-info py-2 small mb-3">
+                        <i class="bi bi-check2-circle"></i> <strong>IA:</strong> He encontrado <span id="iaCount">0</span> ítems. Por favor, revísalos y corrígelos si es necesario.
+                    </div>
+                    <div class="table-responsive" style="max-height:300px">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-dark">
+                                <tr><th>Descripción</th><th style="width:100px">Cantidad</th><th></th></tr>
+                            </thead>
+                            <tbody id="iaTableBody">
+                                <!-- Se llena dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-success d-none" id="btnConfirmarIA">
+                    <i class="bi bi-check-circle"></i> Confirmar y Cargar
+                </button>
+                <button type="button" class="btn btn-outline-primary d-none" id="btnRecargarIA">
+                    <i class="bi bi-arrow-repeat"></i> Volver a Cargar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════ MODAL: AÑADIR MÚLTIPLES (IA) ═══════════════ -->
+<div class="modal fade" id="modalMultiIA" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-robot me-2 text-primary"></i>Carga Masiva con IA</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Paso 1: Carga -->
+                <div id="multiIA-step-upload">
+                    <p class="text-muted small">Carga una imagen de tu lista de trabajos (foto de cuaderno, pedido impreso, etc.) y Antigravity extraerá los datos.</p>
+                    <div class="border border-2 border-dashed rounded-4 p-5 text-center bg-light mb-3" id="dropAreaIA" style="cursor:pointer">
+                        <i class="bi bi-image text-primary" style="font-size:3rem; opacity:.5"></i>
+                        <h6 class="mt-3">Arrastra tu imagen aquí</h6>
+                        <p class="small text-muted">o haz clic para seleccionar archivo</p>
+                        <input type="file" id="fileInputIA" accept="image/*" class="d-none">
+                        <div id="imgPreviewIA" class="mt-3 d-none">
+                            <img src="" class="img-fluid rounded border shadow-sm" style="max-height:200px">
+                        </div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="button" class="btn btn-primary" id="btnProcesarIA" disabled>
+                            <span class="spinner-border spinner-border-sm d-none" id="spinIA"></span>
+                            <span id="txtIA">PROCESAR CON IA</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Paso 2: Revisión -->
+                <div id="multiIA-step-review" class="d-none">
+                    <div class="alert alert-info py-2 small mb-3">
+                        <i class="bi bi-check2-circle"></i> <strong>Antigravity:</strong> He analizado la imagen. Por favor, confirma los datos.
+                    </div>
+                    <div class="table-responsive" style="max-height:300px">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-dark">
+                                <tr><th>Descripción</th><th style="width:100px">Cantidad</th><th></th></tr>
+                            </thead>
+                            <tbody id="iaTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-success d-none" id="btnConfirmarIA">
+                    <i class="bi bi-check-circle"></i> Confirmar y Cargar
+                </button>
+                <button type="button" class="btn btn-outline-primary d-none" id="btnRecargarIA">
+                    <i class="bi bi-arrow-repeat"></i> Volver a Cargar
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 

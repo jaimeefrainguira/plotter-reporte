@@ -140,6 +140,10 @@ switch ($action) {
         header('Location: index.php?action=campanas_list');
         break;
 
+    case 'campana_bulk_save':
+        $campanaController->bulkSaveTrabajos();
+        break;
+
     // --- Módulo de Materia Prima ---
     case 'materiales_list':
         $materialController->list();

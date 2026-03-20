@@ -323,4 +323,105 @@ document.addEventListener('DOMContentLoaded', () => {
 
         console.log('Cálculo finalizado con éxito.');
     }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // ── MÓDULO IA: Carga Masiva desde Imagen ─────────────────────────────────
+    // ════════════════════════════════════════════════════════════════════════
+    const dropAreaIA   = document.getElementById('dropAreaIA');
+    const fileInputIA  = document.getElementById('fileInputIA');
+    const btnProcesar  = document.getElementById('btnProcesarIA');
+    const btnConfirmar = document.getElementById('btnConfirmarIA');
+    const btnRecargar  = document.getElementById('btnRecargarIA');
+    const stepUpload   = document.getElementById('multiIA-step-upload');
+    const stepReview   = document.getElementById('multiIA-step-review');
+    const tableBodyIA  = document.getElementById('iaTableBody');
+    const previewImgIA = document.getElementById('imgPreviewIA');
+
+    if (dropAreaIA) {
+        dropAreaIA.onclick = () => fileInputIA.click();
+        fileInputIA.onchange = (e) => handleFilesIA(e.target.files);
+        dropAreaIA.ondragover = (e) => { e.preventDefault(); dropAreaIA.classList.add('bg-primary-subtle'); };
+        dropAreaIA.ondragleave = () => { dropAreaIA.classList.remove('bg-primary-subtle'); };
+        dropAreaIA.ondrop = (e) => { e.preventDefault(); dropAreaIA.classList.remove('bg-primary-subtle'); handleFilesIA(e.dataTransfer.files); };
+    }
+
+    function handleFilesIA(files) {
+        if (!files.length) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            previewImgIA.querySelector('img').src = e.target.result;
+            previewImgIA.classList.remove('d-none');
+            btnProcesar.disabled = false;
+        };
+        reader.readAsDataURL(files[0]);
+    }
+
+    btnProcesar.onclick = () => {
+        document.getElementById('spinIA').classList.remove('d-none');
+        document.getElementById('txtIA').textContent = 'Analizando con Antigravity...';
+        btnProcesar.disabled = true;
+
+        setTimeout(() => {
+            const jsonStr = prompt("Antigravity: Pega aquí el JSON generado para la imagen:", "");
+            if (jsonStr) {
+                try {
+                    const data = JSON.parse(jsonStr);
+                    renderReviewIA(data);
+                } catch (e) {
+                    alert("JSON inválido.");
+                    resetModalIA();
+                }
+            } else { resetModalIA(); }
+        }, 800);
+    };
+
+    function renderReviewIA(items) {
+        tableBodyIA.innerHTML = '';
+        items.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><input type="text" class="form-control form-control-sm ia-desc" value="${item.descripcion}"></td>
+                <td><input type="number" class="form-control form-control-sm ia-cant" value="${item.cantidad}"></td>
+                <td><button class="btn btn-sm btn-danger py-0 px-1" onclick="this.closest('tr').remove()"><i class="bi bi-x"></i></button></td>
+            `;
+            tableBodyIA.appendChild(tr);
+        });
+        stepUpload.classList.add('d-none');
+        stepReview.classList.remove('d-none');
+        btnConfirmar.classList.remove('d-none');
+        btnRecargar.classList.remove('d-none');
+        btnProcesar.classList.add('d-none');
+    }
+
+    function resetModalIA() {
+        stepUpload.classList.remove('d-none');
+        stepReview.classList.add('d-none');
+        btnConfirmar.classList.add('d-none');
+        btnRecargar.classList.add('d-none');
+        btnProcesar.classList.remove('d-none');
+        btnProcesar.disabled = false;
+        document.getElementById('spinIA').classList.add('d-none');
+        document.getElementById('txtIA').textContent = 'PROCESAR CON IA';
+        previewImgIA.classList.add('d-none');
+    }
+
+    btnRecargar.onclick = resetModalIA;
+
+    btnConfirmar.onclick = async () => {
+        const items = Array.from(document.querySelectorAll('#iaTableBody tr')).map(tr => ({
+            descripcion: tr.querySelector('.ia-desc').value,
+            cantidad: parseInt(tr.querySelector('.ia-cant').value) || 1
+        }));
+        if (!items.length) return;
+        btnConfirmar.disabled = true;
+        const campanaId = new URLSearchParams(window.location.search).get('id');
+        const resp = await fetch('index.php?action=campana_bulk_save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ campana_id: campanaId, items: items })
+        });
+        const res = await resp.json();
+        if (res.ok) location.reload();
+        else { alert("Error: " + res.error); btnConfirmar.disabled = false; }
+    };
 });
