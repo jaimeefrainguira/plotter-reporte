@@ -325,8 +325,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ════════════════════════════════════════════════════════════════════════
-    // ── MÓDULO IA: Carga Masiva desde Imagen ─────────────────────────────────
+    // ── CONFIGURACIÓN IA: Pon tu API Key aquí ────────────────────────────────
     // ════════════════════════════════════════════════════════════════════════
+    const GEMINI_API_KEY = "AIzaSyCpvNI9GiPas9p-hKrZaCGipJkR2_YN4hw"; // Configurada por Antigravity
+
     const dropAreaIA   = document.getElementById('dropAreaIA');
     const fileInputIA  = document.getElementById('fileInputIA');
     const btnProcesar  = document.getElementById('btnProcesarIA');
@@ -336,6 +338,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const stepReview   = document.getElementById('multiIA-step-review');
     const tableBodyIA  = document.getElementById('iaTableBody');
     const previewImgIA = document.getElementById('imgPreviewIA');
+
+    let base64ImageIA = ""; // Para guardar la imagen seleccionada
 
     if (dropAreaIA) {
         dropAreaIA.onclick = () => fileInputIA.click();
@@ -349,6 +353,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!files.length) return;
         const reader = new FileReader();
         reader.onload = (e) => {
+            base64ImageIA = e.target.result.split(',')[1]; // Extraer solo el base64
             previewImgIA.querySelector('img').src = e.target.result;
             previewImgIA.classList.remove('d-none');
             btnProcesar.disabled = false;
@@ -356,23 +361,59 @@ document.addEventListener('DOMContentLoaded', () => {
         reader.readAsDataURL(files[0]);
     }
 
-    btnProcesar.onclick = () => {
-        document.getElementById('spinIA').classList.remove('d-none');
-        document.getElementById('txtIA').textContent = 'Analizando con Antigravity...';
+    btnProcesar.onclick = async () => {
+        if (GEMINI_API_KEY === "TU_API_KEY_AQUI") {
+            alert("Error: Debes configurar tu API KEY de Google Gemini al inicio de js/campanas_calculos.js");
+            return;
+        }
+
+        const spin = document.getElementById('spinIA');
+        const txt  = document.getElementById('txtIA');
+        spin.classList.remove('d-none');
+        txt.textContent = 'Antigravity está analizando la imagen...';
         btnProcesar.disabled = true;
 
-        setTimeout(() => {
-            const jsonStr = prompt("Antigravity: Pega aquí el JSON generado para la imagen:", "");
-            if (jsonStr) {
-                try {
-                    const data = JSON.parse(jsonStr);
-                    renderReviewIA(data);
-                } catch (e) {
-                    alert("JSON inválido.");
-                    resetModalIA();
-                }
-            } else { resetModalIA(); }
-        }, 800);
+        const PROMPT = `Analiza la imagen adjunta que contiene una tabla de trabajos/ítems. 
+        Debes extraer exclusivamente la información de dos columnas: Descripción (descripcion) y Cantidad (cantidad). 
+        Ignora cualquier otra columna. 
+        No añadas comentarios, introducciones ni explicaciones.
+        Devuelve los resultados únicamente en un formato de arreglo JSON válido:
+        [{"descripcion": "Nombre del item", "cantidad": 10}, ...]`;
+
+        try {
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+            
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [
+                            { text: PROMPT },
+                            { inline_data: { mime_type: "image/jpeg", data: base64ImageIA } }
+                        ]
+                    }]
+                })
+            });
+
+            const result = await response.json();
+            
+            // Extraer el texto del JSON que devuelve Gemini y limpiarlo
+            let rawText = result.candidates[0].content.parts[0].text;
+            // Limpiar posibles bloques de código triple backtick
+            rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+
+            const data = JSON.parse(rawText);
+            renderReviewIA(data);
+
+        } catch (error) {
+            console.error(error);
+            alert("Error al procesar con IA: " + error.message);
+            resetModalIA();
+        } finally {
+            spin.classList.add('d-none');
+            txt.textContent = 'PROCESAR CON IA';
+        }
     };
 
     function renderReviewIA(items) {
@@ -382,7 +423,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tr.innerHTML = `
                 <td><input type="text" class="form-control form-control-sm ia-desc" value="${item.descripcion}"></td>
                 <td><input type="number" class="form-control form-control-sm ia-cant" value="${item.cantidad}"></td>
-                <td><button class="btn btn-sm btn-danger py-0 px-1" onclick="this.closest('tr').remove()"><i class="bi bi-x"></i></button></td>
+                <td><button class="btn btn-sm btn-danger py-0 px-1" title="Eliminar ítem" onclick="this.closest('tr').remove()"><i class="bi bi-x"></i></button></td>
             `;
             tableBodyIA.appendChild(tr);
         });
@@ -400,9 +441,8 @@ document.addEventListener('DOMContentLoaded', () => {
         btnRecargar.classList.add('d-none');
         btnProcesar.classList.remove('d-none');
         btnProcesar.disabled = false;
-        document.getElementById('spinIA').classList.add('d-none');
-        document.getElementById('txtIA').textContent = 'PROCESAR CON IA';
         previewImgIA.classList.add('d-none');
+        base64ImageIA = "";
     }
 
     btnRecargar.onclick = resetModalIA;
