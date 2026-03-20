@@ -600,60 +600,85 @@
                         throw new Error("Error en OCR.space: " + (result.ErrorMessage || "No se pudo extraer texto."));
                     }
 
+                    console.log("Respuesta completa de OCR.space (JSON):", result);
+                    
                     const text = result.ParsedResults[0].ParsedText;
 
                     if (!text || text.trim().length < 5) {
                         throw new Error("No se pudo extraer texto suficiente para procesar.");
                     }
 
-                    console.log("OCR completado. Texto obtenido (longitud):", text.length);
+                    console.log("OCR completado. Texto obtenido en crudo:\n", text);
                     ocrStatus.textContent = "Analizando tabla de datos extraída...";
                     progressBar.style.width = '100%';
                     progressBar.classList.replace('bg-info', 'bg-success');
 
-                    // --- PARSEO LOCAL ESPECÍFICO (SIN GOOGLE) ---
+                    // --- PARSEO ROBUSTO DE CADENAS DE TEXTO TABULARES ---
                     const items = [];
                     const lines = text.split('\n');
 
-                    // Expresión regular para omitir encabezados
+                    // Expresión regular para omitir filas que son encabezados obvios
                     const isHeader = /CÓDIGO|DESCRIPCIÓN|MEDIDA|CANTIDAD|CODIGO|DESCRIPCION/i;
 
                     lines.forEach(line => {
                         let trimmed = line.trim();
-                        // Limpiar múltiples espacios seguidos y tabulaciones
-                        trimmed = trimmed.replace(/\s+/g, ' ');
+                        if (trimmed.length < 5) return; // Ignorar ruido corto
+                        if (isHeader.test(trimmed)) return; // Ignorar el título
 
-                        if (trimmed.length < 10) return; // Ignorar líneas muy cortas o ruido de la imagen
-                        if (isHeader.test(trimmed)) return; // Ignorar la fila de título
+                        // OCR.space con isTable=true inserta tabulaciones (\t) entre columnas distanciadas
+                        const columnas = trimmed.split('\t');
 
-                        // Expresión regular para detectar la tabla del usuario:
-                        // (Todo antes de la cantidad) + (Posible unidad: UNIDAD, UNIDA D, UND) + (CANTIDAD numérico final) + (Posible ruido corto)
-                        // Ej: "1 PR01798 VALLA 6.60 * 3.30 MTS UNIDA D 1.00"
-                        const match = trimmed.match(/^(.*?)\s+(?:UNID?A?[ \-]?D?|UND|PZA|U\.? ?MEDIDA)?\s*(\d+(?:[,.]\d+)?)\s*(?:[A-Za-z\W_]{0,3})?$/i);
+                        if (columnas.length >= 2) {
+                             // Buscar la columna de cantidad (típicamente la última o penúltima)
+                             let posCant = columnas.length - 1;
+                             let cantVal = parseFloat(columnas[posCant].trim().replace(',', '.'));
+                             
+                             if (isNaN(cantVal) && posCant > 0) {
+                                 posCant--;
+                                 cantVal = parseFloat(columnas[posCant].trim().replace(',', '.'));
+                             }
+                             
+                             if (!isNaN(cantVal)) {
+                                 let descCols = columnas.slice(0, posCant).join(' ').trim();
+                                 // Limpiar rastros de id numérico, códigos y la palabra "Unidad"
+                                 descCols = descCols.replace(/^[\dO\|\-\.\*]{1,3}\s+[A-Z0-9\-]{5,10}\s+/i, '');
+                                 descCols = descCols.replace(/^[A-Z0-9\-]{5,10}\s+/i, '');
+                                 descCols = descCols.replace(/\s+(?:UNID?A?[ \-]?D?|UND|PZA|U\.? ?MEDIDA)?$/i, '');
+                                 
+                                 if (descCols.trim().length > 3) {
+                                      items.push({ descripcion: descCols.trim(), cantidad: cantVal });
+                                      return; // Éxito con tabulación
+                                 }
+                             }
+                        }
+
+                        // FALLBACK: Si no sirvieron las tabulaciones, intentamos separación por Regex tradicional
+                        let espacioTrimmed = trimmed.replace(/\s+/g, ' ');
+                        const match = espacioTrimmed.match(/^(.*?)\s+(\d+(?:[,.]\d+)?)\s*(?:[A-Za-z\W_]{0,8})?$/i);
 
                         if (match) {
                             let desc = match[1].trim();
                             let cantStr = match[2].trim().replace(',', '.');
                             let cant = parseFloat(cantStr) || 1;
 
-                            // Eliminar posible columna "#" (número de item) y columna "CÓDIGO" al inicio (ej: "1 PR01798" o solo "PR01798")
-                            // Asumimos iterador corto (1-3 chars) + código alfanumérico largo
                             desc = desc.replace(/^[\dO\|\-\.\*]{1,3}\s+[A-Z0-9\-]{5,10}\s+/i, '');
-                            // Alternativa por si el OCR no captó el # de item, solo el código:
                             desc = desc.replace(/^[A-Z0-9\-]{5,10}\s+/i, '');
-
-                            // Limpieza final de rastro de unidad pegada al final (ej: "UNIDA" sin D por defecto del OCR)
-                            desc = desc.replace(/\s+UNID?A?$/i, '');
-
+                            desc = desc.replace(/\s+(?:UNID?A?[ \-]?D?|UND|PZA|U\.? ?MEDIDA)?$/i, '');
                             desc = desc.trim();
 
                             if (desc.length > 3) {
                                 items.push({ descripcion: desc, cantidad: cant });
+                                return; // Éxito con regex
                             }
+                        }
+
+                        // Si hay una línea larga pero no le pudimos deducir la cantidad, la metemos con cant=1 (para revisar)
+                        if (espacioTrimmed.length > 20) {
+                            items.push({ descripcion: "[Revisar] " + espacioTrimmed, cantidad: 1 });
                         }
                     });
 
-                    // Fallback de seguridad por si la expresión de tabla falla en toda la imagen
+                    // Fallback extremo
                     if (items.length === 0) {
                         lines.filter(l => l.trim().length > 15 && !isHeader.test(l)).forEach(l => {
                             items.push({ descripcion: "REVISAR: " + l.trim(), cantidad: 1 });
