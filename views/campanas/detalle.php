@@ -23,6 +23,10 @@
             margin-bottom: 5px;
         }
     </style>
+    <script>
+        // API KEY Global para procesamiento de IA (Bypass de caché)
+        const GEMINI_API_KEY = "AIzaSyBEk4ziQM0iMmHOA7ssfli65woGyMK1kZ4";
+    </script>
 </head>
 <body class="bg-light">
 

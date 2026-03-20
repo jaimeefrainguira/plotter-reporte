@@ -365,7 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     btnProcesar.onclick = async () => {
-        console.log('Iniciando procesamiento con IA...');
+        // Usa la clave GEMINI_API_KEY definida en detalle.php
         const spin = document.getElementById('spinIA');
         const txt  = document.getElementById('txtIA');
         
