@@ -613,76 +613,49 @@
                     progressBar.style.width = '100%';
                     progressBar.classList.replace('bg-info', 'bg-success');
 
-                    // --- PARSEO ROBUSTO DE CADENAS DE TEXTO TABULARES ---
-                    const items = [];
-                    const lines = text.split('\n');
+                    // --- PARSEO INTELIGENTE CON IA (GEMINI) ---
+                    ocrStatus.textContent = "IA organizando los datos obtenidos...";
+                    
+                    const promptText = `Eres un asistente que extrae información tabular de texto en crudo generado por OCR de una orden de producción.
+Objetivos y Reglas:
+1. Extrae cada ítem de trabajo.
+2. Ignora encabezados y ruido repetitivo (ej: "UNIDA", "D", "MTS" sueltos en líneas aparte).
+3. Une aquellas descripciones que el OCR separó por accidente en varias líneas (ej: si dice "ETQ PRECIADORES BIKE SHOP" en una línea e "IOCMX13CM" en la otra, es el mismo producto).
+4. Encuentra la "cantidad" asociada numéricamente a ese ítem (ej: 1.00, 75.00, 50.00). Si dice algo como 1<17 asume cantidad 1.
+5. Devuelve **ESTRICTAMENTE** un JSON Array nativo de objetos con las llaves "descripcion" (string) y "cantidad" (número). NO uses markdown (\`\`\`json), solo el raw array.
 
-                    // Expresión regular para omitir filas que son encabezados obvios
-                    const isHeader = /CÓDIGO|DESCRIPCIÓN|MEDIDA|CANTIDAD|CODIGO|DESCRIPCION/i;
+Texto OCR a procesar:
+${text}`;
 
-                    lines.forEach(line => {
-                        let trimmed = line.trim();
-                        if (trimmed.length < 5) return; // Ignorar ruido corto
-                        if (isHeader.test(trimmed)) return; // Ignorar el título
-
-                        // OCR.space con isTable=true inserta tabulaciones (\t) entre columnas distanciadas
-                        const columnas = trimmed.split('\t');
-
-                        if (columnas.length >= 2) {
-                             // Buscar la columna de cantidad (típicamente la última o penúltima)
-                             let posCant = columnas.length - 1;
-                             let cantVal = parseFloat(columnas[posCant].trim().replace(',', '.'));
-                             
-                             if (isNaN(cantVal) && posCant > 0) {
-                                 posCant--;
-                                 cantVal = parseFloat(columnas[posCant].trim().replace(',', '.'));
-                             }
-                             
-                             if (!isNaN(cantVal)) {
-                                 let descCols = columnas.slice(0, posCant).join(' ').trim();
-                                 // Limpiar rastros de id numérico, códigos y la palabra "Unidad"
-                                 descCols = descCols.replace(/^[\dO\|\-\.\*]{1,3}\s+[A-Z0-9\-]{5,10}\s+/i, '');
-                                 descCols = descCols.replace(/^[A-Z0-9\-]{5,10}\s+/i, '');
-                                 descCols = descCols.replace(/\s+(?:UNID?A?[ \-]?D?|UND|PZA|U\.? ?MEDIDA)?$/i, '');
-                                 
-                                 if (descCols.trim().length > 3) {
-                                      items.push({ descripcion: descCols.trim(), cantidad: cantVal });
-                                      return; // Éxito con tabulación
-                                 }
-                             }
-                        }
-
-                        // FALLBACK: Si no sirvieron las tabulaciones, intentamos separación por Regex tradicional
-                        let espacioTrimmed = trimmed.replace(/\s+/g, ' ');
-                        const match = espacioTrimmed.match(/^(.*?)\s+(\d+(?:[,.]\d+)?)\s*(?:[A-Za-z\W_]{0,8})?$/i);
-
-                        if (match) {
-                            let desc = match[1].trim();
-                            let cantStr = match[2].trim().replace(',', '.');
-                            let cant = parseFloat(cantStr) || 1;
-
-                            desc = desc.replace(/^[\dO\|\-\.\*]{1,3}\s+[A-Z0-9\-]{5,10}\s+/i, '');
-                            desc = desc.replace(/^[A-Z0-9\-]{5,10}\s+/i, '');
-                            desc = desc.replace(/\s+(?:UNID?A?[ \-]?D?|UND|PZA|U\.? ?MEDIDA)?$/i, '');
-                            desc = desc.trim();
-
-                            if (desc.length > 3) {
-                                items.push({ descripcion: desc, cantidad: cant });
-                                return; // Éxito con regex
-                            }
-                        }
-
-                        // Si hay una línea larga pero no le pudimos deducir la cantidad, la metemos con cant=1 (para revisar)
-                        if (espacioTrimmed.length > 20) {
-                            items.push({ descripcion: "[Revisar] " + espacioTrimmed, cantidad: 1 });
-                        }
-                    });
-
-                    // Fallback extremo
-                    if (items.length === 0) {
-                        lines.filter(l => l.trim().length > 15 && !isHeader.test(l)).forEach(l => {
-                            items.push({ descripcion: "REVISAR: " + l.trim(), cantidad: 1 });
+                    let items = [];
+                    try {
+                        const geminiResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                contents: [{ parts: [{ text: promptText }] }],
+                                generationConfig: { temperature: 0.1 }
+                            })
                         });
+
+                        const geminiData = await geminiResp.json();
+                        
+                        if (geminiData.error) {
+                             throw new Error("Error de Gemini API: " + (geminiData.error.message || "Desconocido"));
+                        }
+                        
+                        let aiResultRaw = geminiData.candidates[0].content.parts[0].text;
+                        // Limpieza preventiva si el LLM devuelve formato tipo markdown
+                        aiResultRaw = aiResultRaw.replace(/```json/gi, '').replace(/```/g, '').trim();
+                        
+                        items = JSON.parse(aiResultRaw);
+                        
+                        if (!Array.isArray(items)) {
+                             items = [];
+                        }
+                    } catch (err) {
+                        console.error("Fallo IA parsing:", err);
+                        throw new Error("La IA no pudo procesar los datos estructurados. " + err.message);
                     }
 
                     // --- LLENAR TABLA ---

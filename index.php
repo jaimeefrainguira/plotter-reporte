@@ -12,7 +12,7 @@ session_start();
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: SAMEORIGIN');
 header('Referrer-Policy: strict-origin-when-cross-origin');
-header("Content-Security-Policy: default-src 'self'; style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline' blob: 'wasm-unsafe-eval' https://unpkg.com; img-src 'self' data: https://aeonfree.com; font-src 'self' https://cdn.jsdelivr.net; connect-src 'self' https://cdn.jsdelivr.net https://tessdata.projectnaptha.com https://unpkg.com data: https://api.ocr.space; worker-src 'self' blob: data:; object-src 'none'; frame-ancestors 'self';");
+header("Content-Security-Policy: default-src 'self'; style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline' blob: 'wasm-unsafe-eval' https://unpkg.com; img-src 'self' data: https://aeonfree.com; font-src 'self' https://cdn.jsdelivr.net; connect-src 'self' https://cdn.jsdelivr.net https://tessdata.projectnaptha.com https://unpkg.com data: https://api.ocr.space https://generativelanguage.googleapis.com; worker-src 'self' blob: data:; object-src 'none'; frame-ancestors 'self';");
 
 require_once __DIR__ . '/controllers/ReporteController.php';
 require_once __DIR__ . '/controllers/CampanaController.php';
