@@ -147,7 +147,8 @@ class CampanaController {
         }
 
         $apiKey = "AIzaSyBEk4ziQM0iMmHOA7ssfli65woGyMK1kZ4";
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+        // Usar la API estable v1 y el alias 'latest' que siempre funciona
+        $url = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent";
 
         $prompt = "Analiza la imagen adjunta que contiene una tabla de trabajos/ítems. "
                 . "Debes extraer exclusivamente la información de dos columnas: Descripción (descripcion) y Cantidad (cantidad). "
