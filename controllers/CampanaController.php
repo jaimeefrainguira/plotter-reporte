@@ -146,8 +146,8 @@ class CampanaController {
             exit;
         }
 
-        $apiKey = "AIzaSyCpvNI9GiPas9p-hKrZaCGipJkR2_YN4hw";
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $apiKey;
+        $apiKey = "AIzaSyBEk4ziQM0iMmHOA7ssfli65woGyMK1kZ4";
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
         $prompt = "Analiza la imagen adjunta que contiene una tabla de trabajos/ítems. "
                 . "Debes extraer exclusivamente la información de dos columnas: Descripción (descripcion) y Cantidad (cantidad). "
@@ -168,7 +168,10 @@ class CampanaController {
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'X-goog-api-key: ' . $apiKey
+        ]);
         
         // Omitir verificación SSL si el hosting tiene certificados antiguos/desactualizados
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
