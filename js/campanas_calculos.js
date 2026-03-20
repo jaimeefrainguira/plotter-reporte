@@ -365,27 +365,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     btnProcesar.onclick = async () => {
-        // Usa la clave GEMINI_API_KEY definida en detalle.php
+        alert("Botón pulsado: Iniciando proceso de IA...");
+
+        if (typeof GEMINI_API_KEY === 'undefined') {
+            alert("ERROR CRÍTICO: La clave de API no se ha cargado en el HTML. Avisa a Antigravity.");
+            return;
+        }
+
         const spin = document.getElementById('spinIA');
         const txt  = document.getElementById('txtIA');
         
         if (!base64ImageIA) {
-            alert('No se ha detectado ninguna imagen cargada.');
+            alert('Aviso: Debes cargar una imagen antes de procesar.');
             return;
         }
 
         spin.classList.remove('d-none');
-        txt.textContent = 'Antigravity analizando con IA (Google)...';
+        txt.textContent = 'Analizando...';
         btnProcesar.disabled = true;
 
-        const PROMPT = "Analiza la imagen adjunta que contiene una tabla de trabajos o lista de ítems. " +
-                       "Extrae exclusivamente Descripción (descripcion) y Cantidad (cantidad). " +
-                       "Ignora todo lo demás. No añadas notas ni explicaciones. " +
-                       "Devuelve exclusivamente un JSON así: [{\"descripcion\": \"...\", \"cantidad\": 10}]";
+        alert("Enviando imagen a Google Gemini...");
+
+        const PROMPT = "Analiza la imagen de la tabla de ítems. Extrae Descripción (descripcion) y Cantidad (cantidad) como JSON: [{\"descripcion\": \"...\", \"cantidad\": 10}]";
 
         try {
             const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-            console.log('Llamando a Google API (v1)...');
             
             const response = await fetch(apiUrl, {
                 method: 'POST',
@@ -400,31 +404,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
             });
 
-            console.log('Respuesta de red recibida. Status:', response.status);
-
             if (!response.ok) {
-                const errData = await response.json();
-                console.error('Error detallado de Google:', errData);
-                throw new Error(errData.error?.message || "Error en la API de Google");
+                const err = await response.json();
+                alert("Error de Google: " + (err.error?.message || "Desconocido"));
+                throw new Error("API Error");
             }
 
             const result = await response.json();
-            console.log('JSON bruto recibido de la IA:', result);
+            alert("¡Respuesta recibida con éxito! Procesando tabla...");
             
             let rawText = result.candidates[0].content.parts[0].text;
             rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-            console.log('Texto procesado:', rawText);
 
             const items = JSON.parse(rawText);
             renderReviewIA(items);
 
         } catch (error) {
-            console.error('Fallo total en el procesamiento:', error);
-            alert("Error de procesamiento IA: " + error.message);
+            console.error(error);
+            alert("Fallo en la conexión: " + error.message);
             resetModalIA();
         } finally {
             spin.classList.add('d-none');
             txt.textContent = 'PROCESAR CON IA';
+            btnProcesar.disabled = false;
         }
     };
 
