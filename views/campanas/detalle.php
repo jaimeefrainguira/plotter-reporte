@@ -568,23 +568,32 @@
                 btnProc.disabled = true;
 
                 try {
-                    // PASO 1: OCR con Tesseract.js (Simplificado)
-                    console.log("Iniciando OCR con Tesseract.js...");
-                    ocrStatus.textContent = "Cargando OCR...";
+                    // PASO 1: OCR con Tesseract.js (V5)
+                    console.log("Iniciando OCR con Tesseract.js v5...");
+                    ocrStatus.textContent = "Preparando motor de OCR...";
                     
+                    // Tiempo de espera para informar si demora mucho
+                    const timeoutMsg = setTimeout(() => {
+                        ocrStatus.textContent = "Sigue cargando (primera vez puede demorar)...";
+                    }, 8000);
+
                     const { data: { text } } = await Tesseract.recognize(currentFile, 'spa', {
+                        langPath: 'https://tessdata.projectnaptha.com/4.0.0_best/',
                         logger: m => {
+                            clearTimeout(timeoutMsg);
                             console.log("Tesseract Log:", m);
                             if (m.status === 'recognizing text') {
                                 const prog = Math.round(m.progress * 100);
                                 progressBar.style.width = prog + '%';
                                 ocrPercent.textContent = prog + '%';
-                                ocrStatus.textContent = "Leyendo texto (" + prog + "%)...";
+                                ocrStatus.textContent = `Analizando imagen (${prog}%)...`;
                             } else {
-                                // Traducir estados comunes para el usuario
-                                let statusEs = m.status;
-                                if (m.status.includes('loading')) statusEs = "Cargando componentes...";
-                                if (m.status.includes('initializing')) statusEs = "Inicializando...";
+                                // Traducir estados para el usuario
+                                let statusEs = "Procesando...";
+                                if (m.status === 'loading tesseract core')      statusEs = "Cargando motor...";
+                                if (m.status === 'initializing tesseract core') statusEs = "Iniciando motor...";
+                                if (m.status === 'loading language traineddata')statusEs = "Descargando idioma (15MB)...";
+                                if (m.status === 'initializing api')            statusEs = "Abriendo cámara...";
                                 ocrStatus.textContent = statusEs;
                             }
                         }
