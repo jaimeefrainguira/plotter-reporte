@@ -609,7 +609,7 @@
                     progressBar.classList.replace('bg-info', 'bg-success');
 
                     // PASO 2: Enviar texto a Gemini
-                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_KEY}`;
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
                     
                     // Limpieza básica del texto para evitar ruidos de OCR
                     const cleanText = text.replace(/[^a-zA-Z0-9\s.,×*()\-]/g, ' ').replace(/\s+/g, ' ');
