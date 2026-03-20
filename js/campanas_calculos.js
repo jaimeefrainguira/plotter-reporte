@@ -384,8 +384,8 @@ document.addEventListener('DOMContentLoaded', () => {
                        "Devuelve exclusivamente un JSON así: [{\"descripcion\": \"...\", \"cantidad\": 10}]";
 
         try {
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-            console.log('Llamando a Google API...');
+            const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+            console.log('Llamando a Google API (v1)...');
             
             const response = await fetch(apiUrl, {
                 method: 'POST',
