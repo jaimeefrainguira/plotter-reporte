@@ -613,49 +613,92 @@
                     progressBar.style.width = '100%';
                     progressBar.classList.replace('bg-info', 'bg-success');
 
-                    // --- PARSEO INTELIGENTE CON IA (GEMINI) ---
-                    ocrStatus.textContent = "IA organizando los datos obtenidos...";
+                    // --- PARSEO LOCAL MANUAL (SIN IA) ---
+                    const items = [];
+                    const lines = text.split('\n');
+                    const isHeader = /CÓDIGO|DESCRIPCIÓN|MEDIDA|CANTIDAD|CODIGO|DESCRIPCION/i;
                     
-                    const promptText = `Eres un asistente que extrae información tabular de texto en crudo generado por OCR de una orden de producción.
-Objetivos y Reglas:
-1. Extrae cada ítem de trabajo.
-2. Ignora encabezados y ruido repetitivo (ej: "UNIDA", "D", "MTS" sueltos en líneas aparte).
-3. Une aquellas descripciones que el OCR separó por accidente en varias líneas (ej: si dice "ETQ PRECIADORES BIKE SHOP" en una línea e "IOCMX13CM" en la otra, es el mismo producto).
-4. Encuentra la "cantidad" asociada numéricamente a ese ítem (ej: 1.00, 75.00, 50.00). Si dice algo como 1<17 asume cantidad 1.
-5. Devuelve **ESTRICTAMENTE** un JSON Array nativo de objetos con las llaves "descripcion" (string) y "cantidad" (número). NO uses markdown (\`\`\`json), solo el raw array.
+                    // Expresiones para ignorar líneas sueltas que son solo "Unidad" u otro identificador roto
+                    const ignoreTokens = /^(UNID?A?[ \-]?D?|UND|PZA|U\.?\s?MEDIDA|D|MTS)$/i;
 
-Texto OCR a procesar:
-${text}`;
+                    let pendingDescription = "";
 
-                    let items = [];
-                    try {
-                        const geminiResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                contents: [{ parts: [{ text: promptText }] }],
-                                generationConfig: { temperature: 0.1 }
-                            })
+                    lines.forEach(line => {
+                        let trimmed = line.trim();
+                        let espacioTrimmed = trimmed.replace(/\s+/g, ' ');
+                        
+                        if (espacioTrimmed.length < 2) return; 
+                        if (isHeader.test(espacioTrimmed)) return;
+                        if (ignoreTokens.test(espacioTrimmed)) return; // Ignorar ruido "UNIDA"
+
+                        // Buscar cantidad por tabulaciones (isTable=true)
+                        const columnas = trimmed.split('\t');
+                        let qty = null;
+                        let desc = "";
+
+                        if (columnas.length >= 2) {
+                             let valNum = parseFloat(columnas[columnas.length - 1].trim().replace(',', '.'));
+                             if (!isNaN(valNum)) {
+                                 qty = valNum;
+                                 desc = columnas.slice(0, -1).join(' ').trim();
+                             } else if (columnas.length >= 3) {
+                                  valNum = parseFloat(columnas[columnas.length - 2].trim().replace(',', '.'));
+                                  if (!isNaN(valNum)) {
+                                      qty = valNum;
+                                      desc = columnas.slice(0, -2).join(' ').trim();
+                                  }
+                             }
+                        }
+
+                        // Buscar por Regex (por si no encontró tabs)
+                        const matchRegex = espacioTrimmed.match(/^(.*?)\s+(\d+(?:[,.]\d+)?)\s*(?:[A-Za-z\W_]{0,8})?$/i);
+                        if (qty === null && matchRegex) {
+                            qty = parseFloat(matchRegex[2].replace(',', '.'));
+                            desc = matchRegex[1].trim();
+                        }
+
+                        // Función de limpieza de identificadores extraños al inicio
+                        const cleanDesc = (t) => {
+                             let res = t.replace(/^[\dO\|\-\.\*]{1,3}\s+[A-Z0-9\-]{5,10}\s+/i, '');
+                             res = res.replace(/^[A-Z0-9\-]{5,10}\s+/i, '');
+                             res = res.replace(/\s+(?:UNID?A?[ \-]?D?|UND|PZA|U\.?\s?MEDIDA)?$/i, '');
+                             return res.trim();
+                        };
+
+                        if (qty !== null && !isNaN(qty)) {
+                            desc = cleanDesc(desc);
+                            
+                            // Unimos a cualquier descripción que estuviera "colgando" del renglón anterior
+                            let finalDesc = desc;
+                            if (pendingDescription && desc) {
+                                finalDesc = pendingDescription + " " + desc;
+                            } else if (pendingDescription && !desc) {
+                                finalDesc = pendingDescription;
+                            }
+                            
+                            if (finalDesc.length > 3) {
+                                items.push({ descripcion: finalDesc, cantidad: qty });
+                            }
+                            pendingDescription = ""; // Consumido
+                        } else {
+                            // No tiene número al final, se considera un fragmento de texto
+                            desc = cleanDesc(espacioTrimmed);
+                            if (desc.length > 2) {
+                                pendingDescription += (pendingDescription ? " " : "") + desc;
+                            }
+                        }
+                    });
+
+                    // Si quedó algo huérfano
+                    if (pendingDescription.length > 5) {
+                        items.push({ descripcion: "[Revisar] " + pendingDescription, cantidad: 1 });
+                    }
+
+                    // Fallback extremo
+                    if (items.length === 0) {
+                        lines.filter(l => l.trim().length > 15 && !isHeader.test(l)).forEach(l => {
+                            items.push({ descripcion: "REVISAR: " + l.trim(), cantidad: 1 });
                         });
-
-                        const geminiData = await geminiResp.json();
-                        
-                        if (geminiData.error) {
-                             throw new Error("Error de Gemini API: " + (geminiData.error.message || "Desconocido"));
-                        }
-                        
-                        let aiResultRaw = geminiData.candidates[0].content.parts[0].text;
-                        // Limpieza preventiva si el LLM devuelve formato tipo markdown
-                        aiResultRaw = aiResultRaw.replace(/```json/gi, '').replace(/```/g, '').trim();
-                        
-                        items = JSON.parse(aiResultRaw);
-                        
-                        if (!Array.isArray(items)) {
-                             items = [];
-                        }
-                    } catch (err) {
-                        console.error("Fallo IA parsing:", err);
-                        throw new Error("La IA no pudo procesar los datos estructurados. " + err.message);
                     }
 
                     // --- LLENAR TABLA ---
