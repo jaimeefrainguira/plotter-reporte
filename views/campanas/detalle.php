@@ -7,27 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="css/campanas.css">
-    <style>
-        .result-panel {
-            background-color: #f8f9fa;
-            border: 2px solid #dee2e6;
-            border-radius: 12px;
-            padding: 1rem;
-            margin-top: 1rem;
-        }
-        .summary-card {
-            background: #1e252d;
-            color: #fff;
-            border-radius: 8px;
-            padding: 10px 15px;
-            margin-bottom: 5px;
-        }
-    </style>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-    <script>
-        // API KEY Global para procesamiento de IA (Bypass de caché)
-        const GEMINI_API_KEY = "AIzaSyBEk4ziQM0iMmHOA7ssfli65woGyMK1kZ4";
-    </script>
 </head>
 <body class="bg-light">
 
@@ -592,72 +572,54 @@
                                 let statusEs = "Procesando...";
                                 if (m.status === 'loading tesseract core')      statusEs = "Cargando motor...";
                                 if (m.status === 'initializing tesseract core') statusEs = "Iniciando motor...";
-                                if (m.status === 'loading language traineddata')statusEs = "Descargando idioma (15MB)...";
-                                if (m.status === 'initializing api')            statusEs = "Abriendo cámara...";
+                                if (m.status === 'loading language traineddata') statusEs = "Descargando idioma (15MB)...";
+                                if (m.status === 'initializing api')             statusEs = "Inicializando API...";
                                 ocrStatus.textContent = statusEs;
                             }
                         }
                     });
 
                     if (!text || text.trim().length < 5) {
-                        throw new Error("No se pudo extraer suficiente texto o la imagen está borrosa.");
+                        throw new Error("No se pudo extraer texto suficiente para procesar.");
                     }
 
                     console.log("OCR completado. Texto obtenido (longitud):", text.length);
-                    ocrStatus.textContent = "Texto obtenido. Consultando IA para ordenar...";
+                    ocrStatus.textContent = "Analizando tabla de datos extraída...";
                     progressBar.style.width = '100%';
                     progressBar.classList.replace('bg-info', 'bg-success');
 
-                    // PASO 2: Enviar texto a Gemini
-                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
-                    
-                    // Limpieza básica del texto para evitar ruidos de OCR
-                    const cleanText = text.replace(/[^a-zA-Z0-9\s.,×*()\-]/g, ' ').replace(/\s+/g, ' ');
+                    // --- PARSEO LOCAL (SIN GOOGLE) ---
+                    const items = [];
+                    const lines = text.split('\n');
 
-                    const prompt = `Actúa como un extractor de datos de pedidos de impresión. 
-                    Toma el siguiente texto (extraído de OCR, puede tener errores) y conviértelo a un array de objetos JSON con esta estructura: 
-                    [{"descripcion": "Nombre del item/trabajo", "cantidad": numero_entero}].
-                    
-                    Reglas:
-                    1. Si ves algo como "X uds", "X copias" o "X unidades", el número es la cantidad.
-                    2. Si no hay cantidad clara, asume 1.
-                    3. Agrupa descripción y medidas si están juntas.
-                    4. Devuelve ÚNICAMENTE el array JSON, sin explicaciones ni markdown.
+                    lines.forEach(line => {
+                        const trimmed = line.trim();
+                        if (trimmed.length < 10) return; // Ignorar ruidos cortos
 
-                    TEXTO:
-                    """
-                    ${cleanText}
-                    """`;
+                        // Heurística básica: Buscar números decimales o enteros al inicio o final
+                        // Ejemplo: "ITEM DESCRIPCION 50.00" o "10 BANNER 3X4"
+                        const match = trimmed.match(/(\d+[,.]?\d*)$|(\d+[,.]?\d*)\s/);
+                        let desc = trimmed;
+                        let cant = 1;
 
-                    console.log("IA: Consultando a Gemini...");
-                    const resp = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{ parts: [{ text: prompt }] }]
-                        })
+                        if (match) {
+                            cant = parseFloat(match[0].replace(',', '.')) || 1;
+                            desc = trimmed.replace(match[0], '').trim();
+                        }
+                        
+                        if (desc.length > 5) {
+                            items.push({ descripcion: desc, cantidad: cant });
+                        }
                     });
 
-                    const res = await resp.json();
-                    
-                    if (!resp.ok) {
-                        console.error("Gemini Error:", res);
-                        throw new Error(res.error?.message || "La IA no pudo procesar el texto.");
+                    if (items.length === 0) {
+                        // Fallback: tratar cada línea como un ítem de cantidad 1 si no se detectó nada
+                        lines.filter(l => l.trim().length > 10).forEach(l => {
+                            items.push({ descripcion: l.trim(), cantidad: 1 });
+                        });
                     }
 
-                    if (!res.candidates || !res.candidates[0].content) {
-                        console.error("Gemini Response Incompleto:", res);
-                        throw new Error("La IA no devolvió resultados. Intenta de nuevo.");
-                    }
-
-                    let raw = res.candidates[0].content.parts[0].text;
-                    console.log("IA: Respuesta bruta:", raw);
-                    
-                    // Limpiar markdown del JSON si existe
-                    raw = raw.replace(/```json|```/g, '').trim();
-                    const items = JSON.parse(raw);
-
-                    // Llenar tabla
+                    // --- LLENAR TABLA ---
                     const tbody = document.getElementById('iaTableBody');
                     tbody.innerHTML = '';
                     items.forEach(it => {
@@ -669,6 +631,7 @@
                         `;
                         tbody.appendChild(tr);
                     });
+
 
                     document.getElementById('iaCount').textContent = items.length;
                     document.getElementById('multiIA-step-upload').classList.add('d-none');
