@@ -174,7 +174,7 @@ class CampanaController {
                     'cantidad'     => (int)($item['cantidad'] ?? 1),
                     'ancho_panel'  => 0,
                     'alto_panel'   => 0,
-                    'material_id'  => 0,
+                    'material_id'  => null,
                     'separacion_h' => 0,
                     'separacion_v' => 0,
                     'orientacion'  => 'auto',
