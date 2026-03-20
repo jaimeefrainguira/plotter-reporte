@@ -568,28 +568,35 @@
                 btnProc.disabled = true;
 
                 try {
-                    // PASO 1: OCR con Tesseract.js
-                    ocrStatus.textContent = "Iniciando OCR...";
-                    const worker = await Tesseract.createWorker('spa', 1, {
+                    // PASO 1: OCR con Tesseract.js (Simplificado)
+                    console.log("Iniciando OCR con Tesseract.js...");
+                    ocrStatus.textContent = "Cargando OCR...";
+                    
+                    const { data: { text } } = await Tesseract.recognize(currentFile, 'spa', {
                         logger: m => {
+                            console.log("Tesseract Log:", m);
                             if (m.status === 'recognizing text') {
                                 const prog = Math.round(m.progress * 100);
                                 progressBar.style.width = prog + '%';
                                 ocrPercent.textContent = prog + '%';
-                                ocrStatus.textContent = "Leyendo texto de la imagen...";
+                                ocrStatus.textContent = "Leyendo texto (" + prog + "%)...";
+                            } else {
+                                // Traducir estados comunes para el usuario
+                                let statusEs = m.status;
+                                if (m.status.includes('loading')) statusEs = "Cargando componentes...";
+                                if (m.status.includes('initializing')) statusEs = "Inicializando...";
+                                ocrStatus.textContent = statusEs;
                             }
                         }
                     });
 
-                    const { data: { text } } = await worker.recognize(currentFile);
-                    await worker.terminate();
-
                     if (!text || text.trim().length < 5) {
-                        throw new Error("No se pudo extraer suficiente texto de la imagen. Intenta con una foto más clara.");
+                        throw new Error("No se pudo extraer suficiente texto o la imagen está borrosa.");
                     }
 
-                    console.log("OCR completado. Texto obtenido:", text);
-                    ocrStatus.textContent = "Texto extraído. Enviando a IA para clasificar...";
+                    console.log("OCR completado. Texto obtenido (longitud):", text.length);
+                    ocrStatus.textContent = "Texto extraído. Consultando IA...";
+                    progressBar.style.width = '100%';
                     progressBar.classList.replace('bg-info', 'bg-success');
 
                     // PASO 2: Enviar texto a Gemini
