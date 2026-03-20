@@ -16,12 +16,14 @@ header("Content-Security-Policy: default-src 'self'; style-src 'self' https://cd
 
 require_once __DIR__ . '/controllers/ReporteController.php';
 require_once __DIR__ . '/controllers/CampanaController.php';
+require_once __DIR__ . '/controllers/MaterialController.php';
 
 $action = $_GET['action'] ?? 'dashboard';
 
 try {
     $controller = new ReporteController();
     $campanaController = new CampanaController();
+    $materialController = new MaterialController();
 } catch (Throwable $exception) {
     if (in_array($action, ['dashboard', 'plotter'], true)) {
         $errorMessage = 'No fue posible conectar con la base de datos. Verifica la configuración para habilitar todos los reportes.';
@@ -120,6 +122,51 @@ switch ($action) {
 
     case 'campana_delete_trabajo':
         $campanaController->deleteTrabajo();
+        break;
+
+    // --- Módulo de Materia Prima ---
+    case 'materiales_list':
+        $materialController->list();
+        break;
+
+    case 'material_create':
+        $materialController->showCreateForm();
+        break;
+
+    case 'material_store':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $materialController->store();
+            break;
+        }
+        header('Location: index.php?action=materiales_list');
+        break;
+
+    case 'material_edit':
+        $materialController->showEditForm((int)($_GET['id'] ?? 0));
+        break;
+
+    case 'material_update':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $materialController->update((int)($_GET['id'] ?? 0));
+            break;
+        }
+        header('Location: index.php?action=materiales_list');
+        break;
+
+    case 'material_delete':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $materialController->destroy((int)($_POST['id'] ?? 0));
+            break;
+        }
+        header('Location: index.php?action=materiales_list');
+        break;
+
+    case 'material_stock':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $materialController->adjustStock();
+            break;
+        }
+        header('Location: index.php?action=materiales_list');
         break;
 
     default:

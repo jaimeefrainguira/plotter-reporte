@@ -1,4 +1,5 @@
-/**
+DONDE PUEDA PONER EL NOMBRE DEL MATERIAL, EL TAMAÑO DEL MATERIAL CON EL CUAL SE REALIZA LOS CALCULOS
+Y PUEDA MODIFICAR, BORRAR(OCULTAR O MOSTRAR POR TEMAS DE BD), Y CREAR/**
  * Réplica exacta de calcular.html
  * Integrada en el modal "Nuevo Item de Trabajo" de detalle.php
  * Versión 2.1 (Cache Busted)
@@ -30,8 +31,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCalcular = document.getElementById('btnCalcular');
     if (btnCalcular) {
         btnCalcular.onclick = () => {
-             console.log('Botón Calcular pulsado.');
-             calcular();
+            console.log('Botón Calcular pulsado.');
+            calcular();
         };
     }
 
@@ -50,8 +51,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalEl = document.getElementById('modalTrabajo');
     if (modalEl) {
         modalEl.addEventListener('shown.bs.modal', () => {
-             console.log('Modal abierto (shown). Calculando...');
-             calcular();
+            console.log('Modal abierto (shown). Calculando...');
+            calcular();
         });
     }
 
@@ -61,19 +62,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const d = JSON.parse(this.dataset.trabajo);
             console.log('Cargando datos de edición:', d);
             document.getElementById('modalTitle').textContent = 'Editar Item de Trabajo';
-            document.getElementById('field_trabajo_id').value  = d.id;
-            document.getElementById('field_descripcion').value  = d.descripcion;
-            document.getElementById('field_cantidad').value     = d.cantidad;
-            document.getElementById('field_ancho_panel').value  = d.ancho_panel;
-            document.getElementById('field_alto_panel').value   = d.alto_panel;
-            document.getElementById('field_material_id').value  = d.material_id;
-            
+            document.getElementById('field_trabajo_id').value = d.id;
+            document.getElementById('field_descripcion').value = d.descripcion;
+            document.getElementById('field_cantidad').value = d.cantidad;
+            document.getElementById('field_ancho_panel').value = d.ancho_panel;
+            document.getElementById('field_alto_panel').value = d.alto_panel;
+            document.getElementById('field_material_id').value = d.material_id;
+
             document.getElementById('field_orientacion').value = d.orientacion || 'auto';
             document.getElementById('usarPanelado').checked = parseInt(d.usar_panelado) === 1;
             document.getElementById('panelConfig').style.display = document.getElementById('usarPanelado').checked ? 'block' : 'none';
             document.getElementById('field_panel_ancho').value = d.panel_ancho || 120;
-            document.getElementById('field_panel_gap').value   = d.panel_gap || 2;
-            document.getElementById('usarSintra').checked   = parseInt(d.usar_sintra) === 1;
+            document.getElementById('field_panel_gap').value = d.panel_gap || 2;
+            document.getElementById('usarSintra').checked = parseInt(d.usar_sintra) === 1;
             document.getElementById('resultadoSintra').style.display = document.getElementById('usarSintra').checked ? 'block' : 'none';
 
             // Ejecutar con leve retraso
@@ -100,20 +101,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function calcular() {
         console.log('Iniciando función calcular()...');
-        
+
         const resDiv = document.getElementById('resultado');
         if (!resDiv) {
             console.error('Error: No se encontró el elemento "resultado".');
             return;
         }
 
-        let ancho  = parseFloat(document.getElementById('field_ancho_panel').value) || 0;
-        let alto   = parseFloat(document.getElementById('field_alto_panel').value) || 0;
+        let ancho = parseFloat(document.getElementById('field_ancho_panel').value) || 0;
+        let alto = parseFloat(document.getElementById('field_alto_panel').value) || 0;
         let copias = parseInt(document.getElementById('field_cantidad').value) || 1;
 
         const matSel = document.getElementById('field_material_id');
         const matOpt = matSel.options[matSel.selectedIndex];
-        
+
         if (!matOpt || matSel.value === '') {
             resDiv.innerHTML = '<span class="text-muted">Selecciona un material...</span>';
             console.log('Abortando cálculo: No se ha seleccionado material.');
@@ -128,8 +129,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        let orient     = document.getElementById('field_orientacion').value;
-        let usarPanel  = document.getElementById('usarPanelado').checked;
+        let orient = document.getElementById('field_orientacion').value;
+        let usarPanel = document.getElementById('usarPanelado').checked;
         let usarSintra = document.getElementById('usarSintra').checked;
 
         let preview = document.getElementById('preview');
@@ -285,12 +286,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Hidden fields
         const fMetros = document.getElementById('field_total_metros');
         if (fMetros) fMetros.value = ((rollos * largoMat + sobrante) / 100).toFixed(4);
-        
+
         const fPlanchas = document.getElementById('field_total_planchas');
         if (fPlanchas && usarSintra) {
-             let n1 = Math.floor(122 / w) * Math.floor(244 / h);
-             let n2 = Math.floor(122 / h) * Math.floor(244 / w);
-             fPlanchas.value = Math.max(n1, n2) > 0 ? Math.ceil(copias / Math.max(n1, n2)) : 0;
+            let n1 = Math.floor(122 / w) * Math.floor(244 / h);
+            let n2 = Math.floor(122 / h) * Math.floor(244 / w);
+            fPlanchas.value = Math.max(n1, n2) > 0 ? Math.ceil(copias / Math.max(n1, n2)) : 0;
         }
 
         const fDist = document.getElementById('field_distribucion_texto');

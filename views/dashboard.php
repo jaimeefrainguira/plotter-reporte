@@ -19,7 +19,8 @@ unset($_SESSION['flash']);
 <nav class="navbar navbar-dark bg-dark">
     <div class="container-fluid">
         <span class="navbar-brand mb-0 h1"><i class="bi bi-speedometer2"></i> Panel de Reportes Plotter</span>
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="index.php?action=materiales_list" class="btn btn-outline-warning"><i class="bi bi-boxes"></i> Materia Prima</a>
             <a href="index.php?action=campanas_list" class="btn btn-outline-info"><i class="bi bi-megaphone"></i> Gestionar Campañas</a>
             <a href="index.php?action=pdf<?= $filters['fecha'] !== '' ? '&fecha=' . urlencode($filters['fecha']) : '' ?>" class="btn btn-outline-light"><i class="bi bi-file-earmark-pdf"></i> PDF general</a>
             <a href="index.php?action=plotter_report" class="btn btn-success"><i class="bi bi-file-earmark-plus"></i> CREAR REPORTE PLOTTER</a>
