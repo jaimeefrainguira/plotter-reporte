@@ -327,7 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ════════════════════════════════════════════════════════════════════════
     // ── CONFIGURACIÓN IA: Configuración unificada ────────────────────────────
     // ════════════════════════════════════════════════════════════════════════
-    const GEMINI_API_KEY = "AIzaSyCpvNI9GiPas9p-hKrZaCGipJkR2_YN4hw"; 
+    const GEMINI_API_KEY = "AIzaSyBEk4ziQM0iMmHOA7ssfli65woGyMK1kZ4"; 
 
     const dropAreaIA   = document.getElementById('dropAreaIA');
     const fileInputIA  = document.getElementById('fileInputIA');
