@@ -362,53 +362,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     btnProcesar.onclick = async () => {
-        if (GEMINI_API_KEY === "TU_API_KEY_AQUI") {
-            alert("Error: Debes configurar tu API KEY de Google Gemini al inicio de js/campanas_calculos.js");
-            return;
-        }
-
         const spin = document.getElementById('spinIA');
         const txt  = document.getElementById('txtIA');
         spin.classList.remove('d-none');
-        txt.textContent = 'Antigravity está analizando la imagen...';
+        txt.textContent = 'Analizando imagen en servidor...';
         btnProcesar.disabled = true;
 
-        const PROMPT = `Analiza la imagen adjunta que contiene una tabla de trabajos/ítems. 
-        Debes extraer exclusivamente la información de dos columnas: Descripción (descripcion) y Cantidad (cantidad). 
-        Ignora cualquier otra columna. 
-        No añadas comentarios, introducciones ni explicaciones.
-        Devuelve los resultados únicamente en un formato de arreglo JSON válido:
-        [{"descripcion": "Nombre del item", "cantidad": 10}, ...]`;
-
         try {
-            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-            
-            const response = await fetch(endpoint, {
+            const response = await fetch('index.php?action=campana_ai_process', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [
-                            { text: PROMPT },
-                            { inline_data: { mime_type: "image/jpeg", data: base64ImageIA } }
-                        ]
-                    }]
-                })
+                body: JSON.stringify({ image: base64ImageIA })
             });
 
-            const result = await response.json();
-            
-            // Extraer el texto del JSON que devuelve Gemini y limpiarlo
-            let rawText = result.candidates[0].content.parts[0].text;
-            // Limpiar posibles bloques de código triple backtick
-            rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+            if (!response.ok) throw new Error("Error en servidor");
 
-            const data = JSON.parse(rawText);
-            renderReviewIA(data);
+            const res = await response.json();
+            if (res.ok) {
+                renderReviewIA(res.data);
+            } else {
+                alert("Error de IA: " + res.error);
+                resetModalIA();
+            }
 
         } catch (error) {
             console.error(error);
-            alert("Error al procesar con IA: " + error.message);
+            alert("Error de conexión: " + error.message);
             resetModalIA();
         } finally {
             spin.classList.add('d-none');

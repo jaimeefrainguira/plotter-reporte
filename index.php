@@ -144,6 +144,10 @@ switch ($action) {
         $campanaController->bulkSaveTrabajos();
         break;
 
+    case 'campana_ai_process':
+        $campanaController->processImageIA();
+        break;
+
     // --- Módulo de Materia Prima ---
     case 'materiales_list':
         $materialController->list();
