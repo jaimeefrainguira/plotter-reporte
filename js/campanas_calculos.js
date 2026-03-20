@@ -325,9 +325,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ════════════════════════════════════════════════════════════════════════
-    // ── CONFIGURACIÓN IA: Pon tu API Key aquí ────────────────────────────────
+    // ── CONFIGURACIÓN IA: Configuración unificada ────────────────────────────
     // ════════════════════════════════════════════════════════════════════════
-    const GEMINI_API_KEY = "AIzaSyCpvNI9GiPas9p-hKrZaCGipJkR2_YN4hw"; // Configurada por Antigravity
+    const GEMINI_API_KEY = "AIzaSyCpvNI9GiPas9p-hKrZaCGipJkR2_YN4hw"; 
 
     const dropAreaIA   = document.getElementById('dropAreaIA');
     const fileInputIA  = document.getElementById('fileInputIA');
@@ -339,7 +339,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const tableBodyIA  = document.getElementById('iaTableBody');
     const previewImgIA = document.getElementById('imgPreviewIA');
 
-    let base64ImageIA = ""; // Para guardar la imagen seleccionada
+    let base64ImageIA = ""; 
 
     if (dropAreaIA) {
         dropAreaIA.onclick = () => fileInputIA.click();
@@ -351,33 +351,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleFilesIA(files) {
         if (!files.length) return;
+        console.log('Archivo recibido:', files[0].name, files[0].type);
         const reader = new FileReader();
         reader.onload = (e) => {
-            base64ImageIA = e.target.result.split(',')[1]; // Extraer solo el base64
+            base64ImageIA = e.target.result.split(',')[1]; 
+            console.log('Imagen convertida a Base64 con éxito.');
             previewImgIA.querySelector('img').src = e.target.result;
             previewImgIA.classList.remove('d-none');
             btnProcesar.disabled = false;
         };
+        reader.onerror = () => console.error('Error al leer el archivo con FileReader');
         reader.readAsDataURL(files[0]);
     }
 
     btnProcesar.onclick = async () => {
-        // API Key configurada para procesamiento directo desde el navegador
-        const GEMINI_API_KEY = "AIzaSyBEk4ziQM0iMmHOA7ssfli65woGyMK1kZ4";
+        console.log('Iniciando procesamiento con IA...');
         const spin = document.getElementById('spinIA');
         const txt  = document.getElementById('txtIA');
+        
+        if (!base64ImageIA) {
+            alert('No se ha detectado ninguna imagen cargada.');
+            return;
+        }
+
         spin.classList.remove('d-none');
-        txt.textContent = 'Antigravity analizando con IA (Navegador)...';
+        txt.textContent = 'Antigravity analizando con IA (Google)...';
         btnProcesar.disabled = true;
 
-        const PROMPT = `Analiza la imagen adjunta que contiene una tabla de trabajos/ítems. 
-        Debes extraer exclusivamente la información de dos columnas: Descripción (descripcion) y Cantidad (cantidad). 
-        Ignora cualquier otra columna. No añadas comentarios ni explicaciones. 
-        Devuelve los resultados únicamente en un formato de arreglo JSON válido: 
-        [{"descripcion": "Nombre del item", "cantidad": 10}, ...]`;
+        const PROMPT = "Analiza la imagen adjunta que contiene una tabla de trabajos o lista de ítems. " +
+                       "Extrae exclusivamente Descripción (descripcion) y Cantidad (cantidad). " +
+                       "Ignora todo lo demás. No añadas notas ni explicaciones. " +
+                       "Devuelve exclusivamente un JSON así: [{\"descripcion\": \"...\", \"cantidad\": 10}]";
 
         try {
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+            console.log('Llamando a Google API...');
             
             const response = await fetch(apiUrl, {
                 method: 'POST',
@@ -392,19 +400,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
             });
 
-            if (!response.ok) throw new Error("Error en la API de Google (Status: " + response.status + ")");
+            console.log('Respuesta de red recibida. Status:', response.status);
+
+            if (!response.ok) {
+                const errData = await response.json();
+                console.error('Error detallado de Google:', errData);
+                throw new Error(errData.error?.message || "Error en la API de Google");
+            }
 
             const result = await response.json();
+            console.log('JSON bruto recibido de la IA:', result);
             
-            // Extraer y limpiar el JSON de la respuesta
             let rawText = result.candidates[0].content.parts[0].text;
             rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+            console.log('Texto procesado:', rawText);
 
             const items = JSON.parse(rawText);
             renderReviewIA(items);
 
         } catch (error) {
-            console.error(error);
+            console.error('Fallo total en el procesamiento:', error);
             alert("Error de procesamiento IA: " + error.message);
             resetModalIA();
         } finally {
