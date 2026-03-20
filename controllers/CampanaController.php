@@ -147,8 +147,7 @@ class CampanaController {
         }
 
         $apiKey = "AIzaSyBEk4ziQM0iMmHOA7ssfli65woGyMK1kZ4";
-        // Usar la API estable v1 y el alias 'latest' que siempre funciona
-        $url = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent";
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $apiKey;
 
         $prompt = "Analiza la imagen adjunta que contiene una tabla de trabajos/ítems. "
                 . "Debes extraer exclusivamente la información de dos columnas: Descripción (descripcion) y Cantidad (cantidad). "
@@ -169,13 +168,14 @@ class CampanaController {
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
-            'X-goog-api-key: ' . $apiKey
-        ]);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
         
-        // Omitir verificación SSL si el hosting tiene certificados antiguos/desactualizados
+        // El User-Agent a veces evita el 404 en servidores restrictivos
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+        
+        // Omitir verificación SSL
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
