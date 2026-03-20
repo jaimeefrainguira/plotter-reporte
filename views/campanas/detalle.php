@@ -604,21 +604,32 @@
                     }
 
                     console.log("OCR completado. Texto obtenido (longitud):", text.length);
-                    ocrStatus.textContent = "Texto extraído. Consultando IA...";
+                    ocrStatus.textContent = "Texto obtenido. Consultando IA para ordenar...";
                     progressBar.style.width = '100%';
                     progressBar.classList.replace('bg-info', 'bg-success');
 
                     // PASO 2: Enviar texto a Gemini
                     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_KEY}`;
-                    const prompt = `Analiza el siguiente texto extraído mediante OCR de una lista de trabajos de impresión/plotter. 
-                    Extrae los items en formato JSON: [{"descripcion": "...", "cantidad": 1}]. 
-                    Si no hay cantidad explícita, asume 1. No incluyas explicaciones, solo el JSON.
                     
-                    TEXTO EXTRAÍDO:
+                    // Limpieza básica del texto para evitar ruidos de OCR
+                    const cleanText = text.replace(/[^a-zA-Z0-9\s.,×*()\-]/g, ' ').replace(/\s+/g, ' ');
+
+                    const prompt = `Actúa como un extractor de datos de pedidos de impresión. 
+                    Toma el siguiente texto (extraído de OCR, puede tener errores) y conviértelo a un array de objetos JSON con esta estructura: 
+                    [{"descripcion": "Nombre del item/trabajo", "cantidad": numero_entero}].
+                    
+                    Reglas:
+                    1. Si ves algo como "X uds", "X copias" o "X unidades", el número es la cantidad.
+                    2. Si no hay cantidad clara, asume 1.
+                    3. Agrupa descripción y medidas si están juntas.
+                    4. Devuelve ÚNICAMENTE el array JSON, sin explicaciones ni markdown.
+
+                    TEXTO:
                     """
-                    ${text}
+                    ${cleanText}
                     """`;
 
+                    console.log("IA: Consultando a Gemini...");
                     const resp = await fetch(url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -628,9 +639,22 @@
                     });
 
                     const res = await resp.json();
-                    if (!resp.ok) throw new Error(res.error?.message || "Error en la IA");
+                    
+                    if (!resp.ok) {
+                        console.error("Gemini Error:", res);
+                        throw new Error(res.error?.message || "La IA no pudo procesar el texto.");
+                    }
 
-                    let raw = res.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
+                    if (!res.candidates || !res.candidates[0].content) {
+                        console.error("Gemini Response Incompleto:", res);
+                        throw new Error("La IA no devolvió resultados. Intenta de nuevo.");
+                    }
+
+                    let raw = res.candidates[0].content.parts[0].text;
+                    console.log("IA: Respuesta bruta:", raw);
+                    
+                    // Limpiar markdown del JSON si existe
+                    raw = raw.replace(/```json|```/g, '').trim();
                     const items = JSON.parse(raw);
 
                     // Llenar tabla
