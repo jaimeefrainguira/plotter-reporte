@@ -551,16 +551,14 @@
                     // --- PREPROCESAMIENTO DE IMAGEN PARA MEJORAR OCR ---
                     console.log("Preprocesando imagen para mejorar OCR...");
                     ocrStatus.textContent = "Ajustando contraste de la imagen...";
-                    
-                    const img = new Image();
-                    img.src = URL.createObjectURL(currentFile);
-                    await new Promise(resolve => { img.onload = resolve; });
+                    // Obtenemos la imagen que ya está cargada y visible en la vista previa
+                    const img = document.querySelector('#imgPreviewIA img');
 
                     const canvas = document.createElement('canvas');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
+                    canvas.width = img.naturalWidth;
+                    canvas.height = img.naturalHeight;
                     const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0);
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
                     const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                     const data = imgData.data;
