@@ -686,9 +686,12 @@
                                  qtyEncontrado = qtyLines[closestQtyIdx].val;
                              }
 
-                             // Limpieza final de códigos o ruido residual que haya entrado a la descripción
-                             let cleanDesc = desc.text.replace(/^[\dO\|\-\.\*]{1,3}\s+[A-Z0-9\-]{5,10}\s+/i, '');
-                             cleanDesc = cleanDesc.replace(/^[A-Z0-9\-]{5,10}\s+/i, '');
+                             // Limpieza final de códigos (solo si son códigos alfanuméricos como PR01798)
+                             let cleanDesc = desc.text.trim();
+                             // Si inicia con iterador tipo "1 PR01798"
+                             cleanDesc = cleanDesc.replace(/^[\dO\|\-\.\*]{1,3}\s+[A-Z]+\d+[A-Z0-9\-]*\s+/i, '');
+                             // Si inicia solo con "PR01798"
+                             cleanDesc = cleanDesc.replace(/^[A-Z]+\d+[A-Z0-9\-]*\s+/i, '');
 
                              if (cleanDesc.length > 2) {
                                  items.push({ descripcion: cleanDesc, cantidad: qtyEncontrado });
