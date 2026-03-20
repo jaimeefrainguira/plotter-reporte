@@ -582,7 +582,8 @@
                     formData.append('base64Image', processedImgBase64);
                     formData.append('language', 'spa');
                     formData.append('apikey', 'helloworld'); // Llave pública de prueba
-                    formData.append('isTable', 'true');
+                    formData.append('isOverlayRequired', 'true');
+                    formData.append('isTable', 'false');
                     formData.append('scale', 'true');
 
                     const response = await fetch('https://api.ocr.space/parse/image', {
@@ -613,92 +614,89 @@
                     progressBar.style.width = '100%';
                     progressBar.classList.replace('bg-info', 'bg-success');
 
-                    // --- PARSEO LOCAL MANUAL (SIN IA) ---
+                    // --- PARSEO DE TEXTOVERLAY POR COORDENADAS (JSON DE LA IMAGEN) ---
                     const items = [];
-                    const lines = text.split('\n');
-                    const isHeader = /CÓDIGO|DESCRIPCIÓN|MEDIDA|CANTIDAD|CODIGO|DESCRIPCION/i;
+                    const overlay = result.ParsedResults[0].TextOverlay;
                     
-                    // Expresiones para ignorar líneas sueltas que son solo "Unidad" u otro identificador roto
-                    const ignoreTokens = /^(UNID?A?[ \-]?D?|UND|PZA|U\.?\s?MEDIDA|D|MTS)$/i;
+                    if (overlay && overlay.Lines) {
+                        const allLines = overlay.Lines;
+                        // Evitar tokens que sean solo "UNIDA", "D", "CANTIDAD", etc.
+                        const ignoreTokens = /^(UNID?A?[ \-]?D?|UND|PZA|U\.?\s?MEDIDA|D|MTS|CANTIDAD|DESCRIPCION|MEDIDA|CÓDIGO|CODIGO)$/i;
 
-                    let pendingDescription = "";
+                        // 1. Clasificar en descripciones y cantidades guiándonos por coordenadas
+                        let descLines = [];
+                        let qtyLines = [];
 
-                    lines.forEach(line => {
-                        let trimmed = line.trim();
-                        let espacioTrimmed = trimmed.replace(/\s+/g, ' ');
-                        
-                        if (espacioTrimmed.length < 2) return; 
-                        if (isHeader.test(espacioTrimmed)) return;
-                        if (ignoreTokens.test(espacioTrimmed)) return; // Ignorar ruido "UNIDA"
+                        allLines.forEach(l => {
+                            let texto = l.LineText.trim();
+                            if (texto.length < 1 || ignoreTokens.test(texto)) return;
 
-                        // Buscar cantidad por tabulaciones (isTable=true)
-                        const columnas = trimmed.split('\t');
-                        let qty = null;
-                        let desc = "";
-
-                        if (columnas.length >= 2) {
-                             let valNum = parseFloat(columnas[columnas.length - 1].trim().replace(',', '.'));
-                             if (!isNaN(valNum)) {
-                                 qty = valNum;
-                                 desc = columnas.slice(0, -1).join(' ').trim();
-                             } else if (columnas.length >= 3) {
-                                  valNum = parseFloat(columnas[columnas.length - 2].trim().replace(',', '.'));
-                                  if (!isNaN(valNum)) {
-                                      qty = valNum;
-                                      desc = columnas.slice(0, -2).join(' ').trim();
-                                  }
-                             }
-                        }
-
-                        // Buscar por Regex (por si no encontró tabs)
-                        const matchRegex = espacioTrimmed.match(/^(.*?)\s+(\d+(?:[,.]\d+)?)\s*(?:[A-Za-z\W_]{0,8})?$/i);
-                        if (qty === null && matchRegex) {
-                            qty = parseFloat(matchRegex[2].replace(',', '.'));
-                            desc = matchRegex[1].trim();
-                        }
-
-                        // Función de limpieza de identificadores extraños al inicio
-                        const cleanDesc = (t) => {
-                             let res = t.replace(/^[\dO\|\-\.\*]{1,3}\s+[A-Z0-9\-]{5,10}\s+/i, '');
-                             res = res.replace(/^[A-Z0-9\-]{5,10}\s+/i, '');
-                             res = res.replace(/\s+(?:UNID?A?[ \-]?D?|UND|PZA|U\.?\s?MEDIDA)?$/i, '');
-                             return res.trim();
-                        };
-
-                        if (qty !== null && !isNaN(qty)) {
-                            desc = cleanDesc(desc);
+                            // Es candidato a cantidad si está a la derecha del todo y solo tiene números
+                            // En tu JSON las descripciones tienen Left < 250, cantidades Left > 400
+                            const numVal = parseFloat(texto);
+                            const isStrictNumber = /^\d+(\.\d+)?$/.test(texto);
                             
-                            // Unimos a cualquier descripción que estuviera "colgando" del renglón anterior
-                            let finalDesc = desc;
-                            if (pendingDescription && desc) {
-                                finalDesc = pendingDescription + " " + desc;
-                            } else if (pendingDescription && !desc) {
-                                finalDesc = pendingDescription;
+                            // Si es estrictamente numérico y está a la derecha
+                            if (isStrictNumber && l.Words[0].Left > 300) {
+                                qtyLines.push({ text: texto, val: numVal, minTop: l.MinTop });
+                            } else {
+                                descLines.push({ text: texto, minTop: l.MinTop });
                             }
-                            
-                            if (finalDesc.length > 3) {
-                                items.push({ descripcion: finalDesc, cantidad: qty });
-                            }
-                            pendingDescription = ""; // Consumido
-                        } else {
-                            // No tiene número al final, se considera un fragmento de texto
-                            desc = cleanDesc(espacioTrimmed);
-                            if (desc.length > 2) {
-                                pendingDescription += (pendingDescription ? " " : "") + desc;
-                            }
-                        }
-                    });
-
-                    // Si quedó algo huérfano
-                    if (pendingDescription.length > 5) {
-                        items.push({ descripcion: "[Revisar] " + pendingDescription, cantidad: 1 });
-                    }
-
-                    // Fallback extremo
-                    if (items.length === 0) {
-                        lines.filter(l => l.trim().length > 15 && !isHeader.test(l)).forEach(l => {
-                            items.push({ descripcion: "REVISAR: " + l.trim(), cantidad: 1 });
                         });
+
+                        // 2. Ordenar componentes verticalmente (de arriba a abajo)
+                        descLines.sort((a, b) => a.minTop - b.minTop);
+                        qtyLines.sort((a, b) => a.minTop - b.minTop);
+
+                        // 3. Agrupar descripciones que formen la misma "celda" vertical (ej. un salto de línea en la misma caja)
+                        // Si la diferencia vertical (Top) es menor a 30px, la lógica asume que es la continuación de la fila
+                        let mergedDescs = [];
+                        if (descLines.length > 0) {
+                            let curr = { text: descLines[0].text, top: descLines[0].minTop };
+                            for (let i = 1; i < descLines.length; i++) {
+                                let next = descLines[i];
+                                if (next.minTop - curr.top < 30) { 
+                                    // Pertenecen a la misma descripción (ej: ETQ PRECIADORES BIKE SHOP \n IOCMX13CM)
+                                    curr.text += " " + next.text;
+                                } else {
+                                    mergedDescs.push(curr);
+                                    curr = { text: next.text, top: next.minTop };
+                                }
+                            }
+                            mergedDescs.push(curr);
+                        }
+
+                        // 4. Asignar cantidad a cada descripción en base a su altura Y (MinTop)
+                        mergedDescs.forEach(desc => {
+                             let qtyEncontrado = 1; // 1 por defecto si no le extrajo cantidad
+                             
+                             // Buscar la cantidad que mejor se alinee a la altura de esta fila
+                             let closestQtyIdx = -1;
+                             let minDiff = 25; // Diferencia máxima tolerable (mismo renglón)
+                             
+                             qtyLines.forEach((q, idx) => {
+                                 let diff = Math.abs(q.minTop - desc.top);
+                                 if (diff < minDiff) {
+                                     minDiff = diff;
+                                     closestQtyIdx = idx;
+                                 }
+                             });
+
+                             if (closestQtyIdx !== -1) {
+                                 qtyEncontrado = qtyLines[closestQtyIdx].val;
+                             }
+
+                             // Limpieza final de códigos o ruido residual que haya entrado a la descripción
+                             let cleanDesc = desc.text.replace(/^[\dO\|\-\.\*]{1,3}\s+[A-Z0-9\-]{5,10}\s+/i, '');
+                             cleanDesc = cleanDesc.replace(/^[A-Z0-9\-]{5,10}\s+/i, '');
+
+                             if (cleanDesc.length > 2) {
+                                 items.push({ descripcion: cleanDesc, cantidad: qtyEncontrado });
+                             }
+                        });
+
+                    } else {
+                        throw new Error("No se detectó estructura espaciada en el resultado del OCR.");
                     }
 
                     // --- LLENAR TABLA ---
