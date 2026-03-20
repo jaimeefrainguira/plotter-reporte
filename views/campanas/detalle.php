@@ -564,6 +564,97 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // ── LÓGICA DE IA INYECTADA DIRECTAMENTE PARA EVITAR CACHE ──
+    document.addEventListener('DOMContentLoaded', () => {
+        const GEMINI_KEY = "AIzaSyBEk4ziQM0iMmHOA7ssfli65woGyMK1kZ4";
+        const btnProc    = document.getElementById('btnProcesarIA');
+        const fileIn     = document.getElementById('fileInputIA');
+        const dropArea   = document.getElementById('dropAreaIA');
+        let base64Img    = "";
+
+        if (btnProc) {
+            console.log("IA: Sistema inyectado correctamente.");
+            
+            // Drag & Drop
+            if (dropArea) {
+                dropArea.onclick = () => fileIn.click();
+                fileIn.onchange = (e) => handleIAFiles(e.target.files);
+                dropArea.ondragover = (e) => { e.preventDefault(); dropArea.classList.add('bg-primary-subtle'); };
+                dropArea.ondragleave = () => { dropArea.classList.remove('bg-primary-subtle'); };
+                dropArea.ondrop = (e) => { e.preventDefault(); dropArea.classList.remove('bg-primary-subtle'); handleIAFiles(e.dataTransfer.files); };
+            }
+
+            function handleIAFiles(files) {
+                if (!files.length) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    base64Img = e.target.result.split(',')[1];
+                    document.getElementById('imgPreviewIA').querySelector('img').src = e.target.result;
+                    document.getElementById('imgPreviewIA').classList.remove('d-none');
+                    btnProc.disabled = false;
+                };
+                reader.readAsDataURL(files[0]);
+            }
+
+            // Click Procesar
+            btnProc.onclick = async () => {
+                const spin = document.getElementById('spinIA');
+                const txt  = document.getElementById('txtIA');
+                
+                if (!base64Img) { alert("Sube una imagen primero."); return; }
+
+                spin.classList.remove('d-none');
+                txt.textContent = 'Procesando...';
+                btnProc.disabled = true;
+
+                try {
+                    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
+                    const resp = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [
+                                { text: "Extrae tabla de items a JSON: [{\"descripcion\": \"...\", \"cantidad\": 1}]" },
+                                { inline_data: { mime_type: "image/jpeg", data: base64Img } }
+                            ]}]
+                        })
+                    });
+
+                    if (!resp.ok) throw new Error("Error API Google");
+                    const res = await resp.json();
+                    let raw = res.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
+                    const items = JSON.parse(raw);
+
+                    const tbody = document.getElementById('iaTableBody');
+                    tbody.innerHTML = '';
+                    items.forEach(it => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td><input type="text" class="form-control form-control-sm ia-desc" value="${it.descripcion}"></td>
+                            <td><input type="number" class="form-control form-control-sm ia-cant" value="${it.cantidad}"></td>
+                            <td><button class="btn btn-sm btn-danger py-0 px-1" onclick="this.closest('tr').remove()"><i class="bi bi-x"></i></button></td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+
+                    document.getElementById('multiIA-step-upload').classList.add('d-none');
+                    document.getElementById('multiIA-step-review').classList.remove('d-none');
+                    document.getElementById('btnConfirmarIA').classList.remove('d-none');
+                    document.getElementById('btnRecargarIA').classList.remove('d-none');
+                    btnProc.classList.add('d-none');
+
+                } catch (e) {
+                    alert("Error IA: " + e.message);
+                } finally {
+                    spin.classList.add('d-none');
+                    txt.textContent = 'PROCESAR CON IA';
+                    btnProc.disabled = false;
+                }
+            };
+        }
+    });
+</script>
 <script src="js/campanas_calculos.js?v=<?= time() ?>"></script>
 </body>
 </html>
