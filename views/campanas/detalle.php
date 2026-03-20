@@ -116,10 +116,206 @@
 
     <!-- Panel de Consumos Global -->
     <div class="mt-4">
-        <h4><i class="bi bi-calc"></i> Resumen de Consumos Global</h4>
-        <div id="consumosGlobales" class="row g-2">
-            <!-- Se llena dinámicamente con JS si se desea o se puede pre-generar en PHP -->
-        </div>
+        <h4><i class="bi bi-calculator"></i> Resumen Global de Consumos</h4>
+
+        <?php
+        /* ── Agrupar trabajos por material ─────────────────────────────── */
+        $resumenMat  = [];   // consumo m² por material
+        $totalSintra = 0;    // planchas sintra globales
+
+        foreach ($trabajos as $t) {
+            $metros   = (float)($t['total_metros']   ?? 0);
+            $planchas = (int)  ($t['total_planchas'] ?? 0);
+            $totalSintra += $planchas;
+
+            if ($metros <= 0 && $planchas <= 0) continue; // trabajo sin consumo calculado
+
+            $mid = $t['material_id'] ?: 0;
+            $nombre = $t['material_nombre'] ?? 'Sin material';
+
+            if (!isset($resumenMat[$mid])) {
+                $largoRollo = (float)($t['largo_rollo_m'] ?? 50);
+                if ($largoRollo <= 0) $largoRollo = 50; // fallback
+                $resumenMat[$mid] = [
+                    'nombre'       => $nombre,
+                    'largo_rollo'  => $largoRollo,        // metros
+                    'total_metros' => 0.0,
+                    'trabajos'     => 0,
+                ];
+            }
+            $resumenMat[$mid]['total_metros'] += $metros;
+            $resumenMat[$mid]['trabajos']++;
+        }
+
+        $hayConsumo = !empty($resumenMat) || $totalSintra > 0;
+        ?>
+
+        <?php if (!$hayConsumo): ?>
+            <div class="alert alert-secondary">
+                <i class="bi bi-info-circle"></i>
+                No hay consumos calculados aún. Añade trabajos y presiona <strong>CALCULAR</strong> en cada ítem.
+            </div>
+        <?php else: ?>
+
+        <div class="row g-3">
+
+            <!-- ── Tarjetas por material ───────────────────────────────── -->
+            <?php foreach ($resumenMat as $mid => $rm):
+                $largoRollo  = $rm['largo_rollo'];      // en metros
+                $totalM      = $rm['total_metros'];     // en metros
+                $rollosEnt   = floor($totalM / $largoRollo);
+                $sobranteM   = fmod($totalM, $largoRollo);
+                $sobranteCm  = round($sobranteM * 100, 1);
+                $pct         = $largoRollo > 0 ? min(100, ($totalM / $largoRollo) * 100) : 0;
+
+                // Color según consumo
+                if ($pct >= 90)      $color = 'danger';
+                elseif ($pct >= 50)  $color = 'warning';
+                else                  $color = 'success';
+            ?>
+            <div class="col-md-4 col-sm-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-dark text-white py-2">
+                        <i class="bi bi-layers me-1"></i>
+                        <strong><?= htmlspecialchars($rm['nombre']) ?></strong>
+                        <span class="badge bg-secondary ms-1 small"><?= (int)$rm['trabajos'] ?> ítem(s)</span>
+                    </div>
+                    <div class="card-body pb-2">
+
+                        <!-- Total en metros -->
+                        <div class="d-flex justify-content-between align-items-baseline">
+                            <span class="text-muted small">Total consumido:</span>
+                            <span class="fs-5 fw-bold text-<?= $color ?>">
+                                <?= number_format($totalM, 2) ?> m
+                            </span>
+                        </div>
+
+                        <!-- Barra de progreso por roller -->
+                        <div class="progress my-2" style="height:10px;" title="<?= round($pct, 1) ?>% del rollo">
+                            <div class="progress-bar bg-<?= $color ?> progress-bar-striped"
+                                 role="progressbar" style="width:<?= min(100, $pct) ?>%"></div>
+                        </div>
+
+                        <!-- Desglose rollos -->
+                        <?php if ($rollosEnt >= 1): ?>
+                        <div class="summary-card mb-2">
+                            <div class="d-flex justify-content-between">
+                                <span><i class="bi bi-circle-fill text-warning me-1" style="font-size:.6rem"></i>Rollos completos</span>
+                                <strong><?= (int)$rollosEnt ?> × <?= (int)$largoRollo ?>m</strong>
+                            </div>
+                            <?php if ($sobranteM > 0.01): ?>
+                            <div class="d-flex justify-content-between mt-1">
+                                <span><i class="bi bi-circle me-1" style="font-size:.6rem"></i>Sobrante</span>
+                                <strong>
+                                    <?php if ($sobranteM >= 1): ?>
+                                        <?= number_format($sobranteM, 2) ?> m
+                                    <?php else: ?>
+                                        <?= number_format($sobranteCm, 0) ?> cm
+                                    <?php endif; ?>
+                                </strong>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                        <?php else: ?>
+                        <div class="summary-card mb-2">
+                            <div class="d-flex justify-content-between">
+                                <span><i class="bi bi-circle me-1" style="font-size:.6rem"></i>Uso parcial de rollo</span>
+                                <strong>
+                                    <?php if ($totalM >= 1): ?>
+                                        <?= number_format($totalM, 2) ?> m
+                                    <?php else: ?>
+                                        <?= number_format($totalM * 100, 1) ?> cm
+                                    <?php endif; ?>
+                                </strong>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+
+                        <!-- Resumen texto -->
+                        <p class="mb-0 small text-muted">
+                            <?php if ($rollosEnt >= 1 && $sobranteM > 0.01): ?>
+                                <?= (int)$rollosEnt ?> rollo(s) de <?= (int)$largoRollo ?>m
+                                + <?= number_format($sobranteM >= 1 ? $sobranteM : $sobranteCm, $sobranteM >= 1 ? 2 : 0) ?>
+                                <?= $sobranteM >= 1 ? 'm' : 'cm' ?> adicionales
+                            <?php elseif ($rollosEnt >= 1): ?>
+                                <?= (int)$rollosEnt ?> rollo(s) de <?= (int)$largoRollo ?>m exactos
+                            <?php else: ?>
+                                Menos de 1 rollo (<?= (int)$largoRollo ?>m/rollo)
+                            <?php endif; ?>
+                        </p>
+
+                    </div>
+                </div>
+            </div>
+            <?php endforeach; ?>
+
+            <!-- ── Tarjeta Sintra (si aplica) ───────────────────────────── -->
+            <?php if ($totalSintra > 0): ?>
+            <div class="col-md-4 col-sm-6">
+                <div class="card border-0 shadow-sm h-100 border-top border-3 border-info">
+                    <div class="card-header text-white py-2" style="background:#0d5564;">
+                        <i class="bi bi-grid-3x2-gap me-1"></i>
+                        <strong>Sintra 122×244 cm</strong>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-baseline mb-2">
+                            <span class="text-muted small">Total planchas:</span>
+                            <span class="fs-3 fw-bold text-info"><?= $totalSintra ?></span>
+                        </div>
+                        <p class="mb-0 small text-muted">
+                            <?= $totalSintra ?> plancha(s) de 122×244 cm
+                        </p>
+
+                        <!-- Desglose por ítem -->
+                        <hr class="my-2">
+                        <p class="small fw-semibold mb-1">Detalle por ítem:</p>
+                        <ul class="list-unstyled small mb-0">
+                        <?php foreach ($trabajos as $t):
+                            $p = (int)($t['total_planchas'] ?? 0);
+                            if ($p <= 0) continue;
+                        ?>
+                            <li class="d-flex justify-content-between">
+                                <span class="text-truncate me-2"><?= htmlspecialchars($t['descripcion']) ?></span>
+                                <strong><?= $p ?> plancha(s)</strong>
+                            </li>
+                        <?php endforeach; ?>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <!-- ── Totalizador global ────────────────────────────────────── -->
+            <?php
+            $totalMetrosGlobal = array_sum(array_column($resumenMat, 'total_metros'));
+            ?>
+            <div class="col-12">
+                <div class="card border-0 shadow-sm" style="background:linear-gradient(135deg,#0a1628,#1a3a5c); color:#fff;">
+                    <div class="card-body py-3">
+                        <div class="row align-items-center g-3">
+                            <div class="col-auto">
+                                <i class="bi bi-bar-chart-fill" style="font-size:2rem; opacity:.8;"></i>
+                            </div>
+                            <div class="col">
+                                <div class="small opacity-75 text-uppercase letter-spacing-1">Consumo total acumulado (todos los materiales)</div>
+                                <div class="fs-4 fw-bold">
+                                    <?= number_format($totalMetrosGlobal, 2) ?> m lineales
+                                    <?php if ($totalSintra > 0): ?>
+                                        <span class="fs-6 ms-3 text-info">+ <?= $totalSintra ?> planchas Sintra</span>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                            <div class="col-auto text-end">
+                                <div class="small opacity-75">Ítems con consumo</div>
+                                <div class="fs-5 fw-bold"><?= array_sum(array_column($resumenMat, 'trabajos')) ?></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /row -->
+        <?php endif; ?>
     </div>
 </div>
 

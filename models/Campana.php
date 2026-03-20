@@ -32,11 +32,13 @@ class Campana {
     public function getTrabajos(int $campanaId): array {
         $stmt = $this->db->prepare("
             SELECT t.*, m.nombre as material_nombre, m.tipo as material_tipo,
+                   m.ancho_cm, m.largo_rollo_m,
                    c.total_metros, c.total_planchas, c.distribucion_texto, c.unidades_por_unidad_venta
             FROM trabajos t
             LEFT JOIN materiales m ON t.material_id = m.id
             LEFT JOIN consumos c ON t.id = c.trabajo_id
             WHERE t.campana_id = ?
+            ORDER BY t.id ASC
         ");
         $stmt->execute([$campanaId]);
         return $stmt->fetchAll();
