@@ -1,5 +1,7 @@
-DONDE PUEDA PONER EL NOMBRE DEL MATERIAL, EL TAMAÑO DEL MATERIAL CON EL CUAL SE REALIZA LOS CALCULOS
-Y PUEDA MODIFICAR, BORRAR(OCULTAR O MOSTRAR POR TEMAS DE BD), Y CREAR/**
+/**
+ * MÓDULO DE CÁLCULOS PARA CAMPAÑAS
+ * El selector de material lee ancho_cm y largo_rollo_m de la BD.
+ * data-ancho = ancho en cm | data-largo = largo del rollo en cm (m * 100)
  * Réplica exacta de calcular.html
  * Integrada en el modal "Nuevo Item de Trabajo" de detalle.php
  * Versión 2.1 (Cache Busted)
@@ -47,6 +49,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // ── Info de material seleccionado ──────────────────────────────
+    const matSelect = document.getElementById('field_material_id');
+    const matInfo   = document.createElement('small');
+    matInfo.id = 'matInfoBadge';
+    matInfo.className = 'text-muted ms-2';
+    if (matSelect) {
+        matSelect.parentNode.insertBefore(matInfo, matSelect.nextSibling);
+        const actualizarInfoMat = () => {
+            const opt = matSelect.options[matSelect.selectedIndex];
+            if (opt && matSelect.value !== '') {
+                const anchoMat = parseFloat(opt.dataset.ancho) || 0;
+                const largoMat = parseFloat(opt.dataset.largo) || 0;
+                matInfo.innerHTML = `<span class="badge bg-info text-dark"><i class="bi bi-rulers"></i> ${anchoMat} cm × ${largoMat / 100} m por rollo</span>`;
+            } else {
+                matInfo.textContent = '';
+            }
+        };
+        matSelect.addEventListener('change', actualizarInfoMat);
+        actualizarInfoMat(); // ejecutar al cargar por si ya hay un valor seleccionado
+    }
+
     // Evento de apertura del modal
     const modalEl = document.getElementById('modalTrabajo');
     if (modalEl) {
@@ -68,6 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('field_ancho_panel').value = d.ancho_panel;
             document.getElementById('field_alto_panel').value = d.alto_panel;
             document.getElementById('field_material_id').value = d.material_id;
+            document.getElementById('field_material_id').dispatchEvent(new Event('change'));
 
             document.getElementById('field_orientacion').value = d.orientacion || 'auto';
             document.getElementById('usarPanelado').checked = parseInt(d.usar_panelado) === 1;

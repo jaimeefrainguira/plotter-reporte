@@ -31,7 +31,7 @@ class CampanaController {
             exit;
         }
         $trabajos = $this->campanaModel->getTrabajos($id);
-        $materiales = $this->materialModel->getAll();
+        $materiales = $this->materialModel->getAll(soloActivos: true);
         include __DIR__ . '/../views/campanas/detalle.php';
     }
 

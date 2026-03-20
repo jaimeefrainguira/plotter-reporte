@@ -194,16 +194,14 @@
                         </div>
                     </div>
 
-                    <!-- ===== MATERIAL ROLLOS ===== -->
-                    <h6 class="fw-bold mt-3">Material Rollos</h6>
-                    <select name="material_id" id="field_material_id" class="form-select form-select-sm mb-3 calc-trigger" required style="max-width:300px;">
-                        <option value="">-- SELECCIONAR --</option>
+                    <h6 class="fw-bold mt-3"><i class="bi bi-boxes me-1"></i>Material Rollos</h6>
+                    <select name="material_id" id="field_material_id" class="form-select form-select-sm mb-3 calc-trigger" required style="max-width:380px;">
+                        <option value="">-- SELECCIONAR MATERIAL --</option>
                         <?php foreach ($materiales as $mat): ?>
-                            <option value="<?= $mat['id'] ?>" 
-                                data-tipo="<?= $mat['tipo'] ?>" 
-                                data-ancho="<?= (float)$mat['medida_ancho'] ?>" 
-                                data-largo="<?= (float)$mat['medida_largo'] ?>">
-                                <?= htmlspecialchars($mat['nombre']) ?> <?= (float)$mat['medida_ancho'] ?>x<?= (float)$mat['medida_largo'] ?>
+                            <option value="<?= (int)$mat['id'] ?>"
+                                data-ancho="<?= (float)$mat['ancho_cm'] ?>"
+                                data-largo="<?= (float)$mat['largo_rollo_m'] * 100 ?>">
+                                <?= htmlspecialchars($mat['nombre']) ?> &mdash; <?= (float)$mat['ancho_cm'] ?>cm × <?= (float)$mat['largo_rollo_m'] ?>m
                             </option>
                         <?php endforeach; ?>
                     </select>
