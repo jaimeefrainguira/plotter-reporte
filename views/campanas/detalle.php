@@ -548,6 +548,33 @@
                 btnProc.disabled = true;
 
                 try {
+                    // --- PREPROCESAMIENTO DE IMAGEN PARA MEJORAR OCR ---
+                    console.log("Preprocesando imagen para mejorar OCR...");
+                    ocrStatus.textContent = "Ajustando contraste de la imagen...";
+                    
+                    const img = new Image();
+                    img.src = URL.createObjectURL(currentFile);
+                    await new Promise(resolve => { img.onload = resolve; });
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+
+                    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const data = imgData.data;
+
+                    // Filtro de Binarización rápida (Blanco y Negro extremo) para mejorar legibilidad
+                    for (let i = 0; i < data.length; i += 4) {
+                        const r = data[i], g = data[i+1], b = data[i+2];
+                        let v = (0.2126 * r + 0.7152 * g + 0.0722 * b); // Escala de grises
+                        v = v < 150 ? 0 : 255; // Umbral de contraste (texto negro sobre fondo blanco)
+                        data[i] = data[i+1] = data[i+2] = v;
+                    }
+                    ctx.putImageData(imgData, 0, 0);
+                    const processedImgBase64 = canvas.toDataURL('image/png');
+
                     // PASO 1: OCR con Tesseract.js (V5)
                     console.log("Iniciando OCR con Tesseract.js v5...");
                     ocrStatus.textContent = "Preparando motor de OCR...";
@@ -557,8 +584,10 @@
                         ocrStatus.textContent = "Sigue cargando (primera vez puede demorar)...";
                     }, 8000);
 
-                    const { data: { text } } = await Tesseract.recognize(currentFile, 'spa', {
+                    // Pasamos la imagen en blanco y negro de máximo contraste
+                    const { data: { text } } = await Tesseract.recognize(processedImgBase64, 'spa', {
                         langPath: 'https://tessdata.projectnaptha.com/4.0.0_best/',
+                        tessedit_pageseg_mode: '6', // PSM 6: Assume a single uniform block of text. (ideal para tablas)
                         logger: m => {
                             clearTimeout(timeoutMsg);
                             console.log("Tesseract Log:", m);
