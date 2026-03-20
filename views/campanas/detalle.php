@@ -609,7 +609,7 @@
                 btnProc.disabled = true;
 
                 try {
-                    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
                     console.log("IA: Llamando a Google con clave:", GEMINI_KEY.substring(0, 5) + "...");
                     
                     const resp = await fetch(url, {
