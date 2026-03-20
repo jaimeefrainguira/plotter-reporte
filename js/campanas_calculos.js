@@ -362,32 +362,50 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     btnProcesar.onclick = async () => {
+        // API Key configurada para procesamiento directo desde el navegador
+        const GEMINI_API_KEY = "AIzaSyBEk4ziQM0iMmHOA7ssfli65woGyMK1kZ4";
         const spin = document.getElementById('spinIA');
         const txt  = document.getElementById('txtIA');
         spin.classList.remove('d-none');
-        txt.textContent = 'Analizando imagen en servidor...';
+        txt.textContent = 'Antigravity analizando con IA (Navegador)...';
         btnProcesar.disabled = true;
 
+        const PROMPT = `Analiza la imagen adjunta que contiene una tabla de trabajos/ítems. 
+        Debes extraer exclusivamente la información de dos columnas: Descripción (descripcion) y Cantidad (cantidad). 
+        Ignora cualquier otra columna. No añadas comentarios ni explicaciones. 
+        Devuelve los resultados únicamente en un formato de arreglo JSON válido: 
+        [{"descripcion": "Nombre del item", "cantidad": 10}, ...]`;
+
         try {
-            const response = await fetch('index.php?action=campana_ai_process', {
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+            
+            const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ image: base64ImageIA })
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [
+                            { text: PROMPT },
+                            { inline_data: { mime_type: "image/jpeg", data: base64ImageIA } }
+                        ]
+                    }]
+                })
             });
 
-            if (!response.ok) throw new Error("Error en servidor");
+            if (!response.ok) throw new Error("Error en la API de Google (Status: " + response.status + ")");
 
-            const res = await response.json();
-            if (res.ok) {
-                renderReviewIA(res.data);
-            } else {
-                alert("Error de IA: " + res.error);
-                resetModalIA();
-            }
+            const result = await response.json();
+            
+            // Extraer y limpiar el JSON de la respuesta
+            let rawText = result.candidates[0].content.parts[0].text;
+            rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+
+            const items = JSON.parse(rawText);
+            renderReviewIA(items);
 
         } catch (error) {
             console.error(error);
-            alert("Error de conexión: " + error.message);
+            alert("Error de procesamiento IA: " + error.message);
             resetModalIA();
         } finally {
             spin.classList.add('d-none');

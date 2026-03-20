@@ -133,69 +133,6 @@ class CampanaController {
         exit;
     }
 
-    /* ─── PROCESAMIENTO IA (GEMINI) ────────────────────────────────── */
-
-    public function processImageIA(): void {
-        header('Content-Type: application/json');
-        
-        $inputData = json_decode(file_get_contents('php://input'), true);
-        $base64Image = $inputData['image'] ?? '';
-        
-        if (empty($base64Image)) {
-            echo json_encode(['ok' => false, 'error' => 'No se recibió imagen']);
-            exit;
-        }
-
-        $apiKey = "AIzaSyBEk4ziQM0iMmHOA7ssfli65woGyMK1kZ4";
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $apiKey;
-
-        $prompt = "Analiza la imagen adjunta que contiene una tabla de trabajos/ítems. "
-                . "Debes extraer exclusivamente la información de dos columnas: Descripción (descripcion) y Cantidad (cantidad). "
-                . "Ignora cualquier otra columna. No añadas comentarios ni explicaciones. "
-                . "Devuelve los resultados únicamente en un formato de arreglo JSON válido: "
-                . "[{\"descripcion\": \"Nombre\", \"cantidad\": 10}]";
-
-        $data = [
-            "contents" => [[
-                "parts" => [
-                    ["text" => $prompt],
-                    ["inline_data" => ["mime_type" => "image/jpeg", "data" => $base64Image]]
-                ]
-            ]]
-        ];
-
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-        
-        // El User-Agent a veces evita el 404 en servidores restrictivos
-        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
-        
-        // Omitir verificación SSL
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        if ($httpCode !== 200) {
-            echo json_encode(['ok' => false, 'error' => 'Error de API (Código ' . $httpCode . ')', 'debug' => $response]);
-            exit;
-        }
-
-        $result = json_decode($response, true);
-        $rawText = $result['candidates'][0]['content']['parts'][0]['text'] ?? '';
-        
-        // Limpiar markdown del JSON si la IA lo incluyó
-        $rawText = trim(str_replace(['```json', '```'], '', $rawText));
-        
-        echo json_encode(['ok' => true, 'data' => json_decode($rawText, true)]);
-        exit;
-    }
-
     /* ─── OTROS MÉTODOS ─────────────────────────────────────────────── */
 
     public function deleteCampana(int $id): void {
