@@ -588,34 +588,52 @@
                     progressBar.style.width = '100%';
                     progressBar.classList.replace('bg-info', 'bg-success');
 
-                    // --- PARSEO LOCAL (SIN GOOGLE) ---
+                    // --- PARSEO LOCAL ESPECÍFICO (SIN GOOGLE) ---
                     const items = [];
                     const lines = text.split('\n');
 
-                    lines.forEach(line => {
-                        const trimmed = line.trim();
-                        if (trimmed.length < 10) return; // Ignorar ruidos cortos
+                    // Expresión regular para omitir encabezados
+                    const isHeader = /CÓDIGO|DESCRIPCIÓN|MEDIDA|CANTIDAD|CODIGO|DESCRIPCION/i;
 
-                        // Heurística básica: Buscar números decimales o enteros al inicio o final
-                        // Ejemplo: "ITEM DESCRIPCION 50.00" o "10 BANNER 3X4"
-                        const match = trimmed.match(/(\d+[,.]?\d*)$|(\d+[,.]?\d*)\s/);
-                        let desc = trimmed;
-                        let cant = 1;
+                    lines.forEach(line => {
+                        let trimmed = line.trim();
+                        // Limpiar múltiples espacios seguidos y tabulaciones
+                        trimmed = trimmed.replace(/\s+/g, ' ');
+
+                        if (trimmed.length < 10) return; // Ignorar líneas muy cortas o ruido de la imagen
+                        if (isHeader.test(trimmed)) return; // Ignorar la fila de título
+
+                        // Expresión regular para detectar la tabla del usuario:
+                        // (Todo antes de la cantidad) + (Posible unidad: UNIDAD, UNIDA D, UND) + (CANTIDAD numérico final) + (Posible ruido corto)
+                        // Ej: "1 PR01798 VALLA 6.60 * 3.30 MTS UNIDA D 1.00"
+                        const match = trimmed.match(/^(.*?)\s+(?:UNID?A?[ \-]?D?|UND|PZA|U\.? ?MEDIDA)?\s*(\d+(?:[,.]\d+)?)\s*(?:[A-Za-z\W_]{0,3})?$/i);
 
                         if (match) {
-                            cant = parseFloat(match[0].replace(',', '.')) || 1;
-                            desc = trimmed.replace(match[0], '').trim();
-                        }
-                        
-                        if (desc.length > 5) {
-                            items.push({ descripcion: desc, cantidad: cant });
+                            let desc = match[1].trim();
+                            let cantStr = match[2].trim().replace(',', '.');
+                            let cant = parseFloat(cantStr) || 1;
+
+                            // Eliminar posible columna "#" (número de item) y columna "CÓDIGO" al inicio (ej: "1 PR01798" o solo "PR01798")
+                            // Asumimos iterador corto (1-3 chars) + código alfanumérico largo
+                            desc = desc.replace(/^[\dO\|\-\.\*]{1,3}\s+[A-Z0-9\-]{5,10}\s+/i, '');
+                            // Alternativa por si el OCR no captó el # de item, solo el código:
+                            desc = desc.replace(/^[A-Z0-9\-]{5,10}\s+/i, '');
+
+                            // Limpieza final de rastro de unidad pegada al final (ej: "UNIDA" sin D por defecto del OCR)
+                            desc = desc.replace(/\s+UNID?A?$/i, '');
+
+                            desc = desc.trim();
+
+                            if (desc.length > 3) {
+                                items.push({ descripcion: desc, cantidad: cant });
+                            }
                         }
                     });
 
+                    // Fallback de seguridad por si la expresión de tabla falla en toda la imagen
                     if (items.length === 0) {
-                        // Fallback: tratar cada línea como un ítem de cantidad 1 si no se detectó nada
-                        lines.filter(l => l.trim().length > 10).forEach(l => {
-                            items.push({ descripcion: l.trim(), cantidad: 1 });
+                        lines.filter(l => l.trim().length > 15 && !isHeader.test(l)).forEach(l => {
+                            items.push({ descripcion: "REVISAR: " + l.trim(), cantidad: 1 });
                         });
                     }
 
