@@ -436,61 +436,47 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <!-- Paso 1: Carga -->
-                <div id="multiIA-step-upload">
-                    <p class="text-muted small">Carga una imagen de tu lista de trabajos. Usaremos <strong>OCR (Tesseract.js)</strong> para extraer el texto y luego la IA para organizarlo en una tabla.</p>
-                    <div class="border border-2 border-dashed rounded-4 p-5 text-center bg-light mb-3" id="dropAreaIA" style="cursor:pointer">
-                        <i class="bi bi-image text-primary" style="font-size:3rem; opacity:.5"></i>
-                        <h6 class="mt-3">Arrastra tu imagen aquí</h6>
-                        <p class="small text-muted">o haz clic para seleccionar archivo</p>
-                        <input type="file" id="fileInputIA" accept="image/*" class="d-none">
-                        <div id="imgPreviewIA" class="mt-3 d-none">
-                            <img src="" class="img-fluid rounded border shadow-sm" style="max-height:200px">
-                        </div>
-                    </div>
-                    
-                    <!-- Barra de Progreso OCR -->
-                    <div id="ocrProgressWrapper" class="d-none mb-3">
-                        <div class="d-flex justify-content-between mb-1">
-                            <span class="small text-muted" id="ocrStatusMsg">Leyendo imagen...</span>
-                            <span class="small fw-bold" id="ocrPercent">0%</span>
-                        </div>
-                        <div class="progress" style="height: 10px;">
-                            <div id="ocrProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-info" role="progressbar" style="width: 0%"></div>
-                        </div>
-                    </div>
+                <style>
+                    .loader { display: none; color: #2563eb; font-weight: bold; margin: 20px 0; text-align: center; }
+                    .loader::after { content: "..."; animation: dots 1.5s steps(5, end) infinite; }
+                    .upload-box { border: 2px dashed #cbd5e1; padding: 40px; border-radius: 12px; background: #f1f5f9; cursor: pointer; transition: all 0.3s; margin-bottom: 20px; text-align: center; }
+                    .upload-box:hover { border-color: #2563eb; background: #eff6ff; }
+                    #preview { max-width: 100%; max-height: 300px; border-radius: 8px; display: none; margin: 20px auto; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+                    .error-msg { color: #dc2626; background: #fee2e2; padding: 10px; border-radius: 6px; display: none; margin-top: 20px; text-align: center; }
+                    @keyframes dots { 0%, 20% { color: rgba(0,0,0,0); text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); } 40% { color: #2563eb; text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); } 60% { text-shadow: .25em 0 0 #2563eb, .5em 0 0 rgba(0,0,0,0); } 80%, 100% { text-shadow: .25em 0 0 #2563eb, .5em 0 0 #2563eb; } }
+                </style>
 
-                    <div class="d-grid">
-                        <button type="button" class="btn btn-primary" id="btnProcesarIA" disabled>
-                            <span class="spinner-border spinner-border-sm d-none" id="spinIA"></span>
-                            <span id="txtIA">PROCESAR CON OCR e IA</span>
-                        </button>
+                <div id="multiIA-step-upload">
+                    <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+                        <p>Sube una imagen o <b>pega (Ctrl + V)</b> para extraer Descripción y Cantidad.</p>
+                        <input type="file" id="fileInput" accept="image/*" style="display:none">
                     </div>
+                    <img id="preview">
+                    
+                    <div id="loader" class="loader">IA Analizando y Estructurando datos</div>
+                    <div id="errorBox" class="error-msg"></div>
                 </div>
 
                 <!-- Paso 2: Revisión -->
-                <div id="multiIA-step-review" class="d-none">
-                    <div class="alert alert-info py-2 small mb-3">
-                        <i class="bi bi-check2-circle"></i> <strong>Extracción exitosa:</strong> He encontrado <span id="iaCount">0</span> ítems. Por favor, confirma los datos.
-                    </div>
-                    <div class="table-responsive" style="max-height:300px">
-                        <table class="table table-sm table-bordered">
-                            <thead class="table-dark">
-                                <tr><th>Descripción</th><th style="width:100px">Cantidad</th><th></th></tr>
-                            </thead>
-                            <tbody id="iaTableBody"></tbody>
-                        </table>
-                    </div>
+                <div id="multiIA-step-review" style="display:none;">
+                    <table class="table table-sm table-bordered" id="tablaResultados" style="width: 100%; margin-top: 25px;">
+                        <thead class="table-dark">
+                            <tr>
+                                <th style="width: 80px; text-align: center;">Cant.</th>
+                                <th>Descripción del Producto / Servicio</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="cuerpoTabla">
+                            <!-- Los datos de la IA se insertarán aquí -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                <button type="button" class="btn btn-success d-none" id="btnConfirmarIA">
-                    <i class="bi bi-check-circle"></i> Confirmar y Cargar
-                </button>
-                <button type="button" class="btn btn-outline-primary d-none" id="btnRecargarIA">
-                    <i class="bi bi-arrow-repeat"></i> Volver a Cargar
-                </button>
+                <button type="button" class="btn btn-outline-primary d-none" id="btnRecargarIA"><i class="bi bi-arrow-repeat"></i> Volver a Cargar</button>
+                <button type="button" class="btn btn-success d-none" id="btnConfirmarIA"><i class="bi bi-check-circle"></i> Confirmar y Cargar</button>
             </div>
         </div>
     </div>
@@ -498,245 +484,165 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // ── LÓGICA DE OCR + IA PARA CARGA MASIVA ──
     document.addEventListener('DOMContentLoaded', () => {
-        const GEMINI_KEY = "AIzaSyBEk4ziQM0iMmHOA7ssfli65woGyMK1kZ4";
-        const btnProc    = document.getElementById('btnProcesarIA');
-        const fileIn     = document.getElementById('fileInputIA');
-        const dropArea   = document.getElementById('dropAreaIA');
-        let currentFile  = null;
+        const fileInput = document.getElementById("fileInput");
+        const preview = document.getElementById("preview");
+        const loader = document.getElementById("loader");
+        const tabla = document.getElementById("multiIA-step-review");
+        const cuerpoTabla = document.getElementById("cuerpoTabla");
+        const errorBox = document.getElementById("errorBox");
+        
+        const btnConfirmarIA = document.getElementById('btnConfirmarIA');
+        const btnRecargarIA = document.getElementById('btnRecargarIA');
+        
+        let currentFile = null;
 
-        if (btnProc) {
-            console.log("Sistema OCR+IA: Inicializado.");
-            
-            // Drag & Drop
-            if (dropArea) {
-                dropArea.onclick = () => fileIn.click();
-                fileIn.onchange = (e) => handleIAFiles(e.target.files);
-                dropArea.ondragover = (e) => { e.preventDefault(); dropArea.classList.add('bg-primary-subtle'); };
-                dropArea.ondragleave = () => { dropArea.classList.remove('bg-primary-subtle'); };
-                dropArea.ondrop = (e) => { e.preventDefault(); dropArea.classList.remove('bg-primary-subtle'); handleIAFiles(e.dataTransfer.files); };
-            }
-
-            // Paste event (Ctrl + V)
-            document.addEventListener('paste', (e) => {
-                const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-                let files = [];
-                for (let index in items) {
-                    let item = items[index];
-                    if (item.kind === 'file' && item.type.startsWith('image/')) {
-                        let file = item.getAsFile();
-                        if (file) files.push(file);
-                    }
-                }
-                
-                if (files.length > 0) {
-                    e.preventDefault();
-                    
-                    // Show modal if not open
-                    const modalEl = document.getElementById('modalMultiIA');
-                    const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-                    modal.show();
-                    
-                    // Reset modal state to upload step
-                    document.getElementById('multiIA-step-upload').classList.remove('d-none');
-                    document.getElementById('multiIA-step-review').classList.add('d-none');
-                    document.getElementById('btnConfirmarIA').classList.add('d-none');
-                    document.getElementById('btnRecargarIA').classList.add('d-none');
-                    btnProc.classList.remove('d-none');
-                    document.getElementById('ocrProgressWrapper').classList.add('d-none');
-                    
-                    handleIAFiles(files);
-                }
+        // 1. Capturar archivo por input
+        if (fileInput) {
+            fileInput.addEventListener("change", (e) => {
+                if (e.target.files[0]) procesarImagen(e.target.files[0]);
             });
+        }
 
-            function handleIAFiles(files) {
-                if (!files.length) return;
-                currentFile = files[0];
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    document.getElementById('imgPreviewIA').querySelector('img').src = e.target.result;
-                    document.getElementById('imgPreviewIA').classList.remove('d-none');
-                    btnProc.disabled = false;
-                };
-                reader.readAsDataURL(currentFile);
+        // 2. Capturar imagen pegada (Ctrl + V)
+        document.addEventListener("paste", (e) => {
+            const item = Array.from(e.clipboardData.items).find(x => x.type.indexOf("image") !== -1);
+            if (item) {
+                // Abrir modal si no está abierto
+                const modalEl = document.getElementById('modalMultiIA');
+                const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                modal.show();
+                procesarImagen(item.getAsFile());
             }
+        });
 
-            // Click Procesar (OCR + IA)
-            btnProc.onclick = async () => {
-                const spin = document.getElementById('spinIA');
-                const txt  = document.getElementById('txtIA');
-                const progressWrap = document.getElementById('ocrProgressWrapper');
-                const progressBar  = document.getElementById('ocrProgressBar');
-                const ocrPercent   = document.getElementById('ocrPercent');
-                const ocrStatus    = document.getElementById('ocrStatusMsg');
+        function procesarImagen(file) {
+            if (!file) return;
+            currentFile = file;
+            
+            // Resetear UI
+            errorBox.style.display = "none";
+            tabla.style.display = "none";
+            btnConfirmarIA.classList.add('d-none');
+            btnRecargarIA.classList.add('d-none');
+            document.getElementById('multiIA-step-upload').style.display = 'block';
+            cuerpoTabla.innerHTML = "";
+            
+            // Mostrar Vista Previa
+            const reader = new FileReader();
+            reader.onload = (e) => { 
+                preview.src = e.target.result; 
+                preview.style.display = "block"; 
+            };
+            reader.readAsDataURL(file);
+
+            // COMPRIMIR IMAGEN 
+            const img = new Image();
+            img.src = URL.createObjectURL(file);
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                const MAX = 1000;
                 
-                if (!currentFile) { alert("Sube una imagen primero."); return; }
+                if (width > height && width > MAX) { height *= MAX / width; width = MAX; }
+                else if (height > MAX) { width *= MAX / height; height = MAX; }
+                
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
 
-                progressWrap.classList.remove('d-none');
-                spin.classList.remove('d-none');
-                txt.textContent = 'Procesando...';
-                btnProc.disabled = true;
+                canvas.toBlob((blob) => {
+                    enviarAPHP(blob);
+                }, 'image/jpeg', 0.8);
+            };
+        }
 
+        async function enviarAPHP(blob) {
+            loader.style.display = "block";
+            
+            const formData = new FormData();
+            formData.append("imagen", blob, "captura.jpg");
+
+            try {
+                const res = await fetch("procesar.php", { method: "POST", body: formData });
+                const rawText = await res.text();
+                
+                let data = [];
                 try {
-                    // --- NUEVO OCR: REDIMENSIONAR IMAGEN ---
-                    console.log("Iniciando nuevo OCR con procesar.php...");
-                    ocrStatus.textContent = "Optimizando imagen...";
-                    progressBar.style.width = '30%';
-                    ocrPercent.textContent = '30%';
-
-                    const img = new Image();
-                    img.src = URL.createObjectURL(currentFile);
-                    
-                    await new Promise((resolve, reject) => {
-                        img.onload = () => {
-                            try {
-                                const canvas = document.createElement('canvas');
-                                let width = img.width;
-                                let height = img.height;
-                                // Si la imagen es muy grande, la bajamos a 1000px máximo
-                                const MAX_WIDTH = 1000;
-                                if (width > MAX_WIDTH) {
-                                    height *= MAX_WIDTH / width;
-                                    width = MAX_WIDTH;
-                                }
-                                canvas.width = width;
-                                canvas.height = height;
-                                const ctx = canvas.getContext('2d');
-                                ctx.drawImage(img, 0, 0, width, height);
-
-                                // Convertir a Blob (JPG de calidad media para que pese poco)
-                                canvas.toBlob(async (blob) => {
-                                    try {
-                                        ocrStatus.textContent = "Enviando a la IA (Ligero)...";
-                                        progressBar.style.width = '80%';
-                                        ocrPercent.textContent = '80%';
-
-                                        const formData = new FormData();
-                                        formData.append("imagen", blob, "imagen.jpg");
-
-                                        // Petición al nuevo endpoint procesar.php
-                                        const response = await fetch("procesar.php", {
-                                            method: "POST",
-                                            body: formData
-                                        });
-
-                                        if (!response.ok) throw new Error("Error en el servidor procesar.php");
-
-                                        // Intentamos parsear la respuesta JSON
-                                        const rawText = await response.text();
-                                        console.log("Respuesta procesar.php:", rawText);
-                                        let items = [];
-                                        try {
-                                            const data = JSON.parse(rawText);
-                                            // Asume que devuelve un array directo, o dentro de 'items'
-                                            items = Array.isArray(data) ? data : (data.items || []);
-                                        } catch (e) {
-                                            throw new Error("El archivo procesar.php no devolvió un JSON válido. Respuesta: " + rawText.substring(0, 100) + "...");
-                                        }
-
-                                        if (items.length === 0) {
-                                            throw new Error("No se extrajeron ítems o el arreglo está vacío.");
-                                        }
-
-                                        // --- LLENAR TABLA ---
-                                        const tbody = document.getElementById('iaTableBody');
-                                        tbody.innerHTML = '';
-                                        items.forEach(it => {
-                                            // Ajusta 'descripcion' y 'cantidad' según los nombres de clave de tu JSON
-                                            const desc = it.descripcion || it.desc || it.nombre || "";
-                                            const cant = it.cantidad || it.cant || it.qty || 1;
-
-                                            const tr = document.createElement('tr');
-                                            tr.innerHTML = `
-                                                <td><input type="text" class="form-control form-control-sm ia-desc" value="${desc}"></td>
-                                                <td><input type="number" class="form-control form-control-sm ia-cant" value="${cant}"></td>
-                                                <td><button class="btn btn-sm btn-danger py-0 px-1" onclick="this.closest('tr').remove()"><i class="bi bi-x"></i></button></td>
-                                            `;
-                                            tbody.appendChild(tr);
-                                        });
-
-                                        document.getElementById('iaCount').textContent = items.length;
-                                        document.getElementById('multiIA-step-upload').classList.add('d-none');
-                                        document.getElementById('multiIA-step-review').classList.remove('d-none');
-                                        document.getElementById('btnConfirmarIA').classList.remove('d-none');
-                                        document.getElementById('btnRecargarIA').classList.remove('d-none');
-                                        btnProc.classList.add('d-none');
-
-                                        resolve();
-                                    } catch (fetchError) {
-                                        reject(fetchError);
-                                    }
-                                }, 'image/jpeg', 0.7);
-                            } catch(errCanvas) {
-                                reject(errCanvas);
-                            }
-                        };
-                        img.onerror = () => reject(new Error("No se pudo cargar la imagen para redimensionar."));
-                    });
-
-                } catch (e) {
-                    alert("Error: " + e.message);
-                    console.error(e);
-                } finally {
-                    spin.classList.add('d-none');
-                    txt.textContent = 'PROCESAR CON OCR e IA';
-                    btnProc.disabled = false;
+                    const parsed = JSON.parse(rawText);
+                    data = Array.isArray(parsed) ? parsed : (parsed.items || []);
+                } catch(e) {
+                    throw new Error("Respuesta no válida del servidor: " + rawText.substring(0, 100));
                 }
-            };
 
-            // Volver a cargar
-            document.getElementById('btnRecargarIA').onclick = () => {
-                document.getElementById('multiIA-step-upload').classList.remove('d-none');
-                document.getElementById('multiIA-step-review').classList.add('d-none');
-                document.getElementById('btnConfirmarIA').classList.add('d-none');
-                document.getElementById('btnRecargarIA').classList.add('d-none');
-                btnProc.classList.remove('d-none');
-                document.getElementById('ocrProgressWrapper').classList.add('d-none');
-                document.getElementById('ocrProgressBar').style.width = '0%';
-                document.getElementById('ocrProgressBar').classList.replace('bg-success', 'bg-info');
-            };
+                if(data.length === 0) {
+                    throw new Error("No se encontraron ítems.");
+                }
 
-            // Confirmar y Cargar (Envío al servidor)
-            document.getElementById('btnConfirmarIA').onclick = async () => {
+                data.forEach(it => {
+                    const desc = it.descripcion || it.desc || it.nombre || "";
+                    const cant = it.cantidad || it.cant || it.qty || 1;
+
+                    const tr = document.createElement('tr');
+                    // Usamos las clases ia-desc y ia-cant para que la función de Guardar funcione
+                    tr.innerHTML = `
+                        <td><input type="number" class="form-control form-control-sm ia-cant" value="${cant}"></td>
+                        <td><input type="text" class="form-control form-control-sm ia-desc" value="${desc}"></td>
+                        <td><button class="btn btn-sm btn-danger py-0 px-1" onclick="this.closest('tr').remove()"><i class="bi bi-x"></i></button></td>
+                    `;
+                    cuerpoTabla.appendChild(tr);
+                });
+
+                loader.style.display = "none";
+                document.getElementById('multiIA-step-upload').style.display = 'none';
+                tabla.style.display = "block";
+                
+                btnConfirmarIA.classList.remove('d-none');
+                btnRecargarIA.classList.remove('d-none');
+                
+            } catch (err) {
+                loader.style.display = "none";
+                errorBox.innerText = err.message || "Error de conexión.";
+                errorBox.style.display = "block";
+            }
+        }
+
+        // --- LÓGICA DE LOS BOTONES ---
+        if (btnRecargarIA) {
+            btnRecargarIA.onclick = () => {
+                document.getElementById('multiIA-step-upload').style.display = 'block';
+                tabla.style.display = 'none';
+                btnConfirmarIA.classList.add('d-none');
+                btnRecargarIA.classList.add('d-none');
+                preview.style.display = 'none';
+                errorBox.style.display = 'none';
+                currentFile = null;
+            };
+        }
+
+        if (btnConfirmarIA) {
+            btnConfirmarIA.onclick = async () => {
                 const descs = [...document.querySelectorAll('.ia-desc')].map(i => i.value);
                 const cants = [...document.querySelectorAll('.ia-cant')].map(i => i.value);
                 
                 if (descs.length === 0) { alert("No hay ítems para cargar."); return; }
 
-                // Aquí podrías enviar un fetch al backend para guardar varios a la vez
-                // Pero como el sistema actual parece basado en formularios individuales,
-                // vamos a simular la carga masiva enviando los datos vía POST si el backend lo permite
-                // o informando al usuario. 
-                
-                // Opción pro: Enviar vía AJAX al controlador campana_save_multi_ia
-                const campanaId = document.querySelector('input[name="campana_id"]').value;
+                const campanaId = document.querySelector('input[name="campana_id"]')?.value || 0;
                 const items = descs.map((d, i) => ({ descripcion: d, cantidad: cants[i] }));
                 
                 try {
-                    const btn = document.getElementById('btnConfirmarIA');
-                    btn.disabled = true;
-                    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
+                    btnConfirmarIA.disabled = true;
+                    btnConfirmarIA.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
 
-                    // Subir la imagen original al servidor
+                    // Subir la imagen original al servidor localmente
                     if (currentFile) {
-                        const formData = new FormData();
-                        formData.append('imagen_adjunta', currentFile, currentFile.name || 'pasted_image.png');
-                        formData.append('campana_id', campanaId);
-                        try {
-                            const imgResp = await fetch('index.php?action=campana_upload_imagen', {
-                                method: 'POST',
-                                body: formData
-                            });
-                            const imgResult = await imgResp.json();
-                            if (!imgResult.success) {
-                                console.warn("Aviso: No se pudo guardar la imagen adjunta. " + imgResult.error);
-                            } else {
-                                console.log("Imagen adjunta guardada:", imgResult.ruta_imagen);
-                            }
-                        } catch (errImg) {
-                            console.error("Error capa de red al subir la imagen:", errImg);
-                        }
+                        const fd = new FormData();
+                        fd.append('imagen_adjunta', currentFile, currentFile.name || 'pasted_image.jpg');
+                        fd.append('campana_id', campanaId);
+                        fetch('index.php?action=campana_upload_imagen', { method: 'POST', body: fd })
+                            .catch(err => console.error("Error capa de red al subir la imagen:", err));
                     }
 
                     const resp = await fetch('index.php?action=campana_bulk_save', {
@@ -753,7 +659,8 @@
                 } catch (e) {
                     alert("Error: " + e.message);
                 } finally {
-                    document.getElementById('btnConfirmarIA').disabled = false;
+                    btnConfirmarIA.disabled = false;
+                    btnConfirmarIA.innerHTML = '<i class="bi bi-check-circle"></i> Confirmar y Cargar';
                 }
             };
         }
