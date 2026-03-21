@@ -1,0 +1,21 @@
+<input type="file" id="fileInput">
+
+<script>
+document.getElementById("fileInput").addEventListener("change", function() {
+    const file = this.files[0];
+    enviarImagen(file);
+});
+
+async function enviarImagen(file) {
+    const formData = new FormData();
+    formData.append("imagen", file);
+
+    const res = await fetch("procesar.php", {
+        method: "POST",
+        body: formData
+    });
+
+    const data = await res.text();
+    console.log("Respuesta:", data);
+}
+</script>
