@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Subir o pegar imagen</title>
+    <title>OCR con IA</title>
 </head>
 <body>
 
@@ -20,7 +20,7 @@ document.getElementById("fileInput").addEventListener("change", function() {
     handleImage(file);
 });
 
-// CTRL + V
+// CTRL + V (PEGAR IMAGEN)
 document.addEventListener("paste", function(e) {
     const items = e.clipboardData.items;
 
@@ -36,7 +36,7 @@ document.addEventListener("paste", function(e) {
 function handleImage(file) {
     if (!file) return;
 
-    // preview
+    // Mostrar preview
     const reader = new FileReader();
     reader.onload = function(e) {
         const img = document.getElementById("preview");
