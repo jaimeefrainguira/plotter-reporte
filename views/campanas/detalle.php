@@ -447,7 +447,7 @@
                 </style>
 
                 <div class="text-center mb-3">
-                    <img id="preview" style="max-width: 100%; max-height: 250px; border-radius: 8px; display: none; margin: 0 auto; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                    <img id="iaPreviewImg" style="max-width: 100%; max-height: 250px; border-radius: 8px; display: none; margin: 0 auto; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
                 </div>
 
                 <div id="multiIA-step-upload">
@@ -489,7 +489,7 @@
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const fileInput = document.getElementById("fileInput");
-        const preview = document.getElementById("preview");
+        const preview = document.getElementById("iaPreviewImg");
         const loader = document.getElementById("loader");
         const tabla = document.getElementById("multiIA-step-review");
         const cuerpoTabla = document.getElementById("cuerpoTabla");
