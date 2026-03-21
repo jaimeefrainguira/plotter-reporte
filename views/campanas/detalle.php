@@ -446,12 +446,15 @@
                     @keyframes dots { 0%, 20% { color: rgba(0,0,0,0); text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); } 40% { color: #2563eb; text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); } 60% { text-shadow: .25em 0 0 #2563eb, .5em 0 0 rgba(0,0,0,0); } 80%, 100% { text-shadow: .25em 0 0 #2563eb, .5em 0 0 #2563eb; } }
                 </style>
 
+                <div class="text-center mb-3">
+                    <img id="preview" style="max-width: 100%; max-height: 250px; border-radius: 8px; display: none; margin: 0 auto; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                </div>
+
                 <div id="multiIA-step-upload">
                     <div class="upload-box" onclick="document.getElementById('fileInput').click()">
                         <p>Sube una imagen o <b>pega (Ctrl + V)</b> para extraer Descripción y Cantidad.</p>
                         <input type="file" id="fileInput" accept="image/*" style="display:none">
                     </div>
-                    <img id="preview">
                     
                     <div id="loader" class="loader">IA Analizando y Estructurando datos</div>
                     <div id="errorBox" class="error-msg"></div>
@@ -462,8 +465,8 @@
                     <table class="table table-sm table-bordered" id="tablaResultados" style="width: 100%; margin-top: 25px;">
                         <thead class="table-dark">
                             <tr>
-                                <th style="width: 80px; text-align: center;">Cant.</th>
                                 <th>Descripción del Producto / Servicio</th>
+                                <th style="width: 80px; text-align: center;">Cant.</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -593,8 +596,8 @@
                     const tr = document.createElement('tr');
                     // Usamos las clases ia-desc y ia-cant para que la función de Guardar funcione
                     tr.innerHTML = `
-                        <td><input type="number" class="form-control form-control-sm ia-cant" value="${cant}"></td>
                         <td><input type="text" class="form-control form-control-sm ia-desc" value="${desc}"></td>
+                        <td><input type="number" class="form-control form-control-sm ia-cant" value="${cant}"></td>
                         <td><button class="btn btn-sm btn-danger py-0 px-1" onclick="this.closest('tr').remove()"><i class="bi bi-x"></i></button></td>
                     `;
                     cuerpoTabla.appendChild(tr);
