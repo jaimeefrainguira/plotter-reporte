@@ -2,7 +2,6 @@
 
 $apiKey = "AIzaSyA752oCuP38hIIZ8uqirwVU7nU2JknuQb8";
 
-
 // Validar imagen
 if (!isset($_FILES['imagen'])) {
     echo json_encode(["error" => "No se recibió imagen"]);
@@ -27,8 +26,8 @@ Reglas:
 - Si no hay cantidad, dejar vacío
 - Devuelve SOLO JSON válido, sin explicación";
 
-// URL CORRECTA (ACTUALIZADA)
-$url = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=" . $apiKey;
+// URL CORRECTA (GEMINI 2.0)
+$url = "https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=" . $apiKey;
 
 // Datos a enviar
 $data = [
