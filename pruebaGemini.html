@@ -1,11 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Subir o pegar imagen</title>
+</head>
+<body>
+
+<h2>Sube o pega una imagen (Ctrl + V)</h2>
+
 <input type="file" id="fileInput">
 
+<br><br>
+<img id="preview" style="max-width:300px; display:none; border:1px solid #ccc;">
+
 <script>
+// INPUT FILE
 document.getElementById("fileInput").addEventListener("change", function() {
     const file = this.files[0];
-    enviarImagen(file);
+    handleImage(file);
 });
 
+// CTRL + V
+document.addEventListener("paste", function(e) {
+    const items = e.clipboardData.items;
+
+    for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf("image") !== -1) {
+            const file = items[i].getAsFile();
+            handleImage(file);
+        }
+    }
+});
+
+// PROCESAR IMAGEN
+function handleImage(file) {
+    if (!file) return;
+
+    // preview
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = document.getElementById("preview");
+        img.src = e.target.result;
+        img.style.display = "block";
+    };
+    reader.readAsDataURL(file);
+
+    enviarImagen(file);
+}
+
+// ENVIAR A PHP
 async function enviarImagen(file) {
     const formData = new FormData();
     formData.append("imagen", file);
@@ -16,6 +59,10 @@ async function enviarImagen(file) {
     });
 
     const data = await res.text();
-    console.log("Respuesta:", data);
+
+    console.log("Respuesta IA:", data);
 }
 </script>
+
+</body>
+</html>
