@@ -579,181 +579,101 @@
                 btnProc.disabled = true;
 
                 try {
-                    // --- PREPROCESAMIENTO DE IMAGEN PARA MEJORAR OCR ---
-                    console.log("Preprocesando imagen para mejorar OCR...");
-                    ocrStatus.textContent = "Ajustando contraste de la imagen...";
-                    // Obtenemos la imagen que ya está cargada y visible en la vista previa
-                    const img = document.querySelector('#imgPreviewIA img');
+                    // --- NUEVO OCR: REDIMENSIONAR IMAGEN ---
+                    console.log("Iniciando nuevo OCR con procesar.php...");
+                    ocrStatus.textContent = "Optimizando imagen...";
+                    progressBar.style.width = '30%';
+                    ocrPercent.textContent = '30%';
 
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.naturalWidth;
-                    canvas.height = img.naturalHeight;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-                    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    const data = imgData.data;
-
-                    // Filtro de Binarización rápida (Blanco y Negro extremo) para mejorar legibilidad
-                    for (let i = 0; i < data.length; i += 4) {
-                        const r = data[i], g = data[i+1], b = data[i+2];
-                        let v = (0.2126 * r + 0.7152 * g + 0.0722 * b); // Escala de grises
-                        v = v < 150 ? 0 : 255; // Umbral de contraste (texto negro sobre fondo blanco)
-                        data[i] = data[i+1] = data[i+2] = v;
-                    }
-                    ctx.putImageData(imgData, 0, 0);
-                    const processedImgBase64 = canvas.toDataURL('image/png');
-
-                    // PASO 1: OCR con OCR.space API
-                    console.log("Iniciando OCR con OCR.space API...");
-                    ocrStatus.textContent = "Enviando imagen a OCR.space...";
-                    progressBar.style.width = '40%';
-                    ocrPercent.textContent = '40%';
-
-                    const formData = new FormData();
-                    formData.append('base64Image', processedImgBase64);
-                    formData.append('language', 'spa');
-                    formData.append('apikey', 'helloworld'); // Llave pública de prueba
-                    formData.append('isOverlayRequired', 'true');
-                    formData.append('isTable', 'false');
-                    formData.append('scale', 'true');
-
-                    const response = await fetch('https://api.ocr.space/parse/image', {
-                        method: 'POST',
-                        body: formData
-                    });
+                    const img = new Image();
+                    img.src = URL.createObjectURL(currentFile);
                     
-                    ocrStatus.textContent = "Recibiendo respuesta de OCR.space...";
-                    progressBar.style.width = '80%';
-                    ocrPercent.textContent = '80%';
-
-                    const result = await response.json();
-
-                    if (result.IsErroredOnProcessing || !result.ParsedResults || result.ParsedResults.length === 0) {
-                        throw new Error("Error en OCR.space: " + (result.ErrorMessage || "No se pudo extraer texto."));
-                    }
-
-                    console.log("Respuesta completa de OCR.space (JSON):", result);
-                    
-                    const text = result.ParsedResults[0].ParsedText;
-
-                    if (!text || text.trim().length < 5) {
-                        throw new Error("No se pudo extraer texto suficiente para procesar.");
-                    }
-
-                    console.log("OCR completado. Texto obtenido en crudo:\n", text);
-                    ocrStatus.textContent = "Analizando tabla de datos extraída...";
-                    progressBar.style.width = '100%';
-                    progressBar.classList.replace('bg-info', 'bg-success');
-
-                    // --- PARSEO DE TEXTOVERLAY POR COORDENADAS (JSON DE LA IMAGEN) ---
-                    const items = [];
-                    const overlay = result.ParsedResults[0].TextOverlay;
-                    
-                    if (overlay && overlay.Lines) {
-                        const allLines = overlay.Lines;
-                        // Evitar tokens que sean solo "UNIDA", "D", "CANTIDAD", etc.
-                        const ignoreTokens = /^(UNID?A?[ \-]?D?|UND|PZA|U\.?\s?MEDIDA|D|MTS|CANTIDAD|DESCRIPCION|MEDIDA|CÓDIGO|CODIGO)$/i;
-
-                        // 1. Clasificar en descripciones y cantidades guiándonos por coordenadas
-                        let descLines = [];
-                        let qtyLines = [];
-
-                        allLines.forEach(l => {
-                            let texto = l.LineText.trim();
-                            if (texto.length < 1 || ignoreTokens.test(texto)) return;
-
-                            // Es candidato a cantidad si está a la derecha del todo y solo tiene números
-                            // En tu JSON las descripciones tienen Left < 250, cantidades Left > 400
-                            const numVal = parseFloat(texto);
-                            const isStrictNumber = /^\d+(\.\d+)?$/.test(texto);
-                            
-                            // Si es estrictamente numérico y está a la derecha
-                            if (isStrictNumber && l.Words[0].Left > 300) {
-                                qtyLines.push({ text: texto, val: numVal, minTop: l.MinTop });
-                            } else {
-                                descLines.push({ text: texto, minTop: l.MinTop });
-                            }
-                        });
-
-                        // 2. Ordenar componentes verticalmente (de arriba a abajo)
-                        descLines.sort((a, b) => a.minTop - b.minTop);
-                        qtyLines.sort((a, b) => a.minTop - b.minTop);
-
-                        // 3. Agrupar descripciones que formen la misma "celda" vertical (ej. un salto de línea en la misma caja)
-                        // Si la diferencia vertical (Top) es menor a 30px, la lógica asume que es la continuación de la fila
-                        let mergedDescs = [];
-                        if (descLines.length > 0) {
-                            let curr = { text: descLines[0].text, top: descLines[0].minTop };
-                            for (let i = 1; i < descLines.length; i++) {
-                                let next = descLines[i];
-                                if (next.minTop - curr.top < 30) { 
-                                    // Pertenecen a la misma descripción (ej: ETQ PRECIADORES BIKE SHOP \n IOCMX13CM)
-                                    curr.text += " " + next.text;
-                                } else {
-                                    mergedDescs.push(curr);
-                                    curr = { text: next.text, top: next.minTop };
+                    await new Promise((resolve, reject) => {
+                        img.onload = () => {
+                            try {
+                                const canvas = document.createElement('canvas');
+                                let width = img.width;
+                                let height = img.height;
+                                // Si la imagen es muy grande, la bajamos a 1000px máximo
+                                const MAX_WIDTH = 1000;
+                                if (width > MAX_WIDTH) {
+                                    height *= MAX_WIDTH / width;
+                                    width = MAX_WIDTH;
                                 }
+                                canvas.width = width;
+                                canvas.height = height;
+                                const ctx = canvas.getContext('2d');
+                                ctx.drawImage(img, 0, 0, width, height);
+
+                                // Convertir a Blob (JPG de calidad media para que pese poco)
+                                canvas.toBlob(async (blob) => {
+                                    try {
+                                        ocrStatus.textContent = "Enviando a la IA (Ligero)...";
+                                        progressBar.style.width = '80%';
+                                        ocrPercent.textContent = '80%';
+
+                                        const formData = new FormData();
+                                        formData.append("imagen", blob, "imagen.jpg");
+
+                                        // Petición al nuevo endpoint procesar.php
+                                        const response = await fetch("procesar.php", {
+                                            method: "POST",
+                                            body: formData
+                                        });
+
+                                        if (!response.ok) throw new Error("Error en el servidor procesar.php");
+
+                                        // Intentamos parsear la respuesta JSON
+                                        const rawText = await response.text();
+                                        console.log("Respuesta procesar.php:", rawText);
+                                        let items = [];
+                                        try {
+                                            const data = JSON.parse(rawText);
+                                            // Asume que devuelve un array directo, o dentro de 'items'
+                                            items = Array.isArray(data) ? data : (data.items || []);
+                                        } catch (e) {
+                                            throw new Error("El archivo procesar.php no devolvió un JSON válido. Respuesta: " + rawText.substring(0, 100) + "...");
+                                        }
+
+                                        if (items.length === 0) {
+                                            throw new Error("No se extrajeron ítems o el arreglo está vacío.");
+                                        }
+
+                                        // --- LLENAR TABLA ---
+                                        const tbody = document.getElementById('iaTableBody');
+                                        tbody.innerHTML = '';
+                                        items.forEach(it => {
+                                            // Ajusta 'descripcion' y 'cantidad' según los nombres de clave de tu JSON
+                                            const desc = it.descripcion || it.desc || it.nombre || "";
+                                            const cant = it.cantidad || it.cant || it.qty || 1;
+
+                                            const tr = document.createElement('tr');
+                                            tr.innerHTML = `
+                                                <td><input type="text" class="form-control form-control-sm ia-desc" value="${desc}"></td>
+                                                <td><input type="number" class="form-control form-control-sm ia-cant" value="${cant}"></td>
+                                                <td><button class="btn btn-sm btn-danger py-0 px-1" onclick="this.closest('tr').remove()"><i class="bi bi-x"></i></button></td>
+                                            `;
+                                            tbody.appendChild(tr);
+                                        });
+
+                                        document.getElementById('iaCount').textContent = items.length;
+                                        document.getElementById('multiIA-step-upload').classList.add('d-none');
+                                        document.getElementById('multiIA-step-review').classList.remove('d-none');
+                                        document.getElementById('btnConfirmarIA').classList.remove('d-none');
+                                        document.getElementById('btnRecargarIA').classList.remove('d-none');
+                                        btnProc.classList.add('d-none');
+
+                                        resolve();
+                                    } catch (fetchError) {
+                                        reject(fetchError);
+                                    }
+                                }, 'image/jpeg', 0.7);
+                            } catch(errCanvas) {
+                                reject(errCanvas);
                             }
-                            mergedDescs.push(curr);
-                        }
-
-                        // 4. Asignar cantidad a cada descripción en base a su altura Y (MinTop)
-                        mergedDescs.forEach(desc => {
-                             let qtyEncontrado = 1; // 1 por defecto si no le extrajo cantidad
-                             
-                             // Buscar la cantidad que mejor se alinee a la altura de esta fila
-                             let closestQtyIdx = -1;
-                             let minDiff = 25; // Diferencia máxima tolerable (mismo renglón)
-                             
-                             qtyLines.forEach((q, idx) => {
-                                 let diff = Math.abs(q.minTop - desc.top);
-                                 if (diff < minDiff) {
-                                     minDiff = diff;
-                                     closestQtyIdx = idx;
-                                 }
-                             });
-
-                             if (closestQtyIdx !== -1) {
-                                 qtyEncontrado = qtyLines[closestQtyIdx].val;
-                             }
-
-                             // Limpieza final de códigos (solo si son códigos alfanuméricos como PR01798)
-                             let cleanDesc = desc.text.trim();
-                             // Si inicia con iterador tipo "1 PR01798"
-                             cleanDesc = cleanDesc.replace(/^[\dO\|\-\.\*]{1,3}\s+[A-Z]+\d+[A-Z0-9\-]*\s+/i, '');
-                             // Si inicia solo con "PR01798"
-                             cleanDesc = cleanDesc.replace(/^[A-Z]+\d+[A-Z0-9\-]*\s+/i, '');
-
-                             if (cleanDesc.length > 2) {
-                                 items.push({ descripcion: cleanDesc, cantidad: qtyEncontrado });
-                             }
-                        });
-
-                    } else {
-                        throw new Error("No se detectó estructura espaciada en el resultado del OCR.");
-                    }
-
-                    // --- LLENAR TABLA ---
-                    const tbody = document.getElementById('iaTableBody');
-                    tbody.innerHTML = '';
-                    items.forEach(it => {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td><input type="text" class="form-control form-control-sm ia-desc" value="${it.descripcion}"></td>
-                            <td><input type="number" class="form-control form-control-sm ia-cant" value="${it.cantidad}"></td>
-                            <td><button class="btn btn-sm btn-danger py-0 px-1" onclick="this.closest('tr').remove()"><i class="bi bi-x"></i></button></td>
-                        `;
-                        tbody.appendChild(tr);
+                        };
+                        img.onerror = () => reject(new Error("No se pudo cargar la imagen para redimensionar."));
                     });
-
-
-                    document.getElementById('iaCount').textContent = items.length;
-                    document.getElementById('multiIA-step-upload').classList.add('d-none');
-                    document.getElementById('multiIA-step-review').classList.remove('d-none');
-                    document.getElementById('btnConfirmarIA').classList.remove('d-none');
-                    document.getElementById('btnRecargarIA').classList.remove('d-none');
-                    btnProc.classList.add('d-none');
 
                 } catch (e) {
                     alert("Error: " + e.message);
