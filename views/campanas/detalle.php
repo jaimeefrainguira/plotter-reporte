@@ -518,6 +518,38 @@
                 dropArea.ondrop = (e) => { e.preventDefault(); dropArea.classList.remove('bg-primary-subtle'); handleIAFiles(e.dataTransfer.files); };
             }
 
+            // Paste event (Ctrl + V)
+            document.addEventListener('paste', (e) => {
+                const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+                let files = [];
+                for (let index in items) {
+                    let item = items[index];
+                    if (item.kind === 'file' && item.type.startsWith('image/')) {
+                        let file = item.getAsFile();
+                        if (file) files.push(file);
+                    }
+                }
+                
+                if (files.length > 0) {
+                    e.preventDefault();
+                    
+                    // Show modal if not open
+                    const modalEl = document.getElementById('modalMultiIA');
+                    const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                    modal.show();
+                    
+                    // Reset modal state to upload step
+                    document.getElementById('multiIA-step-upload').classList.remove('d-none');
+                    document.getElementById('multiIA-step-review').classList.add('d-none');
+                    document.getElementById('btnConfirmarIA').classList.add('d-none');
+                    document.getElementById('btnRecargarIA').classList.add('d-none');
+                    btnProc.classList.remove('d-none');
+                    document.getElementById('ocrProgressWrapper').classList.add('d-none');
+                    
+                    handleIAFiles(files);
+                }
+            });
+
             function handleIAFiles(files) {
                 if (!files.length) return;
                 currentFile = files[0];
@@ -765,6 +797,27 @@
                     const btn = document.getElementById('btnConfirmarIA');
                     btn.disabled = true;
                     btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
+
+                    // Subir la imagen original al servidor
+                    if (currentFile) {
+                        const formData = new FormData();
+                        formData.append('imagen_adjunta', currentFile, currentFile.name || 'pasted_image.png');
+                        formData.append('campana_id', campanaId);
+                        try {
+                            const imgResp = await fetch('index.php?action=campana_upload_imagen', {
+                                method: 'POST',
+                                body: formData
+                            });
+                            const imgResult = await imgResp.json();
+                            if (!imgResult.success) {
+                                console.warn("Aviso: No se pudo guardar la imagen adjunta. " + imgResult.error);
+                            } else {
+                                console.log("Imagen adjunta guardada:", imgResult.ruta_imagen);
+                            }
+                        } catch (errImg) {
+                            console.error("Error capa de red al subir la imagen:", errImg);
+                        }
+                    }
 
                     const resp = await fetch('index.php?action=campana_bulk_save', {
                         method: 'POST',

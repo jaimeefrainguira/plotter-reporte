@@ -144,6 +144,10 @@ switch ($action) {
         $campanaController->bulkSaveTrabajos();
         break;
 
+    case 'campana_upload_imagen':
+        $campanaController->uploadImagen();
+        break;
+
     // --- Módulo de Materia Prima ---
     case 'materiales_list':
         $materialController->list();

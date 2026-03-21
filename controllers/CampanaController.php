@@ -196,4 +196,44 @@ class CampanaController {
         }
         exit;
     }
+
+    public function uploadImagen(): void {
+        header('Content-Type: application/json');
+
+        if (isset($_FILES['imagen_adjunta']) && $_FILES['imagen_adjunta']['error'] === UPLOAD_ERR_OK) {
+            $fileTmpPath = $_FILES['imagen_adjunta']['tmp_name'];
+            $fileName = $_FILES['imagen_adjunta']['name'];
+            $fileType = $_FILES['imagen_adjunta']['type'];
+
+            $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            if (!in_array($fileType, $allowedMimeTypes)) {
+                echo json_encode(['success' => false, 'error' => 'El archivo no es una imagen válida.']);
+                exit;
+            }
+
+            $fileExtension = pathinfo($fileName, PATHINFO_EXTENSION);
+            $newFileName = uniqid('img_') . '.' . $fileExtension;
+
+            $uploadFileDir = __DIR__ . '/../uploads/campanas/';
+            if (!is_dir($uploadFileDir)) {
+                mkdir($uploadFileDir, 0777, true);
+            }
+
+            $dest_path = $uploadFileDir . $newFileName;
+
+            if (move_uploaded_file($fileTmpPath, $dest_path)) {
+                $relativePath = 'uploads/campanas/' . $newFileName;
+                echo json_encode(['success' => true, 'ruta_imagen' => $relativePath]);
+            } else {
+                echo json_encode(['success' => false, 'error' => 'Error al mover el archivo subido al directorio.']);
+            }
+        } else {
+            $errorMsg = 'No se recibió ninguna imagen o hubo un error en la subida.';
+            if (isset($_FILES['imagen_adjunta'])) {
+                $errorMsg .= ' Código error PHP: ' . $_FILES['imagen_adjunta']['error'];
+            }
+            echo json_encode(['success' => false, 'error' => $errorMsg]);
+        }
+        exit;
+    }
 }
