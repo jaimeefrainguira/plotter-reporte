@@ -572,7 +572,12 @@
                 let data = [];
                 try {
                     const parsed = JSON.parse(rawText);
-                    data = Array.isArray(parsed) ? parsed : (parsed.items || []);
+                    // Adaptado exactamente a la estructura original (usa 'data' o 'items')
+                    if (parsed.status === "success" && parsed.data) {
+                        data = parsed.data;
+                    } else {
+                        data = Array.isArray(parsed) ? parsed : (parsed.items || parsed.data || []);
+                    }
                 } catch(e) {
                     throw new Error("Respuesta no válida del servidor: " + rawText.substring(0, 100));
                 }
