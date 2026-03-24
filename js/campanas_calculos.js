@@ -88,6 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('field_trabajo_id').value = d.id;
             document.getElementById('field_descripcion').value = d.descripcion;
             document.getElementById('field_cantidad').value = d.cantidad;
+            if (document.getElementById('field_caras')) document.getElementById('field_caras').value = d.caras || 1;
             document.getElementById('field_ancho_panel').value = d.ancho_panel;
             document.getElementById('field_alto_panel').value = d.alto_panel;
             document.getElementById('field_material_id').value = d.material_id;
@@ -135,6 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let ancho = parseFloat(document.getElementById('field_ancho_panel').value) || 0;
         let alto = parseFloat(document.getElementById('field_alto_panel').value) || 0;
         let copias = parseInt(document.getElementById('field_cantidad').value) || 1;
+        let caras = parseInt(document.getElementById('field_caras')?.value) || 1;
 
         const matSel = document.getElementById('field_material_id');
         const matOpt = matSel.options[matSel.selectedIndex];
@@ -254,7 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } else {
             // ===============================
-            // SIN PANELADO
+            // SIN PANELADO (Nesting con caras)
             // ===============================
             let piezasPorFila = Math.floor(anchoMat / w);
             if (piezasPorFila === 0) {
@@ -266,24 +268,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            let filas = Math.ceil(copias / piezasPorFila);
-            let largoTotal = filas * h;
+            let cantidad_tirajes = (copias * caras) / piezasPorFila;
+            let tirajes_por_rollo = Math.floor(largoMat / h);
+            
+            if (tirajes_por_rollo === 0) {
+                 tirajes_por_rollo = 1; 
+            }
 
-            rollos = Math.floor(largoTotal / largoMat);
-            sobrante = largoTotal % largoMat;
+            let num_rollos = Math.floor(cantidad_tirajes / tirajes_por_rollo);
+            let tirajes_adicionales = cantidad_tirajes - (num_rollos * tirajes_por_rollo);
 
-            copiasPorRollo = Math.floor(largoMat / (h || 1)) * piezasPorFila;
-            copiasExtra = Math.floor(sobrante / (h || 1)) * piezasPorFila;
+            let ancho_tiraje = piezasPorFila * w;
+            let alto_tiraje = h;
+
+            let longitud_total = cantidad_tirajes * h;
+
+            // Mantener variables para compatibility 
+            rollos = num_rollos;
+            sobrante = tirajes_adicionales * h;
 
             if (rollos === 0) {
-                textoMaterial = `${sobrante.toFixed(2)} cm (${copiasExtra} copias)`;
+                textoMaterial = `${cantidad_tirajes} tirajes. Tamaño del tiraje: ${ancho_tiraje} cm x ${alto_tiraje} cm<br>Longitud total: ${longitud_total} cm`;
             } else {
-                textoMaterial = `${rollos} rollo(s) + ${sobrante.toFixed(2)} cm 
-            (${copiasPorRollo} copias/rollo + ${copiasExtra} copias adicionales)`;
+                textoMaterial = `${cantidad_tirajes} tirajes. Para este trabajo se necesita ${num_rollos} rollos + ${tirajes_adicionales} tirajes adicionales.<br>(Tamaño del tiraje: ${ancho_tiraje} cm x ${alto_tiraje} cm)<br>Longitud total: ${longitud_total} cm`;
             }
 
             resDiv.innerHTML = `
-                <b>Modo:</b> Sin panelado<br>
+                <b>Modo:</b> Sin panelado (Nesting)<br>
                 <b>Orientación:</b> ${modoFinal}<br>
                 <b>Material:</b><br>${textoMaterial}
             `;

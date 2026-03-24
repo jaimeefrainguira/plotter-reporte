@@ -5,6 +5,7 @@ class Trabajo {
     private PDO $db;
     private bool $schemaChecked = false;
     private array $requiredColumns = [
+        "caras" => "ALTER TABLE trabajos ADD COLUMN caras INT DEFAULT 1 AFTER cantidad",
         "orientacion" => "ALTER TABLE trabajos ADD COLUMN orientacion VARCHAR(20) DEFAULT 'auto' AFTER separacion_v",
         "usar_panelado" => "ALTER TABLE trabajos ADD COLUMN usar_panelado TINYINT(1) DEFAULT 0 AFTER orientacion",
         "panel_ancho" => "ALTER TABLE trabajos ADD COLUMN panel_ancho DECIMAL(10,2) DEFAULT 0 AFTER usar_panelado",
@@ -37,13 +38,14 @@ class Trabajo {
         $this->db->beginTransaction();
         try {
             $stmt = $this->db->prepare("
-                INSERT INTO trabajos (campana_id, descripcion, cantidad, ancho_panel, alto_panel, material_id, separacion_h, separacion_v, orientacion, usar_panelado, panel_ancho, panel_gap, usar_sintra)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO trabajos (campana_id, descripcion, cantidad, caras, ancho_panel, alto_panel, material_id, separacion_h, separacion_v, orientacion, usar_panelado, panel_ancho, panel_gap, usar_sintra)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
             $stmt->execute([
                 $data['campana_id'],
                 $data['descripcion'],
                 $data['cantidad'],
+                $data['caras'] ?? 1,
                 $data['ancho_panel'],
                 $data['alto_panel'],
                 empty($data['material_id']) ? null : $data['material_id'],
@@ -75,13 +77,14 @@ class Trabajo {
         try {
             $stmt = $this->db->prepare("
                 UPDATE trabajos 
-                SET descripcion = ?, cantidad = ?, ancho_panel = ?, alto_panel = ?, material_id = ?, separacion_h = ?, separacion_v = ?,
+                SET descripcion = ?, cantidad = ?, caras = ?, ancho_panel = ?, alto_panel = ?, material_id = ?, separacion_h = ?, separacion_v = ?,
                     orientacion = ?, usar_panelado = ?, panel_ancho = ?, panel_gap = ?, usar_sintra = ?
                 WHERE id = ?
             ");
             $stmt->execute([
                 $data['descripcion'],
                 $data['cantidad'],
+                $data['caras'] ?? 1,
                 $data['ancho_panel'],
                 $data['alto_panel'],
                 empty($data['material_id']) ? null : $data['material_id'],

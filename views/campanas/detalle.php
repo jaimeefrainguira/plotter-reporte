@@ -352,6 +352,12 @@
                                 <input type="number" name="cantidad" id="field_cantidad" class="form-control calc-trigger" value="1" min="1" required style="width:80px;">
                             </div>
                         </div>
+                        <div class="col-auto">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">Caras:</span>
+                                <input type="number" name="caras" id="field_caras" class="form-control calc-trigger" value="1" min="1" required style="width:80px;">
+                            </div>
+                        </div>
                     </div>
 
                     <!-- ===== ACTIVAR PANELADO ===== -->

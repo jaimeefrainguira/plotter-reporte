@@ -57,6 +57,7 @@ class CampanaController {
             'campana_id' => $campanaId,
             'descripcion' => (string)($_POST['descripcion'] ?? ''),
             'cantidad' => (int)($_POST['cantidad'] ?? 0),
+            'caras' => (int)($_POST['caras'] ?? 1),
             'ancho_panel' => (float)($_POST['ancho_panel'] ?? 0),
             'alto_panel' => (float)($_POST['alto_panel'] ?? 0),
             'material_id' => (int)($_POST['material_id'] ?? 0),
