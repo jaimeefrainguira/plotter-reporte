@@ -162,3 +162,44 @@
     transform: translateY(-1px);
     color: #fff;
 }
+
+/* ===== RESULTADO SUMMARY CHIPS ===== */
+.res-summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 2px;
+    padding: 6px 2px;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 6px;
+}
+
+.res-chip {
+    font-size: 0.76rem;
+    color: #334155;
+    padding: 2px 6px;
+    background: #f1f5f9;
+    border-radius: 99px;
+    border: 1px solid #e2e8f0;
+    white-space: nowrap;
+}
+
+.res-chip-mode {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #1d4ed8;
+    font-weight: 700;
+}
+
+.res-sep {
+    color: #cbd5e1;
+    font-size: 0.7rem;
+    padding: 0 1px;
+}
+
+.res-detail {
+    font-size: 0.8rem;
+    color: #475569;
+    line-height: 1.6;
+}
+

@@ -46,6 +46,15 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    // Checkbox preview toggle
+    const chkPreview = document.getElementById('chkPreview');
+    if (chkPreview) {
+        chkPreview.addEventListener('change', () => {
+            const wrap = document.getElementById('previewWrap');
+            if (wrap) wrap.style.display = chkPreview.checked ? 'block' : 'none';
+        });
+    }
+
     // Botón Calcular
     const btnCalcular = document.getElementById('btnCalcular');
     if (btnCalcular) {
@@ -137,11 +146,14 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('resultadoSintra').style.display = 'none';
             document.getElementById('panelConfig').style.display = 'none';
             applyPriority(1); // reset al crear nuevo
+            const pToggle = document.getElementById('previewToggleRow');
+            if (pToggle) pToggle.style.display = 'none';
+            const chk = document.getElementById('chkPreview');
+            if (chk) chk.checked = false;
+            const pWrap = document.getElementById('previewWrap');
+            if (pWrap) pWrap.style.display = 'none';
             let pv = document.getElementById('preview');
-            if (pv) {
-                pv.innerHTML = '';
-                pv.style.display = 'none';
-            }
+            if (pv) { pv.innerHTML = ''; pv.style.display = 'none'; }
         });
     }
 
@@ -249,10 +261,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             resDiv.innerHTML = `
-                <b>Modo:</b> Panelado<br>
-                <b>Orientación:</b> ${modoFinal}<br>
-                Paneles por copia: ${paneles}<br><br>
-                <b>Material:</b><br>${textoMaterial}
+                <div class="res-summary">
+                    <span class="res-chip res-chip-mode"><i class="bi bi-grid-3x2-gap"></i> Panelado</span>
+                    <span class="res-sep">|</span>
+                    <span class="res-chip"><strong>${paneles}</strong> panel(es) por copia</span>
+                    <span class="res-sep">|</span>
+                    <span class="res-chip">Tiraje: ${(paneles * panelAncho).toFixed(0)}×${h} cm</span>
+                    <span class="res-sep">|</span>
+                    <span class="res-chip">Orientación: <em>${modoFinal}</em></span>
+                </div>
+                <div class="res-detail mt-2">${textoMaterial}</div>
             `;
 
             if (preview) {
@@ -309,15 +327,24 @@ document.addEventListener('DOMContentLoaded', () => {
             sobrante = tirajes_adicionales * h;
 
             if (rollos === 0) {
-                textoMaterial = `${cantidad_tirajes} tirajes. Tamaño del tiraje: ${ancho_tiraje} cm x ${alto_tiraje} cm<br>Longitud total: ${longitud_total} cm`;
+                textoMaterial = `${cantidad_tirajes} tiraje(s). Tamaño: ${ancho_tiraje}×${alto_tiraje} cm — Longitud total: ${longitud_total.toFixed(0)} cm`;
             } else {
-                textoMaterial = `${cantidad_tirajes} tirajes. Para este trabajo se necesita ${num_rollos} rollos + ${tirajes_adicionales} tirajes adicionales.<br>(Tamaño del tiraje: ${ancho_tiraje} cm x ${alto_tiraje} cm)<br>Longitud total: ${longitud_total} cm`;
+                textoMaterial = `${num_rollos} rollo(s) + ${tirajes_adicionales.toFixed(1)} tiraje(s) adicionales — Longitud total: ${longitud_total.toFixed(0)} cm`;
             }
 
             resDiv.innerHTML = `
-                <b>Modo:</b> Sin panelado (Nesting)<br>
-                <b>Orientación:</b> ${modoFinal}<br>
-                <b>Material:</b><br>${textoMaterial}
+                <div class="res-summary">
+                    <span class="res-chip res-chip-mode"><i class="bi bi-layout-wtf"></i> Nesting</span>
+                    <span class="res-sep">|</span>
+                    <span class="res-chip">Pieza <strong>${w}×${h}</strong> cm</span>
+                    <span class="res-sep">|</span>
+                    <span class="res-chip"><strong>${piezasPorFila}</strong> pieza(s) por tiraje</span>
+                    <span class="res-sep">|</span>
+                    <span class="res-chip"><strong>${Math.ceil(cantidad_tirajes)}</strong> tiraje(s) total</span>
+                    <span class="res-sep">|</span>
+                    <span class="res-chip">Orientación: <em>${modoFinal}</em></span>
+                </div>
+                <div class="res-detail mt-2">${textoMaterial}</div>
             `;
         }
 
@@ -353,7 +380,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const fDist = document.getElementById('field_distribucion_texto');
         if (fDist) fDist.value = textoMaterial.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
 
-        // Dibujar preview
+        // Mostrar fila de toggle preview
+        const toggleRow = document.getElementById('previewToggleRow');
+        if (toggleRow) toggleRow.style.display = 'block';
+
+        // Dibujar preview (siempre, pero canvas oculto hasta que marque checkbox)
         if (usarPanel) {
             const panelAncho2 = parseFloat(document.getElementById('field_panel_ancho').value) || 120;
             const gap2 = parseFloat(document.getElementById('field_panel_gap').value) || 0;
@@ -581,7 +612,9 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }
 
-        wrap.style.display = 'block';
+        // Respetar estado del checkbox: solo mostrar si está marcado
+        const chk = document.getElementById('chkPreview');
+        wrap.style.display = (chk && chk.checked) ? 'block' : 'none';
     }
     // ── FIN DEL MODULO ──
 });

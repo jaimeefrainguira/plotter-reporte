@@ -469,9 +469,17 @@
 
                     <div id="resultadoSintra" style="display:none;" class="resultado-sintra-box mb-3"></div>
 
+                    <!-- ── PREVIEW CANVAS TOGGLE ── -->
+                    <div id="previewToggleRow" style="display:none;" class="mb-2">
+                        <label class="d-flex align-items-center gap-2 user-select-none" style="cursor:pointer; font-size:0.8rem; color:#64748b;">
+                            <input type="checkbox" id="chkPreview" class="form-check-input m-0" style="width:14px;height:14px;">
+                            <i class="bi bi-grid-1x2-fill" style="color:#3b82f6;"></i>
+                            <span>Mostrar vista previa del tiraje</span>
+                        </label>
+                    </div>
+
                     <!-- ── PREVIEW CANVAS (tiraje layout) ── -->
-                    <div id="previewWrap" style="display:none;" class="mt-3">
-                        <div class="modal-section-title"><i class="bi bi-grid-1x2-fill"></i> Vista previa del tiraje</div>
+                    <div id="previewWrap" style="display:none;" class="mt-1">
                         <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:12px; padding:16px; overflow-x:auto; text-align:center;">
                             <canvas id="previewCanvas" style="max-width:100%; border-radius:6px;"></canvas>
                             <div id="previewLeyenda" class="mt-2" style="font-size:0.75rem; color:#64748b;"></div>
