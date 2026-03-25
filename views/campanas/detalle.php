@@ -57,12 +57,14 @@
             <table class="table table-hover align-middle mb-0">
                 <thead class="bg-light">
                     <tr>
-                        <th style="width: 20%;">DESCRIPCIÓN</th>
-                        <th>CANTIDAD</th>
+                        <th style="width: 15%;">DESCRIPCIÓN</th>
+                        <th class="text-center">CANT.</th>
+                        <th class="text-center">TAMAÑO ITEM</th>
                         <th>MATERIAL</th>
                         <th class="text-center">TIRAJES</th>
                         <th class="text-center">DIM. TIRAJE</th>
-                        <th style="width: 15%;">PROGRESO</th>
+                        <th class="text-center">PRIORIDAD</th>
+                        <th style="width: 12%;">ESTADO</th>
                         <th class="text-center">ACCIONES</th>
                     </tr>
                 </thead>
@@ -72,26 +74,36 @@
                         $tirajesImp   = (int)($trabajo['tirajes_impresos'] ?? 0);
                         $pctProgreso  = $tirajesTotal > 0 ? min(100, round(($tirajesImp / $tirajesTotal) * 100, 1)) : 0;
                         $colorProg    = $pctProgreso >= 100 ? 'success' : ($pctProgreso > 0 ? 'primary' : 'secondary');
+                        
+                        // Prioridad badges
+                        $prios = [
+                            1 => ['msg' => 'BAJA', 'col' => 'success', 'icon' => '🟢'],
+                            2 => ['msg' => 'MEDIA', 'col' => 'warning', 'icon' => '🟡'],
+                            3 => ['msg' => 'ALTA', 'col' => 'orange', 'icon' => '🟠'],
+                            4 => ['msg' => 'URGENTE', 'col' => 'danger', 'icon' => '🔴']
+                        ];
+                        $p = $prios[$trabajo['prioridad'] ?? 1];
                     ?>
                     <tr>
-                        <td>
-                            <div class="fw-bold text-dark"><?= htmlspecialchars($trabajo['descripcion']) ?></div>
-                            <small class="text-muted"><?= (float)$trabajo['ancho_panel'] ?> × <?= (float)$trabajo['alto_panel'] ?> cm</small>
-                        </td>
-                        <td><?= $trabajo['cantidad'] ?> uds</td>
+                        <td class="fw-bold text-dark"><?= htmlspecialchars($trabajo['descripcion']) ?></td>
+                        <td class="text-center"><?= $trabajo['cantidad'] ?> <small>uds</small></td>
+                        <td class="text-center small"><?= (float)$trabajo['ancho_panel'] ?> × <?= (float)$trabajo['alto_panel'] ?> <small>cm</small></td>
                         <td><span class="badge border text-dark bg-light"><?= htmlspecialchars($trabajo['material_nombre'] ?? '—') ?></span></td>
                         <td class="text-center fw-bold text-primary"><?= $tirajesTotal ?></td>
                         <td class="text-center small text-muted"><?= htmlspecialchars($trabajo['tiraje_dimension'] ?: '—') ?></td>
+                        <td class="text-center">
+                            <span class="badge bg-<?= $p['col'] ?>-subtle text-<?= $p['col'] ?> border border-<?= $p['col'] ?> px-2 py-1" style="font-size: 0.65rem;">
+                                <?= $p['icon'] ?> <?= $p['msg'] ?>
+                            </span>
+                        </td>
                         <td>
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="progress flex-grow-1" style="height: 8px;">
-                                    <div class="progress-bar bg-<?= $colorProg ?> <?= $pctProgreso < 100 ? 'progress-bar-striped progress-bar-animated' : '' ?>" 
-                                         role="progressbar" style="width: <?= $pctProgreso ?>%"></div>
-                                </div>
-                                <small class="fw-bold" style="font-size: 0.7rem; min-width: 55px;"><?= $tirajesImp ?> / <?= $tirajesTotal ?></small>
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar bg-<?= $colorProg ?> <?= $pctProgreso < 100 && $pctProgreso > 0 ? 'progress-bar-striped progress-bar-animated' : '' ?>" 
+                                     role="progressbar" style="width: <?= $pctProgreso ?>%"></div>
                             </div>
-                            <div class="text-center mt-1" style="font-size: 0.65rem; color: #64748b;">
-                                <?= $pctProgreso ?>% completado
+                            <div class="d-flex justify-content-between mt-1" style="font-size: 0.6rem;">
+                                <span class="fw-bold"><?= $pctProgreso ?>%</span>
+                                <span class="text-muted"><?= $tirajesImp ?>/<?= $tirajesTotal ?></span>
                             </div>
                         </td>
                         <td class="text-center">
@@ -110,7 +122,7 @@
                         </td>
                     </tr>
                     <?php endforeach; if(empty($trabajos)): ?>
-                    <tr><td colspan="7" class="text-center py-4 text-muted">No hay trabajos registrados.</td></tr>
+                    <tr><td colspan="9" class="text-center py-4 text-muted">No hay trabajos registrados.</td></tr>
                     <?php endif; ?>
                 </tbody>
             </table>
