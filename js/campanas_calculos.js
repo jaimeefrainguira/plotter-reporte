@@ -326,25 +326,20 @@ document.addEventListener('DOMContentLoaded', () => {
             rollos = num_rollos;
             sobrante = tirajes_adicionales * h;
 
-            if (rollos === 0) {
-                textoMaterial = `${cantidad_tirajes} tiraje(s). Tamaño: ${ancho_tiraje}×${alto_tiraje} cm — Longitud total: ${longitud_total.toFixed(0)} cm`;
-            } else {
-                textoMaterial = `${num_rollos} rollo(s) + ${tirajes_adicionales.toFixed(1)} tiraje(s) adicionales — Longitud total: ${longitud_total.toFixed(0)} cm`;
-            }
+            textoMaterial = `${Math.ceil(cantidad_tirajes)} tiraje(s) | ${ancho_tiraje}×${alto_tiraje} cm | ${(longitud_total / 100).toFixed(2)} m | ${num_rollos} rollo(s) | ${Math.ceil(tirajes_adicionales)} tiraje(s) adicionales`;
 
             resDiv.innerHTML = `
                 <div class="res-summary">
-                    <span class="res-chip res-chip-mode"><i class="bi bi-layout-wtf"></i> Nesting</span>
+                    <span class="res-chip res-chip-mode"><i class="bi bi-layout-wtf"></i> ${Math.ceil(cantidad_tirajes)} tiraje(s)</span>
                     <span class="res-sep">|</span>
-                    <span class="res-chip">Pieza <strong>${w}×${h}</strong> cm</span>
+                    <span class="res-chip"><strong>${ancho_tiraje}×${alto_tiraje}</strong> cm</span>
                     <span class="res-sep">|</span>
-                    <span class="res-chip"><strong>${piezasPorFila}</strong> pieza(s) por tiraje</span>
+                    <span class="res-chip">${(longitud_total / 100).toFixed(2)} m</span>
                     <span class="res-sep">|</span>
-                    <span class="res-chip"><strong>${Math.ceil(cantidad_tirajes)}</strong> tiraje(s) total</span>
+                    <span class="res-chip"><strong>${num_rollos}</strong> rollo(s)</span>
                     <span class="res-sep">|</span>
-                    <span class="res-chip">Orientación: <em>${modoFinal}</em></span>
+                    <span class="res-chip"><strong>${Math.ceil(tirajes_adicionales)}</strong> tiraje(s) adicionales</span>
                 </div>
-                <div class="res-detail mt-2">${textoMaterial}</div>
             `;
         }
 
