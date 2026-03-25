@@ -69,6 +69,10 @@ class CampanaController {
             'panel_ancho' => (float)($_POST['panel_ancho'] ?? 0),
             'panel_gap' => (float)($_POST['panel_gap'] ?? 0),
             'usar_sintra' => isset($_POST['usar_sintra']) ? 1 : 0,
+            'prioridad' => (int)($_POST['prioridad'] ?? 1),
+            'tirajes' => (int)($_POST['tirajes'] ?? 0),
+            'tiraje_dimension' => (string)($_POST['tiraje_dimension'] ?? ''),
+            'tirajes_impresos' => (int)($_POST['tirajes_impresos'] ?? 0),
             'consumo' => [
                 'total_metros' => (float)($_POST['total_metros'] ?? 0),
                 'total_planchas' => (float)($_POST['total_planchas'] ?? 0),
@@ -183,6 +187,10 @@ class CampanaController {
                     'panel_ancho'  => 0,
                     'panel_gap'    => 0,
                     'usar_sintra'  => 0,
+                    'prioridad'    => 1,
+                    'tirajes'      => 0,
+                    'tiraje_dimension' => '',
+                    'tirajes_impresos' => 0,
                     'consumo' => [
                         'total_metros'   => 0,
                         'total_planchas' => 0,
