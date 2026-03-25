@@ -353,8 +353,235 @@ document.addEventListener('DOMContentLoaded', () => {
         const fDist = document.getElementById('field_distribucion_texto');
         if (fDist) fDist.value = textoMaterial.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
 
+        // Dibujar preview
+        if (usarPanel) {
+            const panelAncho2 = parseFloat(document.getElementById('field_panel_ancho').value) || 120;
+            const gap2 = parseFloat(document.getElementById('field_panel_gap').value) || 0;
+            const paneles2 = Math.ceil(w / panelAncho2);
+            dibujarPreview({ modo: 'panel', anchoMat, w, h, panelAncho: panelAncho2, gap: gap2, paneles: paneles2, copias, modoFinal });
+        } else {
+            const piezasPorFila2 = Math.floor(anchoMat / w);
+            const cantidad_tirajes2 = piezasPorFila2 > 0 ? Math.ceil((copias * caras) / piezasPorFila2) : 0;
+            dibujarPreview({ modo: 'nesting', anchoMat, w, h, piezasPorFila: piezasPorFila2, cantidad_tirajes: cantidad_tirajes2, copias, modoFinal });
+        }
+
         console.log('Cálculo finalizado con éxito.');
     }
 
+    // ── PREVIEW CANVAS ──────────────────────────────────────────────────────
+    function dibujarPreview({ modo, anchoMat, w, h, piezasPorFila, cantidad_tirajes,
+                               panelAncho, gap, paneles, copias, modoFinal }) {
+
+        const wrap = document.getElementById('previewWrap');
+        const canvas = document.getElementById('previewCanvas');
+        const leyenda = document.getElementById('previewLeyenda');
+        if (!wrap || !canvas) return;
+
+        const ctx = canvas.getContext('2d');
+
+        // Paleta
+        const COLOR_ROLLO_BG  = '#f0f4ff';
+        const COLOR_ROLLO_BDR = '#94a3b8';
+        const COLOR_PIEZA_BG  = '#dbeafe';
+        const COLOR_PIEZA_BDR = '#2563eb';
+        const COLOR_PANEL_BG  = '#fef3c7';
+        const COLOR_PANEL_BDR = '#d97706';
+        const COLOR_GAP       = '#e2e8f0';
+        const COLOR_TEXTO     = '#1e293b';
+        const COLOR_DIM       = '#64748b';
+
+        const MAX_CANVAS_W = 680;
+        const PAD = 32;         // padding interior
+        const MAX_FILAS = 4;    // cuántas filas mostrar
+
+        if (modo === 'nesting') {
+            // ─── MODO NESTING ───────────────────────────────────────────────
+            if (!piezasPorFila || piezasPorFila === 0) { wrap.style.display = 'none'; return; }
+
+            const filasMostrar = Math.min(MAX_FILAS, Math.ceil(cantidad_tirajes) || 1);
+            const escX = (MAX_CANVAS_W - PAD * 2) / anchoMat;
+            const piezaW_px = w * escX;
+            const piezaH_px = h * escX;
+            const rollW_px  = anchoMat * escX;
+
+            canvas.width  = MAX_CANVAS_W;
+            canvas.height = PAD * 2 + filasMostrar * piezaH_px + 28; // +28 para cota ancho
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Fondo rollo
+            ctx.fillStyle = COLOR_ROLLO_BG;
+            ctx.strokeStyle = COLOR_ROLLO_BDR;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.roundRect(PAD, PAD, rollW_px, filasMostrar * piezaH_px, 4);
+            ctx.fill(); ctx.stroke();
+
+            // Cota ancho material
+            const yCotas = PAD - 18;
+            ctx.strokeStyle = COLOR_DIM; ctx.lineWidth = 1;
+            ctx.setLineDash([4,3]);
+            ctx.beginPath(); ctx.moveTo(PAD, yCotas + 6); ctx.lineTo(PAD + rollW_px, yCotas + 6); ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#fff'; ctx.fillRect(PAD + rollW_px/2 - 40, yCotas - 2, 80, 16);
+            ctx.fillStyle = COLOR_DIM; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText(`↔ ${anchoMat} cm (ancho rollo)`, PAD + rollW_px / 2, yCotas + 10);
+
+            // Piezas
+            let pieza = 0;
+            const totalPiezas = copias;
+            for (let fila = 0; fila < filasMostrar; fila++) {
+                for (let col = 0; col < piezasPorFila; col++) {
+                    const x = PAD + col * piezaW_px;
+                    const y = PAD + fila * piezaH_px;
+                    const esUltima = pieza >= totalPiezas - 1;
+                    const llena = pieza < totalPiezas;
+
+                    // Fondo pieza
+                    ctx.fillStyle = llena ? COLOR_PIEZA_BG : '#f1f5f9';
+                    ctx.fillRect(x, y, piezaW_px, piezaH_px);
+
+                    // Borde pieza
+                    ctx.strokeStyle = llena ? COLOR_PIEZA_BDR : '#cbd5e1';
+                    ctx.lineWidth = 1.5;
+                    ctx.strokeRect(x, y, piezaW_px, piezaH_px);
+
+                    // Trazos de corte (marcas de esquina)
+                    const m = 8;
+                    ctx.strokeStyle = '#1e40af'; ctx.lineWidth = 1;
+                    [[x,y],[x+piezaW_px,y],[x,y+piezaH_px],[x+piezaW_px,y+piezaH_px]].forEach(([cx,cy]) => {
+                        const dx = cx === x ? 1 : -1;
+                        const dy = cy === y ? 1 : -1;
+                        ctx.beginPath(); ctx.moveTo(cx + dx*m, cy); ctx.lineTo(cx, cy); ctx.lineTo(cx, cy + dy*m); ctx.stroke();
+                    });
+
+                    // Etiqueta en centro
+                    if (piezaW_px > 28 && piezaH_px > 18 && llena) {
+                        ctx.fillStyle = '#1e40af';
+                        ctx.font = `bold ${Math.min(10, piezaH_px * 0.22)}px sans-serif`;
+                        ctx.textAlign = 'center';
+                        ctx.fillText(`${w}×${h}`, x + piezaW_px/2, y + piezaH_px/2 - 4);
+                        ctx.font = `${Math.min(9, piezaH_px * 0.18)}px sans-serif`;
+                        ctx.fillStyle = '#3b82f6';
+                        ctx.fillText(`#${pieza + 1}`, x + piezaW_px/2, y + piezaH_px/2 + 8);
+                    }
+
+                    pieza++;
+                    if (pieza > Math.ceil(cantidad_tirajes) * piezasPorFila) break;
+                }
+            }
+
+            // Cota alto pieza (lado derecho)
+            const xCota = PAD + rollW_px + 6;
+            ctx.strokeStyle = COLOR_DIM; ctx.lineWidth = 1; ctx.setLineDash([3,3]);
+            ctx.beginPath(); ctx.moveTo(xCota + 6, PAD); ctx.lineTo(xCota + 6, PAD + piezaH_px); ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = COLOR_DIM; ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
+            ctx.save(); ctx.translate(xCota + 18, PAD + piezaH_px/2);
+            ctx.rotate(-Math.PI/2); ctx.fillText(`${h} cm`, 0, 0); ctx.restore();
+
+            // Indicador si hay más filas
+            if (cantidad_tirajes > filasMostrar) {
+                ctx.fillStyle = 'rgba(248,250,252,0.85)';
+                ctx.fillRect(PAD, PAD + (filasMostrar-0.5) * piezaH_px, rollW_px, piezaH_px * 0.5);
+                ctx.fillStyle = COLOR_DIM; ctx.font = 'italic 11px sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText(`... y ${Math.ceil(cantidad_tirajes) - filasMostrar} fila(s) más`, PAD + rollW_px/2, canvas.height - 8);
+            }
+
+            leyenda.innerHTML = `
+                <span style="display:inline-block;width:12px;height:12px;background:${COLOR_PIEZA_BG};border:1.5px solid ${COLOR_PIEZA_BDR};border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Pieza ${w}×${h} cm &nbsp;|&nbsp;
+                <strong>${piezasPorFila}</strong> pieza(s) por tiraje &nbsp;|&nbsp;
+                <strong>${Math.ceil(cantidad_tirajes)}</strong> tiraje(s) total &nbsp;|&nbsp;
+                Orientación: <em>${modoFinal}</em>
+            `;
+
+        } else if (modo === 'panel') {
+            // ─── MODO PANELADO ───────────────────────────────────────────────
+            const escX = Math.min(1.8, (MAX_CANVAS_W - PAD * 2) / (paneles * panelAncho + (paneles-1) * gap));
+            const totalAnchoReal = paneles * panelAncho + (paneles-1) * gap;
+            const panW_px = panelAncho * escX;
+            const gapW_px = gap * escX;
+            const altH_px = Math.min(200, h * escX);
+
+            canvas.width  = PAD * 2 + totalAnchoReal * escX + 30;
+            canvas.height = PAD + altH_px + 50;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Etiqueta ancho total
+            const anchoTotal_px = totalAnchoReal * escX;
+            ctx.fillStyle = COLOR_DIM; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText(`↔ ${totalAnchoReal.toFixed(0)} cm total (${paneles} panel${paneles>1?'es':''})`, PAD + anchoTotal_px/2, PAD - 10);
+
+            for (let i = 0; i < paneles; i++) {
+                const x = PAD + i * (panW_px + gapW_px);
+                const y = PAD;
+
+                // Fondo panel
+                ctx.fillStyle = COLOR_PANEL_BG;
+                ctx.fillRect(x, y, panW_px, altH_px);
+
+                // Borde
+                ctx.strokeStyle = COLOR_PANEL_BDR; ctx.lineWidth = 2;
+                ctx.strokeRect(x, y, panW_px, altH_px);
+
+                // Trazos de corte en esquinas
+                const m = 10;
+                ctx.strokeStyle = '#92400e'; ctx.lineWidth = 1.2;
+                [[x,y],[x+panW_px,y],[x,y+altH_px],[x+panW_px,y+altH_px]].forEach(([cx,cy]) => {
+                    const dx = cx === x ? 1 : -1;
+                    const dy = cy === y ? 1 : -1;
+                    ctx.beginPath(); ctx.moveTo(cx + dx*m, cy); ctx.lineTo(cx, cy); ctx.lineTo(cx, cy + dy*m); ctx.stroke();
+                });
+
+                // Diagonal de referencia (estilo blueprint)
+                ctx.strokeStyle = 'rgba(217,119,6,0.25)'; ctx.lineWidth = 1; ctx.setLineDash([5,4]);
+                ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + panW_px, y + altH_px); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(x + panW_px, y); ctx.lineTo(x, y + altH_px); ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Etiqueta panel
+                ctx.fillStyle = '#92400e';
+                ctx.font = `bold ${Math.min(11, panW_px * 0.12)}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.fillText(`Panel ${i+1}`, x + panW_px/2, y + altH_px/2 - 6);
+                ctx.font = `${Math.min(10, panW_px * 0.1)}px sans-serif`;
+                ctx.fillStyle = '#b45309';
+                ctx.fillText(`${panelAncho}×${h} cm`, x + panW_px/2, y + altH_px/2 + 10);
+
+                // Gap
+                if (gap > 0 && i < paneles - 1) {
+                    ctx.fillStyle = COLOR_GAP;
+                    ctx.fillRect(x + panW_px, y, gapW_px, altH_px);
+                    ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 0.5;
+                    ctx.strokeRect(x + panW_px, y, gapW_px, altH_px);
+                    if (gapW_px > 12) {
+                        ctx.fillStyle = '#94a3b8'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
+                        ctx.save(); ctx.translate(x + panW_px + gapW_px/2, y + altH_px/2);
+                        ctx.rotate(-Math.PI/2); ctx.fillText(`${gap}cm`, 0, 3); ctx.restore();
+                    }
+                }
+
+                // Cota alto (al lado del último panel)
+                if (i === paneles - 1) {
+                    const xc = x + panW_px + 8;
+                    ctx.strokeStyle = COLOR_DIM; ctx.lineWidth = 1; ctx.setLineDash([3,3]);
+                    ctx.beginPath(); ctx.moveTo(xc + 4, y); ctx.lineTo(xc + 4, y + altH_px); ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.fillStyle = COLOR_DIM; ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
+                    ctx.save(); ctx.translate(xc + 16, y + altH_px/2);
+                    ctx.rotate(-Math.PI/2); ctx.fillText(`${h} cm`, 0, 0); ctx.restore();
+                }
+            }
+
+            leyenda.innerHTML = `
+                <span style="display:inline-block;width:12px;height:12px;background:${COLOR_PANEL_BG};border:1.5px solid ${COLOR_PANEL_BDR};border-radius:2px;margin-right:4px;vertical-align:middle;"></span>
+                ${paneles} panel(es) de ${panelAncho}×${h} cm &nbsp;${gap>0?`| Gap: ${gap} cm`:''} &nbsp;|&nbsp;
+                Total por copia: ${totalAnchoReal.toFixed(0)}×${h} cm &nbsp;|&nbsp; <em>${modoFinal}</em>
+            `;
+        }
+
+        wrap.style.display = 'block';
+    }
     // ── FIN DEL MODULO ──
 });

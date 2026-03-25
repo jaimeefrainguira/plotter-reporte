@@ -469,7 +469,16 @@
 
                     <div id="resultadoSintra" style="display:none;" class="resultado-sintra-box mb-3"></div>
 
-                    <div id="preview" style="border:2px dashed #cbd5e1; border-radius:10px; position:relative; background:#e2e8f0; display:none; min-height:60px;"></div>
+                    <!-- ── PREVIEW CANVAS (tiraje layout) ── -->
+                    <div id="previewWrap" style="display:none;" class="mt-3">
+                        <div class="modal-section-title"><i class="bi bi-grid-1x2-fill"></i> Vista previa del tiraje</div>
+                        <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:12px; padding:16px; overflow-x:auto; text-align:center;">
+                            <canvas id="previewCanvas" style="max-width:100%; border-radius:6px;"></canvas>
+                            <div id="previewLeyenda" class="mt-2" style="font-size:0.75rem; color:#64748b;"></div>
+                        </div>
+                    </div>
+
+                    <div id="preview" style="display:none;"></div>
 
                 </div><!-- /modal-body -->
 
