@@ -344,6 +344,10 @@
             <input type="hidden" name="total_planchas" id="field_total_planchas">
             <input type="hidden" name="distribucion_texto" id="field_distribucion_texto">
             <input type="hidden" name="unidades_por_rollo" id="field_unidades_por_rollo">
+            
+            <!-- Nuevos campos técnicos -->
+            <input type="hidden" name="tirajes" id="field_tirajes" value="0">
+            <input type="hidden" name="tiraje_dimension" id="field_tiraje_dimension" value="">
 
             <div class="modal-content border-0 shadow-lg" style="border-radius:16px; overflow:hidden;">
 
@@ -388,9 +392,7 @@
                                 class="form-control form-control-sm modal-input text-center" value="0" min="0">
                         </div>
                     </div>
-                    <!-- Campos ocultos para capturar resultado del cálculo -->
-                    <input type="hidden" name="tirajes" id="field_tirajes" value="0">
-                    <input type="hidden" name="tiraje_dimension" id="field_tiraje_dimension" value="">
+                    <!-- Campos ocultos eliminados de aquí (movidos al inicio del form) -->
 
                     <!-- ── FILA 2: Dimensiones + Material + Orientación ── -->
                     <div class="modal-section-title"><i class="bi bi-rulers"></i> Dimensiones & Material</div>

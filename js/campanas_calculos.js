@@ -151,9 +151,9 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('resultadoSintra').style.display = 'none';
             document.getElementById('panelConfig').style.display = 'none';
             applyPriority(1); // reset al crear nuevo
-            if (document.getElementById('field_tirajes_impresos')) {
-                document.getElementById('field_tirajes_impresos').value = 0;
-            }
+            if (document.getElementById('field_tirajes_impresos')) document.getElementById('field_tirajes_impresos').value = 0;
+            if (document.getElementById('field_tirajes')) document.getElementById('field_tirajes').value = 0;
+            if (document.getElementById('field_tiraje_dimension')) document.getElementById('field_tiraje_dimension').value = '';
             const pToggle = document.getElementById('previewToggleRow');
             if (pToggle) pToggle.style.display = 'none';
             const chk = document.getElementById('chkPreview');
@@ -162,6 +162,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (pWrap) pWrap.style.display = 'none';
             let pv = document.getElementById('preview');
             if (pv) { pv.innerHTML = ''; pv.style.display = 'none'; }
+        });
+    }
+
+    // Recalcular antes de enviar al hosting
+    const fTrabajo = document.getElementById('formTrabajo');
+    if (fTrabajo) {
+        fTrabajo.addEventListener('submit', () => {
+            calcular();
         });
     }
 
