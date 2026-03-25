@@ -11,7 +11,10 @@ class Trabajo {
         "panel_ancho" => "ALTER TABLE trabajos ADD COLUMN panel_ancho DECIMAL(10,2) DEFAULT 0 AFTER usar_panelado",
         "panel_gap" => "ALTER TABLE trabajos ADD COLUMN panel_gap DECIMAL(10,2) DEFAULT 0 AFTER panel_ancho",
         "usar_sintra" => "ALTER TABLE trabajos ADD COLUMN usar_sintra TINYINT(1) DEFAULT 0 AFTER panel_gap",
-        "prioridad" => "ALTER TABLE trabajos ADD COLUMN prioridad INT DEFAULT 1 AFTER usar_sintra"
+        "prioridad" => "ALTER TABLE trabajos ADD COLUMN prioridad INT DEFAULT 1 AFTER usar_sintra",
+        "tirajes" => "ALTER TABLE trabajos ADD COLUMN tirajes INT DEFAULT 0 AFTER prioridad",
+        "tiraje_dimension" => "ALTER TABLE trabajos ADD COLUMN tiraje_dimension VARCHAR(50) AFTER tirajes",
+        "tirajes_impresos" => "ALTER TABLE trabajos ADD COLUMN tirajes_impresos INT DEFAULT 0 AFTER tiraje_dimension"
     ];
 
     public function __construct(PDO $db) {
@@ -39,8 +42,8 @@ class Trabajo {
         $this->db->beginTransaction();
         try {
             $stmt = $this->db->prepare("
-                INSERT INTO trabajos (campana_id, descripcion, cantidad, caras, ancho_panel, alto_panel, material_id, separacion_h, separacion_v, orientacion, usar_panelado, panel_ancho, panel_gap, usar_sintra, prioridad)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO trabajos (campana_id, descripcion, cantidad, caras, ancho_panel, alto_panel, material_id, separacion_h, separacion_v, orientacion, usar_panelado, panel_ancho, panel_gap, usar_sintra, prioridad, tirajes, tiraje_dimension, tirajes_impresos)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
             $stmt->execute([
                 $data['campana_id'],
@@ -57,7 +60,10 @@ class Trabajo {
                 $data['panel_ancho'] ?? 0,
                 $data['panel_gap'] ?? 0,
                 $data['usar_sintra'] ?? 0,
-                $data['prioridad'] ?? 1
+                $data['prioridad'] ?? 1,
+                $data['tirajes'] ?? 0,
+                $data['tiraje_dimension'] ?? '',
+                $data['tirajes_impresos'] ?? 0
             ]);
             $trabajoId = (int)$this->db->lastInsertId();
 
@@ -80,7 +86,8 @@ class Trabajo {
             $stmt = $this->db->prepare("
                 UPDATE trabajos 
                 SET descripcion = ?, cantidad = ?, caras = ?, ancho_panel = ?, alto_panel = ?, material_id = ?, separacion_h = ?, separacion_v = ?,
-                    orientacion = ?, usar_panelado = ?, panel_ancho = ?, panel_gap = ?, usar_sintra = ?, prioridad = ?
+                    orientacion = ?, usar_panelado = ?, panel_ancho = ?, panel_gap = ?, usar_sintra = ?, prioridad = ?,
+                    tirajes = ?, tiraje_dimension = ?, tirajes_impresos = ?
                 WHERE id = ?
             ");
             $stmt->execute([
@@ -98,6 +105,9 @@ class Trabajo {
                 $data['panel_gap'] ?? 0,
                 $data['usar_sintra'] ?? 0,
                 $data['prioridad'] ?? 1,
+                $data['tirajes'] ?? 0,
+                $data['tiraje_dimension'] ?? '',
+                $data['tirajes_impresos'] ?? 0,
                 $id
             ]);
 

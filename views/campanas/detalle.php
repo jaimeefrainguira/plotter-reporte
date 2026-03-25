@@ -57,26 +57,42 @@
             <table class="table table-hover align-middle mb-0">
                 <thead class="bg-light">
                     <tr>
-                        <th>DESCRIPCIÓN</th>
+                        <th style="width: 20%;">DESCRIPCIÓN</th>
                         <th>CANTIDAD</th>
-                        <th>TAMAÑO (cm)</th>
                         <th>MATERIAL</th>
-                        <th>CONSUMO ESTIMADO</th>
+                        <th class="text-center">TIRAJES</th>
+                        <th class="text-center">DIM. TIRAJE</th>
+                        <th style="width: 15%;">PROGRESO</th>
                         <th class="text-center">ACCIONES</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($trabajos as $trabajo): ?>
+                    <?php foreach ($trabajos as $trabajo): 
+                        $tirajesTotal = (int)($trabajo['tirajes'] ?? 0);
+                        $tirajesImp   = (int)($trabajo['tirajes_impresos'] ?? 0);
+                        $pctProgreso  = $tirajesTotal > 0 ? min(100, round(($tirajesImp / $tirajesTotal) * 100, 1)) : 0;
+                        $colorProg    = $pctProgreso >= 100 ? 'success' : ($pctProgreso > 0 ? 'primary' : 'secondary');
+                    ?>
                     <tr>
-                        <td><strong><?= htmlspecialchars($trabajo['descripcion']) ?></strong></td>
-                        <td><?= $trabajo['cantidad'] ?> uds</td>
-                        <td><?= (float)$trabajo['ancho_panel'] ?> × <?= (float)$trabajo['alto_panel'] ?> cm</td>
-                        <td><span class="badge bg-info text-dark"><?= htmlspecialchars($trabajo['material_nombre'] ?? 'Sin material') ?></span></td>
                         <td>
-                            <?php if (!empty($trabajo['total_metros']) && $trabajo['total_metros'] > 0): ?>
-                                <strong><?= number_format((float)$trabajo['total_metros'], 2) ?> m</strong><br>
-                            <?php endif; ?>
-                            <small class="text-muted"><?= htmlspecialchars($trabajo['distribucion_texto'] ?: 'No calculado') ?></small>
+                            <div class="fw-bold text-dark"><?= htmlspecialchars($trabajo['descripcion']) ?></div>
+                            <small class="text-muted"><?= (float)$trabajo['ancho_panel'] ?> × <?= (float)$trabajo['alto_panel'] ?> cm</small>
+                        </td>
+                        <td><?= $trabajo['cantidad'] ?> uds</td>
+                        <td><span class="badge border text-dark bg-light"><?= htmlspecialchars($trabajo['material_nombre'] ?? '—') ?></span></td>
+                        <td class="text-center fw-bold text-primary"><?= $tirajesTotal ?></td>
+                        <td class="text-center small text-muted"><?= htmlspecialchars($trabajo['tiraje_dimension'] ?: '—') ?></td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress flex-grow-1" style="height: 8px;">
+                                    <div class="progress-bar bg-<?= $colorProg ?> <?= $pctProgreso < 100 ? 'progress-bar-striped progress-bar-animated' : '' ?>" 
+                                         role="progressbar" style="width: <?= $pctProgreso ?>%"></div>
+                                </div>
+                                <small class="fw-bold" style="font-size: 0.7rem; min-width: 55px;"><?= $tirajesImp ?> / <?= $tirajesTotal ?></small>
+                            </div>
+                            <div class="text-center mt-1" style="font-size: 0.65rem; color: #64748b;">
+                                <?= $pctProgreso ?>% completado
+                            </div>
                         </td>
                         <td class="text-center">
                             <div class="btn-group btn-group-sm">
@@ -94,7 +110,7 @@
                         </td>
                     </tr>
                     <?php endforeach; if(empty($trabajos)): ?>
-                    <tr><td colspan="6" class="text-center py-4 text-muted">No hay trabajos registrados. Pulsa el botón [AÑADIR] arriba.</td></tr>
+                    <tr><td colspan="7" class="text-center py-4 text-muted">No hay trabajos registrados.</td></tr>
                     <?php endif; ?>
                 </tbody>
             </table>
@@ -339,13 +355,13 @@
                     <!-- ── FILA 1: Identificación ─────────────────── -->
                     <div class="modal-section-title"><i class="bi bi-tag-fill"></i> Identificación</div>
                     <div class="row g-3 mb-4">
-                        <div class="col-md-8">
+                        <div class="col-md-6">
                             <label class="form-label modal-label">Descripción del item</label>
                             <input type="text" name="descripcion" id="field_descripcion"
                                 class="form-control form-control-sm modal-input"
                                 placeholder="Ej: Carteles Navidad 60x120" required>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label modal-label">Prioridad</label>
                             <select name="prioridad" id="field_prioridad" class="form-select form-select-sm priority-select modal-input">
                                 <option value="1">🟢 BAJA</option>
@@ -354,7 +370,15 @@
                                 <option value="4">🔴 URGENTE</option>
                             </select>
                         </div>
+                        <div class="col-md-3">
+                            <label class="form-label modal-label">Impresos</label>
+                            <input type="number" name="tirajes_impresos" id="field_tirajes_impresos" 
+                                class="form-control form-control-sm modal-input text-center" value="0" min="0">
+                        </div>
                     </div>
+                    <!-- Campos ocultos para capturar resultado del cálculo -->
+                    <input type="hidden" name="tirajes" id="field_tirajes" value="0">
+                    <input type="hidden" name="tiraje_dimension" id="field_tiraje_dimension" value="">
 
                     <!-- ── FILA 2: Dimensiones + Material + Orientación ── -->
                     <div class="modal-section-title"><i class="bi bi-rulers"></i> Dimensiones & Material</div>

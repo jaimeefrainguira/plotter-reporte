@@ -128,6 +128,11 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('usarSintra').checked = parseInt(d.usar_sintra) === 1;
             document.getElementById('resultadoSintra').style.display = document.getElementById('usarSintra').checked ? 'block' : 'none';
 
+            // Tirajes impresos
+            if (document.getElementById('field_tirajes_impresos')) {
+                document.getElementById('field_tirajes_impresos').value = d.tirajes_impresos || 0;
+            }
+
             // Cargar prioridad
             applyPriority(d.prioridad || 1);
 
@@ -146,6 +151,9 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('resultadoSintra').style.display = 'none';
             document.getElementById('panelConfig').style.display = 'none';
             applyPriority(1); // reset al crear nuevo
+            if (document.getElementById('field_tirajes_impresos')) {
+                document.getElementById('field_tirajes_impresos').value = 0;
+            }
             const pToggle = document.getElementById('previewToggleRow');
             if (pToggle) pToggle.style.display = 'none';
             const chk = document.getElementById('chkPreview');
@@ -273,6 +281,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="res-detail mt-2">${textoMaterial}</div>
             `;
 
+            // Guardar para BD
+            document.getElementById('field_tirajes').value = copias;
+            document.getElementById('field_tiraje_dimension').value = `${(paneles * panelAncho).toFixed(0)}×${h} cm`;
+
             if (preview) {
                 let anchoTotalPreview = (paneles * panelAncho) + ((paneles - 1) * gap);
                 preview.style.width = (anchoTotalPreview * escala) + 'px';
@@ -341,6 +353,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="res-chip"><strong>${Math.ceil(tirajes_adicionales)}</strong> tiraje(s) adicionales</span>
                 </div>
             `;
+
+            // Guardar para BD
+            document.getElementById('field_tirajes').value = Math.ceil(cantidad_tirajes);
+            document.getElementById('field_tiraje_dimension').value = `${ancho_tiraje}×${alto_tiraje} cm`;
         }
 
         // ===============================
