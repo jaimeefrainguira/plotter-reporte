@@ -1,3 +1,6 @@
+require_once __DIR__ . '/../models/Campana.php';
+require_once __DIR__ . '/../models/Trabajo.php';
+require_once __DIR__ . '/../models/Material.php';
 require_once __DIR__ . '/../models/Asignacion.php';
 
 class CampanaController {
