@@ -10,7 +10,8 @@ class Trabajo {
         "usar_panelado" => "ALTER TABLE trabajos ADD COLUMN usar_panelado TINYINT(1) DEFAULT 0 AFTER orientacion",
         "panel_ancho" => "ALTER TABLE trabajos ADD COLUMN panel_ancho DECIMAL(10,2) DEFAULT 0 AFTER usar_panelado",
         "panel_gap" => "ALTER TABLE trabajos ADD COLUMN panel_gap DECIMAL(10,2) DEFAULT 0 AFTER panel_ancho",
-        "usar_sintra" => "ALTER TABLE trabajos ADD COLUMN usar_sintra TINYINT(1) DEFAULT 0 AFTER panel_gap"
+        "usar_sintra" => "ALTER TABLE trabajos ADD COLUMN usar_sintra TINYINT(1) DEFAULT 0 AFTER panel_gap",
+        "prioridad" => "ALTER TABLE trabajos ADD COLUMN prioridad INT DEFAULT 1 AFTER usar_sintra"
     ];
 
     public function __construct(PDO $db) {
@@ -38,8 +39,8 @@ class Trabajo {
         $this->db->beginTransaction();
         try {
             $stmt = $this->db->prepare("
-                INSERT INTO trabajos (campana_id, descripcion, cantidad, caras, ancho_panel, alto_panel, material_id, separacion_h, separacion_v, orientacion, usar_panelado, panel_ancho, panel_gap, usar_sintra)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO trabajos (campana_id, descripcion, cantidad, caras, ancho_panel, alto_panel, material_id, separacion_h, separacion_v, orientacion, usar_panelado, panel_ancho, panel_gap, usar_sintra, prioridad)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
             $stmt->execute([
                 $data['campana_id'],
@@ -55,7 +56,8 @@ class Trabajo {
                 $data['usar_panelado'] ?? 0,
                 $data['panel_ancho'] ?? 0,
                 $data['panel_gap'] ?? 0,
-                $data['usar_sintra'] ?? 0
+                $data['usar_sintra'] ?? 0,
+                $data['prioridad'] ?? 1
             ]);
             $trabajoId = (int)$this->db->lastInsertId();
 
@@ -78,7 +80,7 @@ class Trabajo {
             $stmt = $this->db->prepare("
                 UPDATE trabajos 
                 SET descripcion = ?, cantidad = ?, caras = ?, ancho_panel = ?, alto_panel = ?, material_id = ?, separacion_h = ?, separacion_v = ?,
-                    orientacion = ?, usar_panelado = ?, panel_ancho = ?, panel_gap = ?, usar_sintra = ?
+                    orientacion = ?, usar_panelado = ?, panel_ancho = ?, panel_gap = ?, usar_sintra = ?, prioridad = ?
                 WHERE id = ?
             ");
             $stmt->execute([
@@ -95,6 +97,7 @@ class Trabajo {
                 $data['panel_ancho'] ?? 0,
                 $data['panel_gap'] ?? 0,
                 $data['usar_sintra'] ?? 0,
+                $data['prioridad'] ?? 1,
                 $id
             ]);
 
