@@ -36,6 +36,47 @@ unset($_SESSION['flash']);
         </div>
     <?php endif; ?>
 
+    <!-- MÓDULO MES: Progreso de Campañas -->
+    <div class="card shadow-sm mb-4 border-0">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold"><i class="bi bi-megaphone-fill me-2"></i> Estado Global de Campañas</h5>
+            <a href="index.php?action=campanas_list" class="btn btn-sm btn-outline-info">Ver todas</a>
+        </div>
+        <div class="card-body p-0">
+            <div class="list-group list-group-flush">
+                <?php foreach ($campanasActivas as $c): 
+                    $p = $c['progreso'];
+                    $color = $p['porcentaje'] >= 100 ? 'success' : ($p['porcentaje'] > 0 ? 'primary' : 'secondary');
+                ?>
+                <div class="list-group-item p-3">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <h6 class="mb-0 fw-bold">
+                                <a href="index.php?action=campana_detail&id=<?= $c['id'] ?>" class="text-decoration-none text-dark">
+                                    <?= htmlspecialchars($c['nombre']) ?>
+                                </a>
+                            </h6>
+                            <small class="text-muted"><?= htmlspecialchars($c['requerimiento_nro']) ?></small>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="progress" style="height: 12px;">
+                                <div class="progress-bar bg-<?= $color ?> progress-bar-striped progress-bar-animated" 
+                                     role="progressbar" style="width: <?= $p['porcentaje'] ?>%"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <span class="fw-bold fs-5 text-<?= $color ?>"><?= $p['porcentaje'] ?>%</span>
+                        </div>
+                    </div>
+                </div>
+                <?php endforeach; if(empty($campanasActivas)): ?>
+                <div class="p-4 text-center text-muted small">No hay campañas registradas.</div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- MÓDULO REPORTES: Stats originales -->
     <div class="row g-3 mb-4">
         <div class="col-md-4">
             <div class="card shadow-sm h-100">
@@ -73,6 +114,19 @@ unset($_SESSION['flash']);
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- ACCESOS RÁPIDOS A PLOTTERS (OPERADOR) -->
+    <div class="row g-3 mb-4">
+        <div class="col-12"><h5 class="fw-bold text-muted text-uppercase small">Panel de Operador (Planta)</h5></div>
+        <?php foreach ([1,2,3,4,5,6] as $pid): ?>
+        <div class="col-6 col-md-4 col-lg-2">
+            <a href="index.php?action=campana_ver_produccion&plotter_id=<?= $pid ?>" class="btn btn-outline-dark w-100 py-3 shadow-sm border-2">
+                <i class="bi bi-cpu fs-4 d-block mb-1"></i>
+                <small class="fw-bold">PLOTTER <?= $pid ?></small>
+            </a>
+        </div>
+        <?php endforeach; ?>
     </div>
 
     <div class="card shadow-sm mb-4">

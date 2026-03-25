@@ -1,15 +1,10 @@
-<?php
-declare(strict_types=1);
-
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../models/Campana.php';
-require_once __DIR__ . '/../models/Trabajo.php';
-require_once __DIR__ . '/../models/Material.php';
+require_once __DIR__ . '/../models/Asignacion.php';
 
 class CampanaController {
     private Campana $campanaModel;
     private Trabajo $trabajoModel;
     private Material $materialModel;
+    private Asignacion $asignacionModel;
 
     public function __construct() {
         $database = new Database();
@@ -17,6 +12,7 @@ class CampanaController {
         $this->campanaModel = new Campana($conn);
         $this->trabajoModel = new Trabajo($conn);
         $this->materialModel = new Material($conn);
+        $this->asignacionModel = new Asignacion($conn);
     }
 
     public function list(): void {
@@ -32,6 +28,10 @@ class CampanaController {
         }
         $trabajos = $this->campanaModel->getTrabajos($id);
         $materiales = $this->materialModel->getAll(soloActivos: true);
+        $progreso = $this->campanaModel->getProgresoGlobal($id);
+        
+        $plotters = [1 => 'PLOTTER 1', 2 => 'PLOTTER 2', 3 => 'PLOTTER 3', 4 => 'PLOTTER 4', 5 => 'PLOTTER 5', 6 => 'PLOTTER 6'];
+        
         include __DIR__ . '/../views/campanas/detalle.php';
     }
 
@@ -242,6 +242,62 @@ class CampanaController {
                 $errorMsg .= ' Código error PHP: ' . $_FILES['imagen_adjunta']['error'];
             }
             echo json_encode(['success' => false, 'error' => $errorMsg]);
+        }
+        exit;
+
+    /* ─── PRODUCCIÓN Y ASIGNACIÓN ────────────────────────────────────── */
+
+    public function asignarPlotter(): void {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') exit;
+        
+        try {
+            $data = [
+                'trabajo_id' => (int)$_POST['trabajo_id'],
+                'plotter_id' => (int)$_POST['plotter_id'],
+                'tirajes_asignados' => (int)$_POST['tirajes_asignados']
+            ];
+            
+            $id = $this->asignacionModel->crear($data);
+            $_SESSION['flash'] = ['type' => 'success', 'message' => "Trabajo asignado correctamente."];
+        } catch (Exception $e) {
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => $e->getMessage()];
+        }
+        
+        $campanaId = (int)$_POST['campana_id'];
+        header('Location: index.php?action=campana_detail&id=' . $campanaId);
+    }
+
+    public function verProduccionPlotter(): void {
+        $plotterId = (int)($_GET['plotter_id'] ?? 1);
+        $asignaciones = $this->asignacionModel->getPorPlotter($plotterId);
+        
+        $plotters = [1 => 'PLOTTER 1', 2 => 'PLOTTER 2', 3 => 'PLOTTER 3', 4 => 'PLOTTER 4', 5 => 'PLOTTER 5', 6 => 'PLOTTER 6'];
+        $plotterName = $plotters[$plotterId] ?? 'Plotter Desconocido';
+        
+        include __DIR__ . '/../views/campanas/produccion_plotter.php';
+    }
+
+    public function registrarProduccion(): void {
+        header('Content-Type: application/json');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['ok' => false, 'error' => 'Metodo no permitido']);
+            exit;
+        }
+
+        $inputData = json_decode(file_get_contents('php://input'), true);
+        $asignacionId = (int)($inputData['asignacion_id'] ?? 0);
+        $cantidad = (int)($inputData['cantidad'] ?? 0);
+
+        if ($asignacionId <= 0 || $cantidad <= 0) {
+            echo json_encode(['ok' => false, 'error' => 'Datos invalidos']);
+            exit;
+        }
+
+        try {
+            $this->asignacionModel->registrarProduccion($asignacionId, $cantidad);
+            echo json_encode(['ok' => true]);
+        } catch (Exception $e) {
+            echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
         }
         exit;
     }

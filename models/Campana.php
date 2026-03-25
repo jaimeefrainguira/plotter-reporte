@@ -56,11 +56,13 @@ class Campana {
         return $stmt->execute([$id]);
     }
 
+
     public function getTrabajos(int $campanaId): array {
         $stmt = $this->db->prepare("
             SELECT t.*, m.nombre as material_nombre, m.tipo as material_tipo,
                    m.ancho_cm, m.largo_rollo_m,
-                   c.total_metros, c.total_planchas, c.distribucion_texto, c.unidades_por_unidad_venta
+                   c.total_metros, c.total_planchas, c.distribucion_texto, c.unidades_por_unidad_venta,
+                   (SELECT COALESCE(SUM(tirajes_asignados), 0) FROM asignaciones_plotter WHERE trabajo_id = t.id) as tirajes_asignados
             FROM trabajos t
             LEFT JOIN materiales m ON t.material_id = m.id
             LEFT JOIN consumos c ON t.id = c.trabajo_id
@@ -69,5 +71,30 @@ class Campana {
         ");
         $stmt->execute([$campanaId]);
         return $stmt->fetchAll();
+    }
+
+    /**
+     * Calcula el progreso global de la campaña basado en tirajes
+     */
+    public function getProgresoGlobal(int $id): array {
+        $stmt = $this->db->prepare("
+            SELECT 
+                SUM(tirajes) as total,
+                SUM(tirajes_impresos) as completados
+            FROM trabajos
+            WHERE campana_id = ?
+        ");
+        $stmt->execute([$id]);
+        $res = $stmt->fetch();
+        
+        $total = (int)($res['total'] ?? 0);
+        $completados = (int)($res['completados'] ?? 0);
+        $porcentaje = ($total > 0) ? ($completados / $total) * 100 : 0;
+        
+        return [
+            'total' => $total,
+            'completados' => $completados,
+            'porcentaje' => round($porcentaje, 2)
+        ];
     }
 }

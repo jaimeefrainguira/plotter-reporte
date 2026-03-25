@@ -148,6 +148,18 @@ switch ($action) {
         $campanaController->uploadImagen();
         break;
 
+    case 'campana_asignar_plotter':
+        $campanaController->asignarPlotter();
+        break;
+
+    case 'campana_ver_produccion':
+        $campanaController->verProduccionPlotter();
+        break;
+
+    case 'campana_registrar_produccion':
+        $campanaController->registrarProduccion();
+        break;
+
     // --- Módulo de Materia Prima ---
     case 'materiales_list':
         $materialController->list();

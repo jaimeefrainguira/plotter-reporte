@@ -41,7 +41,14 @@
                 <div class="col-md-6">
                     <p class="mb-0 text-muted">Progreso Global de Producción</p>
                     <div class="progress mt-2" style="height: 15px;">
-                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 45%;" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100">45%</div>
+                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" 
+                             style="width: <?= $progreso['porcentaje'] ?>%;" 
+                             aria-valuenow="<?= $progreso['porcentaje'] ?>" aria-valuemin="0" aria-valuemax="100">
+                            <?= $progreso['porcentaje'] ?>%
+                        </div>
+                    </div>
+                    <div class="text-end small mt-1 text-muted">
+                        <?= $progreso['completados'] ?> / <?= $progreso['total'] ?> tirajes completados
                     </div>
                 </div>
             </div>
@@ -65,7 +72,8 @@
                         <th class="text-center">DIM. TIRAJE</th>
                         <th class="text-center">IMPRESOS</th>
                         <th class="text-center">PRIORIDAD</th>
-                        <th style="width: 12%;">ESTADO</th>
+                        <th style="width: 10%;">ESTADO</th>
+                        <th class="text-center">ASIGNACIÓN</th>
                         <th class="text-center">ACCIONES</th>
                     </tr>
                 </thead>
@@ -107,6 +115,35 @@
                                 <span class="fw-bold"><?= $pctProgreso ?>%</span>
                                 <span class="text-muted"><?= $tirajesImp ?>/<?= $tirajesTotal ?></span>
                             </div>
+                        </td>
+                        <td class="text-center">
+                            <?php if ($tirajesTotal > $trabajo['tirajes_asignados']): ?>
+                                <form action="index.php?action=campana_asignar_plotter" method="POST" class="d-flex gap-1" style="min-width: 160px; justify-content: center;">
+                                    <input type="hidden" name="trabajo_id" value="<?= $trabajo['id'] ?>">
+                                    <input type="hidden" name="campana_id" value="<?= $campana['id'] ?>">
+                                    <select name="plotter_id" class="form-select form-select-sm p-1" required style="font-size: 0.7rem;">
+                                        <option value="" selected disabled>P...</option>
+                                        <?php foreach ($plotters as $pid => $pname): ?>
+                                            <option value="<?= $pid ?>"><?= $pid ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <input type="number" name="tirajes_asignados" class="form-control form-control-sm p-1 text-center" 
+                                           value="<?= $tirajesTotal - $trabajo['tirajes_asignados'] ?>" 
+                                           max="<?= $tirajesTotal - $trabajo['tirajes_asignados'] ?>" min="1" 
+                                           style="width: 45px; font-size: 0.7rem;">
+                                    <button class="btn btn-sm btn-outline-primary p-1" title="Asignar"><i class="bi bi-person-plus-fill"></i></button>
+                                </form>
+                            <?php else: ?>
+                                <span class="badge bg-success-subtle text-success border border-success" style="font-size: 0.65rem;">
+                                    <i class="bi bi-check-all"></i> ASIGNADO
+                                </span>
+                            <?php endif; 
+                            
+                            if ($trabajo['tirajes_asignados'] > 0): ?>
+                                <div class="mt-1 small" style="font-size: 0.6rem; color: #64748b;">
+                                    Total asignado: <?= $trabajo['tirajes_asignados'] ?>
+                                </div>
+                            <?php endif; ?>
                         </td>
                         <td class="text-center">
                             <div class="btn-group btn-group-sm">

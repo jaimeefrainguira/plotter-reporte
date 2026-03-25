@@ -19,8 +19,18 @@ class ReporteController
 
     public function dashboard(): void
     {
+        $database = new Database();
+        $conn = $database->getConnection();
+        $this->reporteModel = new Reporte($conn);
+        $campanaModel = new Campana($conn);
+
         $stats = $this->reporteModel->getDashboardStats();
         $plotters = $this->getPlotterOptions();
+        
+        $campanasActivas = $campanaModel->getAll();
+        foreach ($campanasActivas as &$c) {
+            $c['progreso'] = $campanaModel->getProgresoGlobal((int)$c['id']);
+        }
 
         $plotterFilter = trim((string) ($_GET['plotter'] ?? ''));
         $fechaFilter = isset($_GET['fecha']) ? trim((string) $_GET['fecha']) : '';
