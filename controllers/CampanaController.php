@@ -244,6 +244,7 @@ class CampanaController {
             echo json_encode(['success' => false, 'error' => $errorMsg]);
         }
         exit;
+    }
 
     /* ─── PRODUCCIÓN Y ASIGNACIÓN ────────────────────────────────────── */
 
