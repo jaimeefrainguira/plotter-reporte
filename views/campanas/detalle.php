@@ -308,7 +308,7 @@
 
 <!-- Modal Detallado de Consumo y Trabajo -->
 <div class="modal fade" id="modalTrabajo" tabindex="-1">
-    <div class="modal-dialog modal-xl">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <form id="formTrabajo" method="POST" action="index.php?action=campana_save_trabajo">
             <input type="hidden" name="campana_id" value="<?= $campana['id'] ?>">
             <input type="hidden" name="trabajo_id" id="field_trabajo_id" value="">
@@ -317,129 +317,185 @@
             <input type="hidden" name="distribucion_texto" id="field_distribucion_texto">
             <input type="hidden" name="unidades_por_rollo" id="field_unidades_por_rollo">
 
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header bg-dark text-white">
-                    <h5 class="modal-title" id="modalTitle">Nuevo Item de Trabajo</h5>
+            <div class="modal-content border-0 shadow-lg" style="border-radius:16px; overflow:hidden;">
+
+                <!-- HEADER -->
+                <div class="modal-header border-0 px-4 py-3" style="background:linear-gradient(135deg,#0f172a,#1e3a5f);">
+                    <div class="d-flex align-items-center gap-2">
+                        <div style="background:rgba(255,255,255,0.12); border-radius:10px; padding:6px 10px;">
+                            <i class="bi bi-pencil-square text-white fs-5"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title text-white mb-0 fw-bold" id="modalTitle">Nuevo Item de Trabajo</h5>
+                            <small class="text-white-50">Complete los campos y calcule el consumo</small>
+                        </div>
+                    </div>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
 
-                    <!-- ===== PRIORIDAD ===== -->
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Prioridad</label>
-                        <select name="prioridad" id="field_prioridad" class="form-select form-select-sm priority-select" style="max-width:220px; font-weight:700;">
-                            <option value="1">🟢 BAJA</option>
-                            <option value="2">🟡 MEDIA</option>
-                            <option value="3">🟠 ALTA</option>
-                            <option value="4">🔴 URGENTE</option>
-                        </select>
-                    </div>
+                <!-- BODY -->
+                <div class="modal-body p-0" style="background:#f8fafc;">
+                    <div class="row g-0">
 
-                    <!-- Descripción (solo para BD, no en calcular.html) -->
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Descripción</label>
-                        <input type="text" name="descripcion" id="field_descripcion" class="form-control form-control-sm" placeholder="Ej: Carteles Navidad 60x120" required>
-                    </div>
+                        <!-- COLUMNA IZQUIERDA: Datos del trabajo -->
+                        <div class="col-lg-5 p-4 border-end" style="background:#fff;">
 
-                    <!-- ===== DISEÑO (igual que calcular.html) ===== -->
-                    <h6 class="fw-bold mt-3">Diseño</h6>
-                    <div class="row g-2 mb-2">
-                        <div class="col-auto">
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-text">Ancho:</span>
-                                <input type="number" name="ancho_panel" id="field_ancho_panel" class="form-control calc-trigger" value="300" style="width:80px;">
-                                <span class="input-group-text">cm</span>
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-text">Alto:</span>
-                                <input type="number" name="alto_panel" id="field_alto_panel" class="form-control calc-trigger" value="120" style="width:80px;">
-                                <span class="input-group-text">cm</span>
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-text">Copias:</span>
-                                <input type="number" name="cantidad" id="field_cantidad" class="form-control calc-trigger" value="1" min="1" required style="width:80px;">
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-text">Caras:</span>
-                                <input type="number" name="caras" id="field_caras" class="form-control calc-trigger" value="1" min="1" required style="width:80px;">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- ===== ACTIVAR PANELADO ===== -->
-                    <h6 class="fw-bold mt-3">
-                        <input type="checkbox" name="usar_panelado" id="usarPanelado" value="1" class="form-check-input me-1"> Activar Panelado
-                    </h6>
-                    <div id="panelConfig" style="display:none;" class="mb-3 ps-3">
-                        <div class="row g-2">
-                            <div class="col-auto">
-                                <div class="input-group input-group-sm">
-                                    <span class="input-group-text">Ancho panel:</span>
-                                    <input type="number" name="panel_ancho" id="field_panel_ancho" class="form-control calc-trigger" value="120" style="width:80px;">
-                                    <span class="input-group-text">cm</span>
+                            <!-- Sección: Identificación -->
+                            <div class="modal-section mb-4">
+                                <div class="modal-section-title">
+                                    <i class="bi bi-tag-fill"></i> Identificación
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label modal-label">Descripción del item</label>
+                                    <input type="text" name="descripcion" id="field_descripcion"
+                                        class="form-control form-control-sm modal-input"
+                                        placeholder="Ej: Carteles Navidad 60x120" required>
+                                </div>
+                                <div>
+                                    <label class="form-label modal-label">Prioridad</label>
+                                    <select name="prioridad" id="field_prioridad" class="form-select form-select-sm priority-select modal-input">
+                                        <option value="1">🟢 BAJA</option>
+                                        <option value="2">🟡 MEDIA</option>
+                                        <option value="3">🟠 ALTA</option>
+                                        <option value="4">🔴 URGENTE</option>
+                                    </select>
                                 </div>
                             </div>
-                            <div class="col-auto">
-                                <div class="input-group input-group-sm">
-                                    <span class="input-group-text">Gap:</span>
-                                    <input type="number" name="panel_gap" id="field_panel_gap" class="form-control calc-trigger" value="2" style="width:80px;">
-                                    <span class="input-group-text">cm</span>
+
+                            <!-- Sección: Diseño -->
+                            <div class="modal-section mb-4">
+                                <div class="modal-section-title">
+                                    <i class="bi bi-rulers"></i> Dimensiones del Diseño
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <label class="form-label modal-label">Ancho (cm)</label>
+                                        <input type="number" name="ancho_panel" id="field_ancho_panel"
+                                            class="form-control form-control-sm calc-trigger modal-input" value="300" min="1">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label modal-label">Alto (cm)</label>
+                                        <input type="number" name="alto_panel" id="field_alto_panel"
+                                            class="form-control form-control-sm calc-trigger modal-input" value="120" min="1">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label modal-label">Copias</label>
+                                        <input type="number" name="cantidad" id="field_cantidad"
+                                            class="form-control form-control-sm calc-trigger modal-input" value="1" min="1" required>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label modal-label">Caras</label>
+                                        <input type="number" name="caras" id="field_caras"
+                                            class="form-control form-control-sm calc-trigger modal-input" value="1" min="1" required>
+                                    </div>
                                 </div>
                             </div>
+
+                            <!-- Sección: Material y Orientación -->
+                            <div class="modal-section mb-4">
+                                <div class="modal-section-title">
+                                    <i class="bi bi-layers-fill"></i> Material & Configuración
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label modal-label">Material (rollo)</label>
+                                    <select name="material_id" id="field_material_id"
+                                        class="form-select form-select-sm calc-trigger modal-input" required>
+                                        <option value="">— Seleccionar material —</option>
+                                        <?php foreach ($materiales as $mat): ?>
+                                            <option value="<?= (int)$mat['id'] ?>"
+                                                data-ancho="<?= (float)$mat['ancho_cm'] ?>"
+                                                data-largo="<?= (float)$mat['largo_rollo_m'] * 100 ?>">
+                                                <?= htmlspecialchars($mat['nombre']) ?> — <?= (float)$mat['ancho_cm'] ?>cm × <?= (float)$mat['largo_rollo_m'] ?>m
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label modal-label">Orientación</label>
+                                    <select name="orientacion" id="field_orientacion"
+                                        class="form-select form-select-sm calc-trigger modal-input">
+                                        <option value="auto">⚙️ Automático</option>
+                                        <option value="vertical">↕️ Forzar Vertical</option>
+                                        <option value="horizontal">↔️ Forzar Horizontal</option>
+                                    </select>
+                                </div>
+
+                                <!-- Panelado -->
+                                <div class="modal-toggle-card mb-2">
+                                    <div class="form-check form-switch mb-0">
+                                        <input class="form-check-input" type="checkbox" name="usar_panelado" id="usarPanelado" value="1" role="switch">
+                                        <label class="form-check-label fw-semibold" for="usarPanelado">
+                                            <i class="bi bi-grid-3x2-gap me-1 text-primary"></i> Activar Panelado
+                                        </label>
+                                    </div>
+                                </div>
+                                <div id="panelConfig" style="display:none;" class="ps-2 mb-2">
+                                    <div class="row g-2 mt-1">
+                                        <div class="col-6">
+                                            <label class="form-label modal-label">Ancho panel (cm)</label>
+                                            <input type="number" name="panel_ancho" id="field_panel_ancho"
+                                                class="form-control form-control-sm calc-trigger modal-input" value="120">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label modal-label">Gap (cm)</label>
+                                            <input type="number" name="panel_gap" id="field_panel_gap"
+                                                class="form-control form-control-sm calc-trigger modal-input" value="2">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Sintra -->
+                                <div class="modal-toggle-card">
+                                    <div class="form-check form-switch mb-0">
+                                        <input class="form-check-input" type="checkbox" name="usar_sintra" id="usarSintra" value="1" role="switch">
+                                        <label class="form-check-label fw-semibold" for="usarSintra">
+                                            <i class="bi bi-grid me-1 text-info"></i> Usar Sintra 122×244
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Botón Calcular -->
+                            <button type="button" id="btnCalcular" class="btn btn-calcular w-100">
+                                <i class="bi bi-calculator-fill me-2"></i> CALCULAR CONSUMO
+                            </button>
+
                         </div>
-                    </div>
 
-                    <h6 class="fw-bold mt-3"><i class="bi bi-boxes me-1"></i>Material Rollos</h6>
-                    <select name="material_id" id="field_material_id" class="form-select form-select-sm mb-3 calc-trigger" required style="max-width:380px;">
-                        <option value="">-- SELECCIONAR MATERIAL --</option>
-                        <?php foreach ($materiales as $mat): ?>
-                            <option value="<?= (int)$mat['id'] ?>"
-                                data-ancho="<?= (float)$mat['ancho_cm'] ?>"
-                                data-largo="<?= (float)$mat['largo_rollo_m'] * 100 ?>">
-                                <?= htmlspecialchars($mat['nombre']) ?> &mdash; <?= (float)$mat['ancho_cm'] ?>cm × <?= (float)$mat['largo_rollo_m'] ?>m
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
+                        <!-- COLUMNA DERECHA: Resultado -->
+                        <div class="col-lg-7 p-4" style="background:#f8fafc;">
+                            <div class="modal-section-title mb-3">
+                                <i class="bi bi-bar-chart-line-fill"></i> Resultado del Cálculo
+                            </div>
 
-                    <!-- ===== ORIENTACIÓN ===== -->
-                    <h6 class="fw-bold mt-3">Orientación</h6>
-                    <select name="orientacion" id="field_orientacion" class="form-select form-select-sm mb-3 calc-trigger" style="max-width:250px;">
-                        <option value="auto">Automático</option>
-                        <option value="vertical">Forzar Vertical</option>
-                        <option value="horizontal">Forzar Horizontal</option>
-                    </select>
+                            <!-- Resultado principal -->
+                            <div id="resultado" class="resultado-box mb-3">
+                                <div class="text-center py-4 text-muted">
+                                    <i class="bi bi-arrow-left-circle fs-2 d-block mb-2 opacity-25"></i>
+                                    <small>Completa los datos y presiona <strong>Calcular</strong></small>
+                                </div>
+                            </div>
 
-                    <!-- ===== SINTRA ===== -->
-                    <h6 class="fw-bold mt-3">
-                        <input type="checkbox" name="usar_sintra" id="usarSintra" value="1" class="form-check-input me-1"> Usar Sintra 122x244
-                    </h6>
+                            <!-- Resultado Sintra -->
+                            <div id="resultadoSintra" style="display:none;" class="resultado-sintra-box mb-3"></div>
 
-                    <br>
-                    <button type="button" id="btnCalcular" class="btn btn-dark w-100 py-2">CALCULAR</button>
-                    <br><br>
+                            <!-- Preview panelado -->
+                            <div id="preview" style="margin-top:16px; border:2px dashed #cbd5e1; border-radius:10px; position:relative; background:#e2e8f0; display:none; min-height:60px;"></div>
+                        </div>
 
-                    <!-- ===== RESULTADO ===== -->
-                    <div class="mt-3 p-3 bg-light border rounded" id="resultado">
-                        <span class="text-muted">Completa los datos para ver el resultado...</span>
-                    </div>
+                    </div><!-- /row -->
+                </div><!-- /modal-body -->
 
-                    <!-- Sintra resultado -->
-                    <div id="resultadoSintra" style="display:none;" class="mt-2 p-3 bg-light border rounded"></div>
-
-                    <!-- ===== PREVIEW ===== -->
-                    <div id="preview" style="margin-top:20px; border:2px solid #333; position:relative; background:#eee; display:none;"></div>
-
+                <!-- FOOTER -->
+                <div class="modal-footer border-0 px-4 py-3" style="background:#fff; border-top:1px solid #e2e8f0;">
+                    <button type="button" class="btn btn-outline-secondary btn-modal-cancel" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-modal-save">
+                        <i class="bi bi-floppy-fill me-2"></i> Guardar Item
+                    </button>
                 </div>
-                <div class="modal-footer justify-content-center border-0 pb-4">
-                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">CANCELAR</button>
-                    <button type="submit" class="btn btn-primary px-4">GUARDAR CAMBIOS</button>
-                </div>
+
             </div>
         </form>
     </div>
