@@ -324,25 +324,15 @@
                 </div>
                 <div class="modal-body">
 
-                    <!-- ===== PRIORIDAD SLIDER ===== -->
-                    <div class="mb-4">
-                        <label class="form-label fw-bold mb-2">Prioridad</label>
-                        <input type="hidden" name="prioridad" id="field_prioridad" value="1">
-                        <div class="priority-slider-wrapper">
-                            <div class="priority-track">
-                                <div class="priority-track-fill" id="priorityFill"></div>
-                            </div>
-                            <input type="range" id="priorityRange" min="1" max="4" step="1" value="1" class="priority-range" aria-label="Prioridad">
-                            <div class="priority-labels">
-                                <span data-val="1">BAJA</span>
-                                <span data-val="2">MEDIA</span>
-                                <span data-val="3">ALTA</span>
-                                <span data-val="4">URGENTE</span>
-                            </div>
-                        </div>
-                        <div class="priority-badge-wrap">
-                            <span id="priorityBadge" class="priority-badge">BAJA</span>
-                        </div>
+                    <!-- ===== PRIORIDAD ===== -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Prioridad</label>
+                        <select name="prioridad" id="field_prioridad" class="form-select form-select-sm priority-select" style="max-width:220px; font-weight:700;">
+                            <option value="1">🟢 BAJA</option>
+                            <option value="2">🟡 MEDIA</option>
+                            <option value="3">🟠 ALTA</option>
+                            <option value="4">🔴 URGENTE</option>
+                        </select>
                     </div>
 
                     <!-- Descripción (solo para BD, no en calcular.html) -->

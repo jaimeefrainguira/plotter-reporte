@@ -11,69 +11,22 @@ console.log('campanas_calculos.js cargado correctamente.');
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    // ===== PRIORITY SLIDER =====
-    const PRIORITY_CONFIG = [
-        null, // index 0 unused (values are 1-4)
-        { label: 'BAJA',     color: '#22c55e', border: '#16a34a' },
-        { label: 'MEDIA',    color: '#eab308', border: '#ca8a04' },
-        { label: 'ALTA',     color: '#f97316', border: '#ea580c' },
-        { label: 'URGENTE',  color: '#ef4444', border: '#dc2626' },
-    ];
+    // ===== PRIORITY SELECT COLOR =====
+    const PRIORITY_COLORS = { 1: '#22c55e', 2: '#eab308', 3: '#f97316', 4: '#ef4444' };
 
     function applyPriority(val) {
-        val = Math.max(1, Math.min(4, parseInt(val) || 1));
-        const cfg = PRIORITY_CONFIG[val];
-        const fill = document.getElementById('priorityFill');
-        const badge = document.getElementById('priorityBadge');
-        const range = document.getElementById('priorityRange');
-        const hidden = document.getElementById('field_prioridad');
-        const labels = document.querySelectorAll('.priority-labels span');
-
-        if (!fill || !badge || !range) return;
-
-        // fill width: val 1 = 0%, 2 = 33%, 3 = 66%, 4 = 100%
-        const pct = ((val - 1) / 3) * 100;
-        fill.style.width = pct + '%';
-
-        badge.textContent = cfg.label;
-        badge.style.background = cfg.color;
-        badge.style.boxShadow = `0 2px 12px ${cfg.color}66`;
-
-        // thumb border color via CSS custom property
-        range.style.setProperty('--thumb-color', cfg.border);
-
-        // Dynamic inline style for webkit thumb
-        const styleId = 'priority-thumb-style';
-        let styleEl = document.getElementById(styleId);
-        if (!styleEl) {
-            styleEl = document.createElement('style');
-            styleEl.id = styleId;
-            document.head.appendChild(styleEl);
-        }
-        styleEl.textContent = `.priority-range::-webkit-slider-thumb { border-color: ${cfg.border} !important; box-shadow: 0 2px 10px ${cfg.color}88 !important; }
-        .priority-range::-moz-range-thumb { border-color: ${cfg.border} !important; }`;
-
-        labels.forEach(span => {
-            const v = parseInt(span.dataset.val);
-            span.classList.remove('active');
-            if (v === val) {
-                span.classList.add('active');
-                span.style.color = cfg.color;
-            } else {
-                span.style.color = '';
-            }
-        });
-
-        if (hidden) hidden.value = val;
-        range.value = val;
+        const sel = document.getElementById('field_prioridad');
+        if (!sel) return;
+        sel.value = val;
+        sel.style.borderLeftColor = PRIORITY_COLORS[val] || '#6c757d';
     }
 
-    const priorityRange = document.getElementById('priorityRange');
-    if (priorityRange) {
-        priorityRange.addEventListener('input', () => applyPriority(priorityRange.value));
-        applyPriority(1); // default
+    const prioSel = document.getElementById('field_prioridad');
+    if (prioSel) {
+        prioSel.addEventListener('change', () => applyPriority(prioSel.value));
+        applyPriority(prioSel.value);
     }
-    // ==========================
+    // =================================
 
     // mostrar panelado config
     const usarPanelado = document.getElementById('usarPanelado');
