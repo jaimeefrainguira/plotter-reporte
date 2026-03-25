@@ -63,6 +63,7 @@
                         <th>MATERIAL</th>
                         <th class="text-center">TIRAJES</th>
                         <th class="text-center">DIM. TIRAJE</th>
+                        <th class="text-center">IMPRESOS</th>
                         <th class="text-center">PRIORIDAD</th>
                         <th style="width: 12%;">ESTADO</th>
                         <th class="text-center">ACCIONES</th>
@@ -91,6 +92,7 @@
                         <td><span class="badge border text-dark bg-light"><?= htmlspecialchars($trabajo['material_nombre'] ?? '—') ?></span></td>
                         <td class="text-center fw-bold text-primary"><?= $tirajesTotal ?></td>
                         <td class="text-center small text-muted"><?= htmlspecialchars($trabajo['tiraje_dimension'] ?: '—') ?></td>
+                        <td class="text-center fw-bold text-success" title="Tirajes Impresos"><?= $tirajesImp ?></td>
                         <td class="text-center">
                             <span class="badge bg-<?= $p['col'] ?>-subtle text-<?= $p['col'] ?> border border-<?= $p['col'] ?> px-2 py-1" style="font-size: 0.65rem;">
                                 <?= $p['icon'] ?> <?= $p['msg'] ?>
@@ -122,7 +124,7 @@
                         </td>
                     </tr>
                     <?php endforeach; if(empty($trabajos)): ?>
-                    <tr><td colspan="9" class="text-center py-4 text-muted">No hay trabajos registrados.</td></tr>
+                    <tr><td colspan="10" class="text-center py-4 text-muted">No hay trabajos registrados.</td></tr>
                     <?php endif; ?>
                 </tbody>
             </table>
