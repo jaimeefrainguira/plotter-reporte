@@ -275,6 +275,26 @@ class ReporteController
         $this->redirectWithMessage('Porcentaje actualizado.');
     }
 
+    public function destroy(int $id): void
+    {
+        if ($id <= 0) {
+            $this->redirectWithMessage('ID de reporte inválido.', 'danger');
+            return;
+        }
+
+        if (!$this->isValidCsrfToken((string) ($_POST['csrf_token'] ?? ''))) {
+            $this->redirectWithMessage('Token de seguridad inválido.', 'danger');
+            return;
+        }
+
+        if ($this->reporteModel->delete($id)) {
+            $this->rotateCsrfToken();
+            $this->redirectWithMessage('Reporte eliminado correctamente.');
+        } else {
+            $this->redirectWithMessage('No se pudo eliminar el reporte.', 'danger');
+        }
+    }
+
     public function generatePdf(?int $id = null): void
     {
         if (!$this->loadDompdfLibrary()) {
@@ -315,7 +335,12 @@ class ReporteController
 
             $html = $this->buildPdfHtml($reportes, $plotter, $fecha);
 
-            $dompdf = new Dompdf\Dompdf(['isRemoteEnabled' => true, 'isHtml5ParserEnabled' => true]);
+            $options = new Dompdf\Options();
+            $options->set('isRemoteEnabled', true);
+            $options->set('isHtml5ParserEnabled', true);
+            $options->set('defaultFont', 'Arial');
+            
+            $dompdf = new Dompdf\Dompdf($options);
             $dompdf->loadHtml($html);
             $dompdf->setPaper('A4', 'landscape');
             $dompdf->render();
@@ -339,7 +364,12 @@ class ReporteController
 
             $html = $this->buildJornadaPdfHtml($reportes, $meta);
 
-            $dompdf = new Dompdf\Dompdf(['isRemoteEnabled' => true, 'isHtml5ParserEnabled' => true]);
+            $options = new Dompdf\Options();
+            $options->set('isRemoteEnabled', true);
+            $options->set('isHtml5ParserEnabled', true);
+            $options->set('defaultFont', 'Arial');
+
+            $dompdf = new Dompdf\Dompdf($options);
             $dompdf->loadHtml($html);
             $dompdf->setPaper('A4', 'landscape');
             $dompdf->render();
@@ -347,6 +377,48 @@ class ReporteController
         } catch (Throwable $e) {
             $this->redirectWithMessage('Error en reporte PDF de jornada: ' . $e->getMessage(), 'danger');
         }
+    }
+
+    public function debugPdf(): void
+    {
+        echo "<h1>Diagnóstico de PDF</h1>";
+        echo "<strong>PHP Versión:</strong> " . PHP_VERSION . "<br>";
+        echo "<strong>Directorio actual:</strong> " . __DIR__ . "<br>";
+        
+        $candidates = [
+            '../vendor/autoload.php',
+            '../dompdf/autoload.inc.php',
+            '../dompdf/vendor/autoload.php',
+            '../../vendor/autoload.php',
+            '../../dompdf/autoload.inc.php'
+        ];
+
+        foreach ($candidates as $rel) {
+            $abs = realpath(__DIR__ . '/' . $rel);
+            echo "Buscando $rel ... " . ($abs ? "<span style='color:green'>ENCONTRADO ($abs)</span>" : "<span style='color:red'>NO ENCONTRADO</span>") . "<br>";
+        }
+
+        if ($this->loadDompdfLibrary()) {
+            echo "<br><span style='color:green'>DomPDF cargado correctamente.</span><br>";
+            if (class_exists('Dompdf\\Dompdf')) {
+                echo "Clase Dompdf\\Dompdf: <span style='color:green'>EXISTE</span><br>";
+                try {
+                    $options = new Dompdf\Options();
+                    echo "Opciones instancia: <span style='color:green'>OK</span><br>";
+                    $dompdf = new Dompdf\Dompdf($options);
+                    echo "Instancia Dompdf: <span style='color:green'>OK</span><br>";
+                } catch (Throwable $e) {
+                    echo "Error al instanciar Dompdf: <span style='color:red'>" . $e->getMessage() . "</span><br>";
+                }
+            } else {
+                echo "Clase Dompdf\\Dompdf: <span style='color:red'>NO EXISTE</span> (posiblemente versión antigua o namespace incorrecto)<br>";
+            }
+        } else {
+            echo "<br><span style='color:red'>No se pudo cargar la librería DomPDF.</span><br>";
+        }
+        
+        echo "<br><a href='index.php?action=dashboard'>Volver al Dashboard</a>";
+        exit;
     }
 
     private function loadDompdfLibrary(): bool
