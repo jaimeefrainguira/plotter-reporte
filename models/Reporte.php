@@ -5,6 +5,8 @@ declare(strict_types=1);
 class Reporte
 {
     private bool $schemaChecked = false;
+    private bool $masterTableChecked = false;
+    private bool $masterTableExists = false;
 
     private array $requiredColumns = [
         'cantidad_impreso' => 'ALTER TABLE reportes ADD COLUMN cantidad_impreso INT NOT NULL DEFAULT 0 AFTER cantidad',
@@ -20,11 +22,19 @@ class Reporte
 
     public function getLatestMasterId(): ?int
     {
+        if (!$this->hasMasterTable()) {
+            return null;
+        }
+
         return (int) $this->db->query('SELECT MAX(id) FROM reportes_maestro')->fetchColumn() ?: null;
     }
 
     public function getMasterById(int $masterId): ?array
     {
+        if (!$this->hasMasterTable()) {
+            return null;
+        }
+
         $stmt = $this->db->prepare('SELECT * FROM reportes_maestro WHERE id = :id LIMIT 1');
         $stmt->execute([':id' => $masterId]);
         $result = $stmt->fetch();
@@ -41,6 +51,12 @@ class Reporte
 
     public function createMaster(?string $observacion = null): int
     {
+        if (!$this->hasMasterTable()) {
+            throw new RuntimeException(
+                "No existe la tabla reportes_maestro. Ejecuta el script actualizado de database/script.sql."
+            );
+        }
+
         $sql = 'INSERT INTO reportes_maestro (fecha_creacion, observacion_general)
                 VALUES (NOW(), :observacion)';
         $stmt = $this->db->prepare($sql);
@@ -287,5 +303,33 @@ class Reporte
                 );
             }
         }
+    }
+
+    private function hasMasterTable(): bool
+    {
+        if ($this->masterTableChecked) {
+            return $this->masterTableExists;
+        }
+
+        $this->masterTableChecked = true;
+
+        try {
+            $stmt = $this->db->prepare(
+                'SELECT COUNT(*)
+                 FROM information_schema.TABLES
+                 WHERE TABLE_SCHEMA = DATABASE()
+                   AND TABLE_NAME = :table'
+            );
+            $stmt->execute([':table' => 'reportes_maestro']);
+            $this->masterTableExists = (int) $stmt->fetchColumn() > 0;
+        } catch (PDOException $exception) {
+            throw new RuntimeException(
+                'No se pudo verificar la tabla reportes_maestro. Ejecuta el script actualizado de database/script.sql.',
+                0,
+                $exception
+            );
+        }
+
+        return $this->masterTableExists;
     }
 }
