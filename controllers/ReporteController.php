@@ -324,50 +324,22 @@ class ReporteController
     {
 
 
-        if (!$this->loadDompdfLibrary()) {
-            $this->redirectWithMessage(
-                'No se encontró DomPDF. Sube la carpeta vendor o la carpeta dompdf en la raíz del proyecto.',
-                'danger'
-            );
+         if (!$this->loadDompdfLibrary() || !class_exists('Dompdf\\Dompdf')) {
+            $this->redirectWithMessage('No se pudo generar PDF. Verifica instalación de DomPDF.', 'danger');
             return;
         }
 
-        if (!class_exists('Dompdf\\Dompdf')) {
-            $this->redirectWithMessage('DomPDF no está disponible. Verifica la instalación de la librería.', 'danger');
-            return;
-        }
+        $master = $this->reporteModel->getMasterById($maestroId);
+        $reportes = $this->reporteModel->getByMasterId($maestroId);
+        $meta = $this->parseJornadaMetadata((string) ($master['observacion_general'] ?? ''));
 
-        $reportId = ($id !== null && $id > 0) ? $id : null;
-        $plotter = trim((string) ($_GET['plotter'] ?? ''));
-        $fecha = trim((string) ($_GET['fecha'] ?? ''));
-
-        if ($plotter !== '' && !in_array($plotter, $this->getPlotterOptions(), true)) {
-            $plotter = '';
-        }
-
-        if ($fecha !== '' && !$this->isValidDate($fecha)) {
-            $fecha = '';
-        }
-
-        if ($reportId !== null) {
-            $reportes = $this->reporteModel->getAllForPdf($reportId, $plotter, $fecha);
-        } elseif ($plotter !== '' || $fecha !== '') {
-            $reportes = $this->reporteModel->getAllForPdf(null, $plotter, $fecha);
-        } else {
-            $latestMasterId = $this->reporteModel->getLatestMasterId();
-            $reportes = $latestMasterId ? $this->reporteModel->getByMasterId($latestMasterId) : [];
-        }
-
-        $html = $this->buildPdfHtml($reportes, $plotter, $fecha);
+        $html = $this->buildJornadaPdfHtml($reportes, $meta);
 
         $dompdf = new Dompdf\Dompdf();
         $dompdf->loadHtml($html);
         $dompdf->setPaper('A4', 'landscape');
         $dompdf->render();
-        $dompdf->stream('reporte-impresiones-plotter.pdf', ['Attachment' => false]);
-
-        
-
+        $dompdf->stream('reporte-jornada-plotters.pdf', ['Attachment' => false]);
         
         
     }
