@@ -335,7 +335,7 @@ class Asignacion {
         return $stmt->execute([$asignacionId]);
     }
 
-    public function registrarProduccion(int $asignacionId, int $cantidad): bool {
+    public function registrarProduccion(int $asignacionId, int $cantidad): array {
         $this->ensureSchema();
         $this->db->beginTransaction();
         try {
@@ -368,11 +368,133 @@ class Asignacion {
             $stmt = $this->db->prepare('INSERT INTO produccion_log (asignacion_id, trabajo_id, plotter_id, tirajes) VALUES (?, ?, ?, ?)');
             $stmt->execute([$asignacionId, $a['trabajo_id'], $a['plotter_id'], $cantidadAplicada]);
 
+            $reporteId = $this->registrarProduccionEnReporte(
+                (int)$a['trabajo_id'],
+                (int)$a['plotter_id'],
+                $cantidadAplicada
+            );
+
             $this->db->commit();
-            return true;
+            return [
+                'cantidad_aplicada' => $cantidadAplicada,
+                'tirajes_producidos' => $nuevoProducido,
+                'reporte_id' => $reporteId,
+            ];
         } catch (Exception $e) {
             $this->db->rollBack();
             throw $e;
         }
+    }
+
+    private function registrarProduccionEnReporte(int $trabajoId, int $plotterId, int $cantidadAplicada): int
+    {
+        $stmt = $this->db->prepare("
+            SELECT
+                t.id,
+                t.descripcion,
+                t.tirajes,
+                t.tirajes_impresos,
+                c.nombre AS campana_nombre,
+                COALESCE(m.nombre, '') AS material_nombre
+            FROM trabajos t
+            INNER JOIN campanas c ON c.id = t.campana_id
+            LEFT JOIN materiales m ON m.id = t.material_id
+            WHERE t.id = ?
+            LIMIT 1
+        ");
+        $stmt->execute([$trabajoId]);
+        $trabajo = $stmt->fetch();
+
+        if (!$trabajo) {
+            throw new Exception('No se encontró el trabajo para actualizar el reporte.');
+        }
+
+        $plotterNombre = 'PLOTTER ' . max(1, min(6, $plotterId));
+        $maestroId = $this->getOrCreateAutoMasterId();
+
+        $stmt = $this->db->prepare("
+            SELECT id, cantidad_impreso
+            FROM reportes
+            WHERE maestro_id = :maestro_id
+              AND plotter = :plotter
+              AND descripcion = :descripcion
+            LIMIT 1
+        ");
+        $stmt->execute([
+            ':maestro_id' => $maestroId,
+            ':plotter' => $plotterNombre,
+            ':descripcion' => (string)$trabajo['descripcion'],
+        ]);
+        $reporte = $stmt->fetch();
+
+        $cantidadTotal = max(1, (int)$trabajo['tirajes']);
+        $cantidadImpresoActual = (int)$trabajo['tirajes_impresos'];
+        $porcentaje = (int)round(($cantidadImpresoActual / $cantidadTotal) * 100);
+        $observacion = 'Registro automático desde producción - Campaña: ' . (string)$trabajo['campana_nombre'];
+
+        if ($reporte) {
+            $stmt = $this->db->prepare("
+                UPDATE reportes
+                SET cantidad = :cantidad,
+                    cantidad_impreso = :cantidad_impreso,
+                    porcentaje_impresion = :porcentaje_impresion,
+                    material = :material,
+                    observacion = :observacion
+                WHERE id = :id
+            ");
+            $stmt->execute([
+                ':cantidad' => $cantidadTotal,
+                ':cantidad_impreso' => $cantidadImpresoActual,
+                ':porcentaje_impresion' => $porcentaje,
+                ':material' => (string)$trabajo['material_nombre'],
+                ':observacion' => $observacion,
+                ':id' => (int)$reporte['id'],
+            ]);
+            return (int)$reporte['id'];
+        }
+
+        $stmt = $this->db->prepare("
+            INSERT INTO reportes
+            (maestro_id, plotter, observacion, descripcion, material, cantidad, cantidad_impreso, porcentaje_impresion, material_sobrante, fecha)
+            VALUES (:maestro_id, :plotter, :observacion, :descripcion, :material, :cantidad, :cantidad_impreso, :porcentaje_impresion, 0, NOW())
+        ");
+        $stmt->execute([
+            ':maestro_id' => $maestroId,
+            ':plotter' => $plotterNombre,
+            ':observacion' => $observacion,
+            ':descripcion' => (string)$trabajo['descripcion'],
+            ':material' => (string)$trabajo['material_nombre'],
+            ':cantidad' => $cantidadTotal,
+            ':cantidad_impreso' => $cantidadImpresoActual,
+            ':porcentaje_impresion' => $porcentaje,
+        ]);
+
+        return (int)$this->db->lastInsertId();
+    }
+
+    private function getOrCreateAutoMasterId(): int
+    {
+        $observacion = 'AUTO_PRODUCCION|' . date('Y-m-d');
+
+        $stmt = $this->db->prepare("
+            SELECT id
+            FROM reportes_maestro
+            WHERE observacion_general = :observacion
+            ORDER BY id DESC
+            LIMIT 1
+        ");
+        $stmt->execute([':observacion' => $observacion]);
+        $masterId = (int)$stmt->fetchColumn();
+        if ($masterId > 0) {
+            return $masterId;
+        }
+
+        $stmt = $this->db->prepare("
+            INSERT INTO reportes_maestro (fecha_creacion, observacion_general)
+            VALUES (NOW(), :observacion)
+        ");
+        $stmt->execute([':observacion' => $observacion]);
+
+        return (int)$this->db->lastInsertId();
     }
 }

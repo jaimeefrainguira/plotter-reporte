@@ -171,10 +171,11 @@
             const data = await resp.json();
 
             if (data.ok) {
+                const cantidadAplicada = parseInt(data.resultado?.cantidad_aplicada ?? cantidad, 10);
                 // Actualizar UI sin recargar
                 const prodEl = document.getElementById('prod-' + asigId);
                 const currentProd = parseInt(prodEl.innerText);
-                const newProd = currentProd + cantidad;
+                const newProd = currentProd + cantidadAplicada;
                 prodEl.innerText = newProd;
 
                 const tr = document.getElementById('row-' + asigId);
