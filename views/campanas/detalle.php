@@ -15,6 +15,9 @@
         <span class="navbar-brand h1 mb-0"><i class="bi bi- megaphone"></i> <?= htmlspecialchars($campana['nombre']) ?></span>
         <div class="d-flex gap-2">
             <a href="index.php?action=campanas_list" class="btn btn-outline-light btn-sm"><i class="bi bi-arrow-left"></i> Volver a Lista</a>
+            <button class="btn btn-primary btn-sm" id="btnAutoAsignacion">
+                <i class="bi bi-magic"></i> Asignación automática
+            </button>
             <button class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target="#modalMultiIA">
                 <i class="bi bi-robot"></i> AÑADIR MÚLTIPLES (IA)
             </button>
@@ -26,6 +29,7 @@
 </nav>
 
 <div class="container py-4">
+    <div id="alertasAsignacion"></div>
     <div class="card shadow-sm border-0 mb-4">
         <div class="card-body">
             <h5 class="card-title text-muted small text-uppercase">Información de Campaña</h5>
@@ -118,7 +122,7 @@
                         </td>
                         <td class="text-center">
                             <?php if ($tirajesTotal > $trabajo['tirajes_asignados']): ?>
-                                <form action="index.php?action=campana_asignar_plotter" method="POST" class="d-flex gap-1" style="min-width: 160px; justify-content: center;">
+                                <form action="index.php?action=campana_asignar_plotter" method="POST" class="d-flex gap-1 js-form-asignar" style="min-width: 160px; justify-content: center;">
                                     <input type="hidden" name="trabajo_id" value="<?= $trabajo['id'] ?>">
                                     <input type="hidden" name="campana_id" value="<?= $campana['id'] ?>">
                                     <select name="plotter_id" class="form-select form-select-sm p-1" required style="font-size: 0.7rem;">
@@ -828,6 +832,82 @@
             };
         }
     });
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const alertWrap = document.getElementById('alertasAsignacion');
+    const campanaId = <?= (int)$campana['id'] ?>;
+
+    const mostrarAlerta = (tipo, mensaje) => {
+        if (!alertWrap) return;
+        const clase = tipo === 'ok' ? 'success' : 'danger';
+        alertWrap.innerHTML = `
+            <div class="alert alert-${clase} alert-dismissible fade show" role="alert">
+                ${mensaje}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
+    };
+
+    document.querySelectorAll('.js-form-asignar').forEach((form) => {
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const fd = new FormData(form);
+            try {
+                const resp = await fetch(form.action, {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json' },
+                    body: fd
+                });
+                const data = await resp.json();
+                if (!data.ok) {
+                    mostrarAlerta('error', data.error || 'No fue posible asignar el trabajo.');
+                    return;
+                }
+                location.reload();
+            } catch (error) {
+                mostrarAlerta('error', 'Error de red al asignar trabajo.');
+            }
+        });
+    });
+
+    const btnAuto = document.getElementById('btnAutoAsignacion');
+    if (btnAuto) {
+        btnAuto.addEventListener('click', async () => {
+            btnAuto.disabled = true;
+            const htmlOriginal = btnAuto.innerHTML;
+            btnAuto.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Optimizando...';
+            try {
+                const resp = await fetch('index.php?action=campana_auto_asignar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ campana_id: campanaId, capacidad_por_plotter: 100 })
+                });
+                const data = await resp.json();
+                if (!data.ok) {
+                    mostrarAlerta('error', data.error || 'No se pudo ejecutar la asignación automática.');
+                    return;
+                }
+
+                const r = data.resultado || {};
+                const saltadas = Array.isArray(r.saltadas) && r.saltadas.length > 0
+                    ? `<br><small>${r.saltadas.join('<br>')}</small>`
+                    : '';
+
+                mostrarAlerta(
+                    'ok',
+                    `Asignaciones creadas: <strong>${r.creadas || 0}</strong>. Tirajes asignados: <strong>${r.tirajes_asignados || 0}</strong>.${saltadas}`
+                );
+                setTimeout(() => location.reload(), 900);
+            } catch (error) {
+                mostrarAlerta('error', 'Error de red al ejecutar la asignación automática.');
+            } finally {
+                btnAuto.disabled = false;
+                btnAuto.innerHTML = htmlOriginal;
+            }
+        });
+    }
+});
 </script>
 <script src="js/campanas_calculos.js?v=<?= time() ?>"></script>
 </body>
