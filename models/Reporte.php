@@ -7,9 +7,11 @@ class Reporte
     private bool $schemaChecked = false;
 
     private array $requiredColumns = [
-        "cantidad_impreso" => "ALTER TABLE reportes ADD COLUMN cantidad_impreso INT NOT NULL DEFAULT 0 AFTER cantidad",
-        "porcentaje_impresion" => "ALTER TABLE reportes ADD COLUMN porcentaje_impresion INT NOT NULL DEFAULT 0 AFTER cantidad_impreso",
-        "material_sobrante" => "ALTER TABLE reportes ADD COLUMN material_sobrante INT NOT NULL DEFAULT 0 AFTER porcentaje_impresion",
+        'cantidad_impreso' => 'ALTER TABLE reportes ADD COLUMN cantidad_impreso INT NOT NULL DEFAULT 0 AFTER cantidad',
+        'porcentaje_impresion' => 'ALTER TABLE reportes ADD COLUMN porcentaje_impresion INT NOT NULL DEFAULT 0 AFTER cantidad_impreso',
+        'material_sobrante' => 'ALTER TABLE reportes ADD COLUMN material_sobrante INT NOT NULL DEFAULT 0 AFTER porcentaje_impresion',
+        'maestro_id' => 'ALTER TABLE reportes ADD COLUMN maestro_id INT NULL AFTER id',
+        'material' => 'ALTER TABLE reportes ADD COLUMN material VARCHAR(120) NOT NULL DEFAULT "" AFTER descripcion',
     ];
 
     public function __construct(private PDO $db)
@@ -19,6 +21,15 @@ class Reporte
     public function getLatestMasterId(): ?int
     {
         return (int) $this->db->query('SELECT MAX(id) FROM reportes_maestro')->fetchColumn() ?: null;
+    }
+
+    public function getMasterById(int $masterId): ?array
+    {
+        $stmt = $this->db->prepare('SELECT * FROM reportes_maestro WHERE id = :id LIMIT 1');
+        $stmt->execute([':id' => $masterId]);
+        $result = $stmt->fetch();
+
+        return $result ?: null;
     }
 
     public function getByMasterId(int $masterId): array
@@ -41,8 +52,8 @@ class Reporte
     {
         $this->ensureRequiredColumns();
 
-        $sql = 'INSERT INTO reportes (maestro_id, plotter, observacion, descripcion, cantidad, cantidad_impreso, porcentaje_impresion, material_sobrante, fecha)
-                VALUES (:maestro_id, :plotter, :observacion, :descripcion, :cantidad, :cantidad_impreso, :porcentaje_impresion, :material_sobrante, NOW())';
+        $sql = 'INSERT INTO reportes (maestro_id, plotter, observacion, descripcion, material, cantidad, cantidad_impreso, porcentaje_impresion, material_sobrante, fecha)
+                VALUES (:maestro_id, :plotter, :observacion, :descripcion, :material, :cantidad, :cantidad_impreso, :porcentaje_impresion, :material_sobrante, NOW())';
 
         $stmt = $this->db->prepare($sql);
 
@@ -51,6 +62,7 @@ class Reporte
             ':plotter' => $data['plotter'],
             ':observacion' => $data['observacion'],
             ':descripcion' => $data['descripcion'],
+            ':material' => $data['material'] ?? '',
             ':cantidad' => (int) $data['cantidad'],
             ':cantidad_impreso' => (int) $data['cantidad_impreso'],
             ':porcentaje_impresion' => (int) $data['porcentaje_impresion'],
@@ -77,6 +89,7 @@ class Reporte
                 SET plotter = :plotter,
                     observacion = :observacion,
                     descripcion = :descripcion,
+                    material = :material,
                     cantidad = :cantidad,
                     cantidad_impreso = :cantidad_impreso,
                     porcentaje_impresion = :porcentaje_impresion,
@@ -90,6 +103,7 @@ class Reporte
             ':plotter' => $data['plotter'],
             ':observacion' => $data['observacion'],
             ':descripcion' => $data['descripcion'],
+            ':material' => $data['material'] ?? '',
             ':cantidad' => (int) $data['cantidad'],
             ':cantidad_impreso' => (int) $data['cantidad_impreso'],
             ':porcentaje_impresion' => (int) $data['porcentaje_impresion'],
@@ -236,6 +250,7 @@ class Reporte
 
         return $stmt->fetchAll();
     }
+
     private function ensureRequiredColumns(): void
     {
         if ($this->schemaChecked) {
@@ -273,5 +288,4 @@ class Reporte
             }
         }
     }
-
 }
