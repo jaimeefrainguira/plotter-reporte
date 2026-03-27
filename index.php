@@ -217,6 +217,10 @@ switch ($action) {
         header('Location: index.php?action=materiales_list');
         break;
 
+    case 'debug_pdf':
+        $controller->debugPdf();
+        break;
+
     default:
         http_response_code(404);
         echo 'Acción no válida.';
