@@ -26,10 +26,10 @@ class ReporteController
 
         $stats = $this->reporteModel->getDashboardStats();
         $plotters = $this->getPlotterOptions();
-        
+
         $campanasActivas = $campanaModel->getAll();
         foreach ($campanasActivas as &$c) {
-            $c['progreso'] = $campanaModel->getProgresoGlobal((int)$c['id']);
+            $c['progreso'] = $campanaModel->getProgresoGlobal((int) $c['id']);
         }
 
         $plotterFilter = trim((string) ($_GET['plotter'] ?? ''));
@@ -48,13 +48,10 @@ class ReporteController
             'fecha' => $fechaFilter,
         ];
 
-        // Determinar qué datos mostrar
         if ($plotterFilter === '' && $fechaFilter === '' && !isset($_GET['page'])) {
-            // Caso por defecto: Mostrar el último reporte maestro completo
             $latestMasterId = $this->reporteModel->getLatestMasterId();
             $dashboardRows = $latestMasterId ? $this->reporteModel->getByMasterId($latestMasterId) : [];
         } else {
-            // Caso con filtros o paginación
             $dashboardRows = $this->reporteModel->getByDateAndPlotter($fechaFilter !== '' ? $fechaFilter : null, $plotterFilter !== '' ? $plotterFilter : null);
         }
 
@@ -149,11 +146,27 @@ class ReporteController
             return;
         }
 
+        $operador = trim((string) ($_POST['jornada_operator'] ?? ''));
+        $jornadaInicio = trim((string) ($_POST['jornada_start'] ?? ''));
+        $jornadaFin = trim((string) ($_POST['jornada_end'] ?? ''));
+
+        if ($operador === '' || $jornadaInicio === '') {
+            $this->redirectWithMessage('Debes iniciar la jornada con nombre de operador.', 'warning');
+            return;
+        }
+
+        $metadata = $this->buildJornadaMetadata($operador, $jornadaInicio, $jornadaFin);
+
         try {
-            $maestroId = $this->reporteModel->createMaster('Reporte masivo de Plotters');
-            
+            $maestroId = $this->reporteModel->createMaster($metadata);
+
             foreach ($rows as $row) {
                 $data = $this->sanitizeData($row);
+                $errors = $this->validate($data);
+                if (!empty($errors)) {
+                    throw new RuntimeException(implode(' ', $errors));
+                }
+
                 $data['maestro_id'] = $maestroId;
                 $this->reporteModel->create($data);
             }
@@ -163,6 +176,13 @@ class ReporteController
         }
 
         $this->rotateCsrfToken();
+
+        $submitMode = (string) ($_POST['submit_mode'] ?? 'save');
+        if ($submitMode === 'pdf') {
+            $this->renderJornadaPdf($maestroId);
+            return;
+        }
+
         $this->redirectWithMessage('Reporte guardado con éxito.');
     }
 
@@ -273,7 +293,6 @@ class ReporteController
         } elseif ($plotter !== '' || $fecha !== '') {
             $reportes = $this->reporteModel->getAllForPdf(null, $plotter, $fecha);
         } else {
-            // Caso por defecto: Último reporte maestro completo
             $latestMasterId = $this->reporteModel->getLatestMasterId();
             $reportes = $latestMasterId ? $this->reporteModel->getByMasterId($latestMasterId) : [];
         }
@@ -285,6 +304,26 @@ class ReporteController
         $dompdf->setPaper('A4', 'landscape');
         $dompdf->render();
         $dompdf->stream('reporte-impresiones-plotter.pdf', ['Attachment' => false]);
+    }
+
+    private function renderJornadaPdf(int $maestroId): void
+    {
+        if (!$this->loadDompdfLibrary() || !class_exists('Dompdf\\Dompdf')) {
+            $this->redirectWithMessage('No se pudo generar PDF. Verifica instalación de DomPDF.', 'danger');
+            return;
+        }
+
+        $master = $this->reporteModel->getMasterById($maestroId);
+        $reportes = $this->reporteModel->getByMasterId($maestroId);
+        $meta = $this->parseJornadaMetadata((string) ($master['observacion_general'] ?? ''));
+
+        $html = $this->buildJornadaPdfHtml($reportes, $meta);
+
+        $dompdf = new Dompdf\Dompdf();
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->render();
+        $dompdf->stream('reporte-jornada-plotters.pdf', ['Attachment' => false]);
     }
 
     private function loadDompdfLibrary(): bool
@@ -344,7 +383,6 @@ class ReporteController
                 table { width: 100%; border-collapse: collapse; font-size: 11px; }
                 th, td { border: 1px solid #444; padding: 4px; }
                 th { background: #eee; text-align: left; }
-                td.empty-row { height: 16px; }
             </style>
         </head>
         <body>
@@ -360,21 +398,21 @@ class ReporteController
                             <table>
                                 <thead>
                                     <tr>
-                                        <th>CAMPAÑA</th>
-                                        <th>DESCRIPCIÓN</th>
-                                        <th>CANT. IMPRESO</th>
-                                        <th>% IMPRESO</th>
-                                        <th>SOBRANTE</th>
+                                        <th>CAMPAÑA / TRABAJO</th>
+                                        <th>MATERIAL</th>
+                                        <th>ASIGNADO</th>
+                                        <th>PRODUCIDO</th>
+                                        <th>PROGRESO</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                 <?php foreach ($plotterRows as $row): ?>
                                     <tr>
                                         <td><?= htmlspecialchars((string) ($row['observacion'] ?? '')) ?></td>
-                                        <td><?= htmlspecialchars((string) ($row['descripcion'] ?? '')) ?></td>
+                                        <td><?= htmlspecialchars((string) ($row['material'] ?? '')) ?></td>
+                                        <td><?= (int) ($row['cantidad'] ?? 0) ?></td>
                                         <td><?= (int) ($row['cantidad_impreso'] ?? 0) ?></td>
                                         <td><?= (int) ($row['porcentaje_impresion'] ?? 0) ?>%</td>
-                                        <td><?= (int) ($row['material_sobrante'] ?? 0) ?> cm</td>
                                     </tr>
                                 <?php endforeach; ?>
                                 <?php if (empty($plotterRows)): ?>
@@ -391,25 +429,25 @@ class ReporteController
                 <table>
                     <thead>
                         <tr>
-                            <th>Observación</th>
-                            <th>Descripción</th>
-                            <th>Cantidad</th>
-                            <th>Cantidad Impreso</th>
-                            <th>% Impresión</th>
-                            <th>Sobrante</th>
+                            <th>Plotter</th>
+                            <th>Campaña / Trabajo</th>
+                            <th>Material</th>
+                            <th>Asignado</th>
+                            <th>Producido</th>
+                            <th>Progreso</th>
                             <th>Fecha</th>
                         </tr>
                     </thead>
                     <tbody>
                     <?php foreach ($reportes as $reporte): ?>
                         <tr>
-                            <td><?= htmlspecialchars((string) $reporte['observacion']) ?></td>
-                            <td><?= htmlspecialchars((string) $reporte['descripcion']) ?></td>
-                            <td><?= (int) $reporte['cantidad'] ?></td>
+                            <td><?= htmlspecialchars((string) ($reporte['plotter'] ?? '')) ?></td>
+                            <td><?= htmlspecialchars((string) ($reporte['observacion'] ?? '')) ?></td>
+                            <td><?= htmlspecialchars((string) ($reporte['material'] ?? '')) ?></td>
+                            <td><?= (int) ($reporte['cantidad'] ?? 0) ?></td>
                             <td><?= (int) ($reporte['cantidad_impreso'] ?? 0) ?></td>
-                            <td><?= (int) $reporte['porcentaje_impresion'] ?>%</td>
-                            <td><?= (int) ($reporte['material_sobrante'] ?? 0) ?> cm</td>
-                            <td><?= htmlspecialchars((string) $reporte['fecha']) ?></td>
+                            <td><?= (int) ($reporte['porcentaje_impresion'] ?? 0) ?>%</td>
+                            <td><?= htmlspecialchars((string) ($reporte['fecha'] ?? '')) ?></td>
                         </tr>
                     <?php endforeach; ?>
                     <?php if (!$reportes): ?>
@@ -427,12 +465,77 @@ class ReporteController
         return (string) ob_get_clean();
     }
 
+    private function buildJornadaPdfHtml(array $reportes, array $meta): string
+    {
+        $inicio = $this->formatJornadaDate((string) ($meta['inicio'] ?? ''));
+        $fin = $this->formatJornadaDate((string) ($meta['fin'] ?? ''));
+        $operador = (string) ($meta['operador'] ?? 'Sin operador');
+
+        ob_start();
+        ?>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <style>
+                body { font-family: DejaVu Sans, sans-serif; font-size: 12px; }
+                h2 { text-align: center; margin-bottom: 8px; }
+                .meta { margin-bottom: 12px; }
+                .meta span { display: inline-block; margin-right: 20px; }
+                table { width: 100%; border-collapse: collapse; font-size: 11px; }
+                th, td { border: 1px solid #444; padding: 5px; }
+                th { background: #efefef; text-align: left; }
+            </style>
+        </head>
+        <body>
+            <h2>Reporte de Jornada de Plotters</h2>
+            <div class="meta">
+                <span><strong>Operador:</strong> <?= htmlspecialchars($operador) ?></span>
+                <span><strong>Inicio:</strong> <?= htmlspecialchars($inicio) ?></span>
+                <span><strong>Fin:</strong> <?= htmlspecialchars($fin) ?></span>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Plotter</th>
+                        <th>Campaña / Trabajo</th>
+                        <th>Material</th>
+                        <th>Asignado</th>
+                        <th>Producido</th>
+                        <th>Progreso del Trabajo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($reportes as $row): ?>
+                    <tr>
+                        <td><?= htmlspecialchars((string) ($row['plotter'] ?? '')) ?></td>
+                        <td><?= htmlspecialchars((string) ($row['observacion'] ?? '')) ?></td>
+                        <td><?= htmlspecialchars((string) ($row['material'] ?? '')) ?></td>
+                        <td><?= (int) ($row['cantidad'] ?? 0) ?></td>
+                        <td><?= (int) ($row['cantidad_impreso'] ?? 0) ?></td>
+                        <td><?= (int) ($row['porcentaje_impresion'] ?? 0) ?>%</td>
+                    </tr>
+                <?php endforeach; ?>
+                <?php if (empty($reportes)): ?>
+                    <tr>
+                        <td colspan="6" style="text-align: center;">Sin trabajos registrados en la jornada.</td>
+                    </tr>
+                <?php endif; ?>
+                </tbody>
+            </table>
+        </body>
+        </html>
+        <?php
+
+        return (string) ob_get_clean();
+    }
+
     private function sanitizeData(array $input): array
     {
         return [
             'plotter' => trim((string) ($input['plotter'] ?? '')),
             'observacion' => trim((string) ($input['campana'] ?? $input['observacion'] ?? '')),
             'descripcion' => trim((string) ($input['descripcion'] ?? '')),
+            'material' => trim((string) ($input['material'] ?? '')),
             'cantidad' => (int) ($input['cantidad'] ?? 0),
             'cantidad_impreso' => (int) ($input['cantidad_impreso'] ?? 0),
             'porcentaje_impresion' => (int) ($input['porcentaje_impresion'] ?? 0),
@@ -449,34 +552,79 @@ class ReporteController
         }
 
         if ($data['observacion'] === '') {
-            $errors[] = 'La observación es obligatoria.';
+            $errors[] = 'La campaña / trabajo es obligatoria.';
         }
 
         if ($data['descripcion'] === '') {
-            $errors[] = 'La descripción es obligatoria.';
+            $errors[] = 'La descripción del trabajo es obligatoria.';
+        }
+
+        if ($data['material'] === '') {
+            $errors[] = 'El material es obligatorio.';
         }
 
         if (mb_strlen($data['descripcion']) > 255) {
             $errors[] = 'La descripción no puede superar 255 caracteres.';
         }
 
+        if (mb_strlen($data['material']) > 120) {
+            $errors[] = 'El material no puede superar 120 caracteres.';
+        }
+
         if ($data['cantidad'] <= 0) {
-            $errors[] = 'La cantidad debe ser mayor a 0.';
+            $errors[] = 'La cantidad asignada debe ser mayor a 0.';
         }
 
         if ($data['cantidad_impreso'] < 0) {
-            $errors[] = 'La cantidad impreso no puede ser negativa.';
+            $errors[] = 'La cantidad producida no puede ser negativa.';
         }
 
         if ($data['cantidad_impreso'] > $data['cantidad']) {
-            $errors[] = 'La cantidad impreso no puede ser mayor a la cantidad.';
+            $errors[] = 'La cantidad producida no puede ser mayor a la asignada.';
         }
 
         if ($data['porcentaje_impresion'] < 0 || $data['porcentaje_impresion'] > 100) {
-            $errors[] = 'El porcentaje de impresión debe estar entre 0 y 100.';
+            $errors[] = 'El progreso del trabajo debe estar entre 0 y 100.';
         }
 
         return $errors;
+    }
+
+    private function buildJornadaMetadata(string $operador, string $inicio, string $fin): string
+    {
+        return json_encode([
+            'operador' => $operador,
+            'inicio' => $inicio,
+            'fin' => $fin,
+        ], JSON_UNESCAPED_UNICODE) ?: '';
+    }
+
+    private function parseJornadaMetadata(string $metadata): array
+    {
+        if ($metadata === '') {
+            return [];
+        }
+
+        $decoded = json_decode($metadata, true);
+        if (!is_array($decoded)) {
+            return [];
+        }
+
+        return $decoded;
+    }
+
+    private function formatJornadaDate(string $value): string
+    {
+        if ($value === '') {
+            return '—';
+        }
+
+        try {
+            $date = new DateTime($value);
+            return $date->format('d/m/Y H:i:s');
+        } catch (Throwable) {
+            return $value;
+        }
     }
 
     private function redirectWithMessage(string $message, string $type = 'success'): void
