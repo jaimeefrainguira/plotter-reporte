@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../models/Campana.php';
 require_once __DIR__ . '/../models/Material.php';
+require_once __DIR__ . '/../models/Asignacion.php';
 require_once __DIR__ . '/../models/Reporte.php';
 
 class ReporteController
@@ -124,11 +125,24 @@ class ReporteController
     public function showPlotterReportForm(): void
     {
         $plotters = $this->getPlotterOptions();
-        $database = new Database();
-        $campanaModel = new Campana($database->getConnection());
-        $materialModel = new Material($database->getConnection());
-        $campanas = $campanaModel->getAll();
-        $materiales = $materialModel->getAll();
+        $loadError = '';
+        $campanas = [];
+        $materiales = [];
+        $asignacionesJornada = [];
+
+        try {
+            $database = new Database();
+            $conn = $database->getConnection();
+            $campanaModel = new Campana($conn);
+            $materialModel = new Material($conn);
+            $asignacionModel = new Asignacion($conn);
+            $campanas = $campanaModel->getAll();
+            $materiales = $materialModel->getAll();
+            $asignacionesJornada = $asignacionModel->getResumenJornada();
+        } catch (Throwable $exception) {
+            $loadError = 'No se pudieron cargar los trabajos del módulo de producción: ' . $exception->getMessage();
+        }
+
         $csrfToken = $this->getCsrfToken();
         include __DIR__ . '/../views/reporte_plotter_crear.php';
     }

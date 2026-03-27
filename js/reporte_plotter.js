@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const plotters = JSON.parse(reportForm.dataset.plotters || '[]');
     const campanas = JSON.parse(reportForm.dataset.campanas || '[]');
+    const asignaciones = JSON.parse(reportForm.dataset.asignaciones || '[]');
 
     function formatDateTime(now) {
         return now.toLocaleString('es-ES', {
@@ -38,11 +39,18 @@ document.addEventListener('DOMContentLoaded', function() {
         shiftStatus.textContent = message;
     }
 
-    function createRow() {
+    function createRow(initialData = null) {
         const tr = document.createElement('tr');
         tr.dataset.index = rowCount;
 
         const plotterOptions = plotters.map(p => `<option value="${p}">${p}</option>`).join('');
+
+        const rowData = initialData || {};
+        const cantidadAsignada = Number(rowData.cantidad || 0);
+        const cantidadProducida = Number(rowData.cantidad_impreso || 0);
+        const progreso = Number.isFinite(Number(rowData.porcentaje_impresion))
+            ? Number(rowData.porcentaje_impresion)
+            : (cantidadAsignada > 0 ? Math.round((cantidadProducida / cantidadAsignada) * 100) : 0);
 
         tr.innerHTML = `
             <td>
@@ -52,23 +60,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 </select>
             </td>
             <td>
-                <input list="campanasList" name="rows[${rowCount}][campana]" class="form-control form-control-sm" required placeholder="Campaña...">
+                <input list="campanasList" name="rows[${rowCount}][campana]" class="form-control form-control-sm" required placeholder="Campaña..." value="${rowData.campana || ''}">
             </td>
             <td>
-                <input type="text" name="rows[${rowCount}][descripcion]" class="form-control form-control-sm" required placeholder="Trabajo...">
+                <input type="text" name="rows[${rowCount}][descripcion]" class="form-control form-control-sm" required placeholder="Trabajo..." value="${rowData.descripcion || ''}">
             </td>
             <td>
-                <input type="text" name="rows[${rowCount}][material]" class="form-control form-control-sm" required placeholder="Material...">
+                <input type="text" name="rows[${rowCount}][material]" class="form-control form-control-sm" required placeholder="Material..." value="${rowData.material || ''}">
             </td>
             <td>
-                <input type="number" name="rows[${rowCount}][cantidad]" class="form-control form-control-sm cantidad-input" min="1" value="0" required>
+                <input type="number" name="rows[${rowCount}][cantidad]" class="form-control form-control-sm cantidad-input" min="1" value="${cantidadAsignada > 0 ? cantidadAsignada : 0}" required>
             </td>
             <td>
-                <input type="number" name="rows[${rowCount}][cantidad_impreso]" class="form-control form-control-sm impreso-input" min="0" value="0" required>
+                <input type="number" name="rows[${rowCount}][cantidad_impreso]" class="form-control form-control-sm impreso-input" min="0" value="${cantidadProducida > 0 ? cantidadProducida : 0}" required>
             </td>
             <td class="percentage-cell">
                 <div class="input-group input-group-sm">
-                    <input type="number" name="rows[${rowCount}][porcentaje_impresion]" class="form-control text-center" min="0" max="100" value="0" required>
+                    <input type="number" name="rows[${rowCount}][porcentaje_impresion]" class="form-control text-center" min="0" max="100" value="${progreso >= 0 ? progreso : 0}" required>
                     <span class="input-group-text">%</span>
                 </div>
             </td>
@@ -79,6 +87,11 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
 
         tableBody.appendChild(tr);
+
+        const selectPlotter = tr.querySelector(`select[name="rows[${rowCount}][plotter]"]`);
+        if (rowData.plotter && selectPlotter) {
+            selectPlotter.value = rowData.plotter;
+        }
 
         tr.querySelector('.delete-row').addEventListener('click', function() {
             tr.remove();
@@ -142,7 +155,25 @@ document.addEventListener('DOMContentLoaded', function() {
         shiftStartInput.value = formatted;
         startShiftBtn.disabled = true;
 
-        createRow();
+        if (Array.isArray(asignaciones) && asignaciones.length > 0) {
+            asignaciones.forEach((asig) => {
+                const plotterNumero = Number(asig.plotter_id || 0);
+                const asignado = Number(asig.tirajes_asignados || 0);
+                const producido = Number(asig.tirajes_producidos || 0);
+                const progresoRow = asignado > 0 ? Math.round((producido / asignado) * 100) : 0;
+                createRow({
+                    plotter: plotterNumero > 0 ? `PLOTTER ${plotterNumero}` : '',
+                    campana: `${asig.campana_nombre || ''} / ${asig.trabajo_nombre || ''}`.trim(),
+                    descripcion: asig.trabajo_nombre || '',
+                    material: asig.material_nombre || '',
+                    cantidad: asignado,
+                    cantidad_impreso: producido,
+                    porcentaje_impresion: progresoRow,
+                });
+            });
+        } else {
+            createRow();
+        }
         activarControlesJornada();
         setShiftStatus('Jornada iniciada. Ya puedes registrar trabajos por plotter.', 'text-success fw-semibold');
     });

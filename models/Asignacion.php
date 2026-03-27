@@ -263,6 +263,29 @@ class Asignacion {
         return $stmt->fetchAll();
     }
 
+    public function getResumenJornada(): array {
+        $this->ensureSchema();
+        $stmt = $this->db->query("
+            SELECT a.id,
+                   a.plotter_id,
+                   a.tirajes_asignados,
+                   a.tirajes_producidos,
+                   a.estado,
+                   t.descripcion AS trabajo_nombre,
+                   c.nombre AS campana_nombre,
+                   COALESCE(m.nombre, '') AS material_nombre
+            FROM asignaciones_plotter a
+            INNER JOIN trabajos t ON t.id = a.trabajo_id
+            INNER JOIN campanas c ON c.id = t.campana_id
+            LEFT JOIN materiales m ON m.id = t.material_id
+            WHERE a.tirajes_asignados > 0
+              AND (a.estado <> 'Completado' OR a.tirajes_producidos > 0)
+            ORDER BY a.plotter_id ASC, a.fecha_asignacion ASC, a.id ASC
+        ");
+
+        return $stmt->fetchAll();
+    }
+
     public function getAsignacionesDeTrabajo(int $trabajoId): array {
         $this->ensureSchema();
         $stmt = $this->db->prepare("SELECT * FROM asignaciones_plotter WHERE trabajo_id = ? ORDER BY fecha_asignacion ASC, id ASC");

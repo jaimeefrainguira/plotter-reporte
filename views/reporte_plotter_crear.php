@@ -103,9 +103,17 @@
     <div class="main-container">
         <h1>REPORTE DE JORNADA - PLOTTERS</h1>
 
+        <?php if (!empty($loadError)): ?>
+            <div class="alert alert-warning" role="alert">
+                <i class="bi bi-exclamation-triangle"></i>
+                <?= htmlspecialchars((string) $loadError) ?>
+            </div>
+        <?php endif; ?>
+
         <form action="index.php?action=store_bulk" method="POST" id="reportForm"
               data-plotters='<?= json_encode($plotters) ?>'
-              data-campanas='<?= json_encode($campanas, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG) ?>'>
+              data-campanas='<?= json_encode($campanas, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG) ?>'
+              data-asignaciones='<?= json_encode($asignacionesJornada ?? [], JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG) ?>'>
             <input type="hidden" name="csrf_token" value="<?= $csrfToken ?>">
             <input type="hidden" name="submit_mode" value="pdf">
             <input type="hidden" name="jornada_operator" id="jornadaOperator">
