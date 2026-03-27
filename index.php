@@ -152,6 +152,18 @@ switch ($action) {
         $campanaController->asignarPlotter();
         break;
 
+    case 'campana_auto_asignar':
+        $campanaController->autoAsignarPlotters();
+        break;
+
+    case 'campana_editar_asignacion':
+        $campanaController->editarAsignacionPlotter();
+        break;
+
+    case 'campana_borrar_asignacion':
+        $campanaController->borrarAsignacionPlotter();
+        break;
+
     case 'campana_ver_produccion':
         $campanaController->verProduccionPlotter();
         break;

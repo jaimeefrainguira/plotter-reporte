@@ -1,3 +1,7 @@
+<?php
+declare(strict_types=1);
+
+require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../models/Campana.php';
 require_once __DIR__ . '/../models/Trabajo.php';
 require_once __DIR__ . '/../models/Material.php';
@@ -30,6 +34,10 @@ class CampanaController {
             exit;
         }
         $trabajos = $this->campanaModel->getTrabajos($id);
+        $asignacionesPorTrabajo = [];
+        foreach ($trabajos as $trabajo) {
+            $asignacionesPorTrabajo[(int)$trabajo['id']] = $this->asignacionModel->getAsignacionesDeTrabajo((int)$trabajo['id']);
+        }
         $materiales = $this->materialModel->getAll(soloActivos: true);
         $progreso = $this->campanaModel->getProgresoGlobal($id);
         
@@ -253,22 +261,99 @@ class CampanaController {
 
     public function asignarPlotter(): void {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') exit;
-        
+        $acceptJson = str_contains((string)($_SERVER['HTTP_ACCEPT'] ?? ''), 'application/json');
+        $isJsonBody = str_contains((string)($_SERVER['CONTENT_TYPE'] ?? ''), 'application/json');
+
         try {
+            $payload = $isJsonBody ? (json_decode(file_get_contents('php://input'), true) ?? []) : $_POST;
             $data = [
-                'trabajo_id' => (int)$_POST['trabajo_id'],
-                'plotter_id' => (int)$_POST['plotter_id'],
-                'tirajes_asignados' => (int)$_POST['tirajes_asignados']
+                'trabajo_id' => (int)($payload['trabajo_id'] ?? 0),
+                'plotter_id' => (int)($payload['plotter_id'] ?? 0),
+                'tirajes_asignados' => (int)($payload['tirajes_asignados'] ?? 0)
             ];
-            
-            $id = $this->asignacionModel->crear($data);
+
+            $this->asignacionModel->crear($data);
+
+            if ($acceptJson || $isJsonBody) {
+                echo json_encode(['ok' => true]);
+                exit;
+            }
+
             $_SESSION['flash'] = ['type' => 'success', 'message' => "Trabajo asignado correctamente."];
         } catch (Exception $e) {
+            if ($acceptJson || $isJsonBody) {
+                echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
+                exit;
+            }
             $_SESSION['flash'] = ['type' => 'danger', 'message' => $e->getMessage()];
         }
-        
+
         $campanaId = (int)$_POST['campana_id'];
         header('Location: index.php?action=campana_detail&id=' . $campanaId);
+    }
+
+    public function autoAsignarPlotters(): void {
+        header('Content-Type: application/json');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['ok' => false, 'error' => 'Metodo no permitido']);
+            exit;
+        }
+
+        $inputData = json_decode(file_get_contents('php://input'), true) ?? [];
+        $capacidad = (int)($inputData['capacidad_por_plotter'] ?? 100);
+        $campanaId = (int)($inputData['campana_id'] ?? 0);
+
+        try {
+            $resultado = $this->asignacionModel->autoAsignarPendientes($capacidad, $campanaId > 0 ? $campanaId : null);
+            echo json_encode(['ok' => true, 'resultado' => $resultado]);
+        } catch (Exception $e) {
+            echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
+        }
+        exit;
+    }
+
+    public function editarAsignacionPlotter(): void {
+        header('Content-Type: application/json');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['ok' => false, 'error' => 'Metodo no permitido']);
+            exit;
+        }
+        $inputData = json_decode(file_get_contents('php://input'), true) ?? [];
+        $asignacionId = (int)($inputData['asignacion_id'] ?? 0);
+        $plotterId = (int)($inputData['plotter_id'] ?? 0);
+        $tirajesAsignados = (int)($inputData['tirajes_asignados'] ?? 0);
+        if ($asignacionId <= 0 || $plotterId <= 0 || $tirajesAsignados <= 0) {
+            echo json_encode(['ok' => false, 'error' => 'Datos invalidos']);
+            exit;
+        }
+        try {
+            $this->asignacionModel->actualizar($asignacionId, $plotterId, $tirajesAsignados);
+            echo json_encode(['ok' => true]);
+        } catch (Exception $e) {
+            echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
+        }
+        exit;
+    }
+
+    public function borrarAsignacionPlotter(): void {
+        header('Content-Type: application/json');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['ok' => false, 'error' => 'Metodo no permitido']);
+            exit;
+        }
+        $inputData = json_decode(file_get_contents('php://input'), true) ?? [];
+        $asignacionId = (int)($inputData['asignacion_id'] ?? 0);
+        if ($asignacionId <= 0) {
+            echo json_encode(['ok' => false, 'error' => 'Datos invalidos']);
+            exit;
+        }
+        try {
+            $this->asignacionModel->eliminar($asignacionId);
+            echo json_encode(['ok' => true]);
+        } catch (Exception $e) {
+            echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
+        }
+        exit;
     }
 
     public function verProduccionPlotter(): void {
