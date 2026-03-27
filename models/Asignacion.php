@@ -81,6 +81,24 @@ class Asignacion {
             throw new Exception('La cantidad a asignar debe ser mayor a 0.');
         }
 
+
+        $restanteReal = max(0, (int)$trabajo['tirajes'] - (int)$trabajo['tirajes_impresos']);
+        return max(0, $restanteReal - (int)$trabajo['pendiente_ya_asignado']);
+    }
+
+    public function crear(array $data): int {
+        $this->ensureSchema();
+
+        $pendiente = $this->getPendienteAsignableDeTrabajo((int)$data['trabajo_id']);
+        if ($pendiente <= 0) {
+            throw new Exception('El trabajo ya no tiene tirajes pendientes por asignar.');
+        }
+
+        $tirajesAsignados = (int)$data['tirajes_asignados'];
+        if ($tirajesAsignados <= 0) {
+            throw new Exception('La cantidad a asignar debe ser mayor a 0.');
+        }
+
         if ($tirajesAsignados > $pendiente) {
             throw new Exception("No puedes asignar más tirajes de los pendientes ($pendiente). ");
         }
@@ -241,9 +259,91 @@ class Asignacion {
 
     public function getAsignacionesDeTrabajo(int $trabajoId): array {
         $this->ensureSchema();
+        $stmt = $this->db->prepare("SELECT * FROM asignaciones_plotter WHERE trabajo_id = ? ORDER BY id DESC");
         $stmt = $this->db->prepare("SELECT * FROM asignaciones_plotter WHERE trabajo_id = ?");
         $stmt->execute([$trabajoId]);
         return $stmt->fetchAll();
+    }
+
+    public function actualizar(int $asignacionId, int $plotterId, int $tirajesAsignados): bool {
+        $this->ensureSchema();
+        $this->db->beginTransaction();
+        try {
+            $stmt = $this->db->prepare("SELECT * FROM asignaciones_plotter WHERE id = ? FOR UPDATE");
+            $stmt->execute([$asignacionId]);
+            $asignacion = $stmt->fetch();
+            if (!$asignacion) {
+                throw new Exception('Asignación no encontrada.');
+            }
+
+            $producidos = (int)$asignacion['tirajes_producidos'];
+            if ($tirajesAsignados < $producidos) {
+                throw new Exception("No puedes asignar menos de lo ya producido ($producidos).");
+            }
+
+            $stmt = $this->db->prepare("
+                SELECT
+                    t.tirajes,
+                    t.tirajes_impresos,
+                    COALESCE(SUM(GREATEST(a.tirajes_asignados - a.tirajes_producidos, 0)), 0) AS pendiente_otros
+                FROM trabajos t
+                LEFT JOIN asignaciones_plotter a
+                    ON a.trabajo_id = t.id
+                   AND a.id <> :asignacion_id
+                   AND a.estado <> 'Completado'
+                WHERE t.id = :trabajo_id
+                GROUP BY t.id
+            ");
+            $stmt->execute([
+                ':asignacion_id' => $asignacionId,
+                ':trabajo_id' => $asignacion['trabajo_id'],
+            ]);
+            $trabajo = $stmt->fetch();
+            if (!$trabajo) {
+                throw new Exception('Trabajo no encontrado para la asignación.');
+            }
+
+            $restanteReal = max(0, (int)$trabajo['tirajes'] - (int)$trabajo['tirajes_impresos']);
+            $maxPermitido = $restanteReal - (int)$trabajo['pendiente_otros'] + $producidos;
+            if ($tirajesAsignados > $maxPermitido) {
+                throw new Exception("No puedes asignar más de lo pendiente real ($maxPermitido).");
+            }
+
+            $estado = 'Pendiente';
+            if ($producidos > 0 && $producidos < $tirajesAsignados) {
+                $estado = 'En proceso';
+            } elseif ($producidos >= $tirajesAsignados) {
+                $estado = 'Completado';
+            }
+
+            $stmt = $this->db->prepare("
+                UPDATE asignaciones_plotter
+                SET plotter_id = ?, tirajes_asignados = ?, estado = ?
+                WHERE id = ?
+            ");
+            $stmt->execute([$plotterId, $tirajesAsignados, $estado, $asignacionId]);
+
+            $this->db->commit();
+            return true;
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+    }
+
+    public function eliminar(int $asignacionId): bool {
+        $this->ensureSchema();
+        $stmt = $this->db->prepare("SELECT tirajes_producidos FROM asignaciones_plotter WHERE id = ?");
+        $stmt->execute([$asignacionId]);
+        $asignacion = $stmt->fetch();
+        if (!$asignacion) {
+            throw new Exception('Asignación no encontrada.');
+        }
+        if ((int)$asignacion['tirajes_producidos'] > 0) {
+            throw new Exception('No se puede borrar una asignación con producción registrada.');
+        }
+        $stmt = $this->db->prepare("DELETE FROM asignaciones_plotter WHERE id = ?");
+        return $stmt->execute([$asignacionId]);
     }
 
     public function registrarProduccion(int $asignacionId, int $cantidad): bool {
