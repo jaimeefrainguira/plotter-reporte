@@ -47,19 +47,22 @@ class Asignacion {
     }
 
     private function getPendienteAsignableDeTrabajo(int $trabajoId, ?int $excluirAsignacionId = null): int {
+        $joinCondExclusion = '';
+        if ($excluirAsignacionId !== null && $excluirAsignacionId > 0) {
+            $joinCondExclusion = " AND a.id <> :asignacion_id_excluir ";
+        }
+
         $sql = "
             SELECT
                 t.tirajes,
                 t.tirajes_impresos,
                 COALESCE(SUM(GREATEST(a.tirajes_asignados - a.tirajes_producidos, 0)), 0) AS pendiente_ya_asignado
             FROM trabajos t
-            LEFT JOIN asignaciones_plotter a ON a.trabajo_id = t.id AND a.estado <> 'Completado'
+            LEFT JOIN asignaciones_plotter a ON a.trabajo_id = t.id
+                AND a.estado <> 'Completado'
+                {$joinCondExclusion}
             WHERE t.id = :trabajo_id
         ";
-
-        if ($excluirAsignacionId !== null && $excluirAsignacionId > 0) {
-            $sql .= " AND (a.id IS NULL OR a.id <> :asignacion_id_excluir) ";
-        }
 
         $sql .= " GROUP BY t.id ";
 
