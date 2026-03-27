@@ -322,7 +322,9 @@ class ReporteController
 
     private function renderJornadaPdf(int $maestroId): void
     {
-        if (!$this->loadDompdfLibrary() || !class_exists('Dompdf\\Dompdf')) {
+
+
+         if (!$this->loadDompdfLibrary() || !class_exists('Dompdf\\Dompdf')) {
             $this->redirectWithMessage('No se pudo generar PDF. Verifica instalación de DomPDF.', 'danger');
             return;
         }
@@ -338,6 +340,8 @@ class ReporteController
         $dompdf->setPaper('A4', 'landscape');
         $dompdf->render();
         $dompdf->stream('reporte-jornada-plotters.pdf', ['Attachment' => false]);
+        
+        
     }
 
     private function loadDompdfLibrary(): bool
