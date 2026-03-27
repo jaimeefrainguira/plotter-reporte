@@ -344,8 +344,8 @@ class CampanaController {
         }
 
         try {
-            $this->asignacionModel->registrarProduccion($asignacionId, $cantidad);
-            echo json_encode(['ok' => true]);
+            $resultado = $this->asignacionModel->registrarProduccion($asignacionId, $cantidad);
+            echo json_encode(['ok' => true, 'resultado' => $resultado]);
         } catch (Exception $e) {
             echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
         }
