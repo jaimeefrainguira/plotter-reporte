@@ -5,6 +5,7 @@ declare(strict_types=1);
 class Reporte
 {
     private bool $schemaChecked = false;
+    private bool $masterSchemaChecked = false;
 
     private array $requiredColumns = [
         'cantidad_impreso' => 'ALTER TABLE reportes ADD COLUMN cantidad_impreso INT NOT NULL DEFAULT 0 AFTER cantidad',
@@ -20,11 +21,13 @@ class Reporte
 
     public function getLatestMasterId(): ?int
     {
+        $this->ensureMasterSchema();
         return (int) $this->db->query('SELECT MAX(id) FROM reportes_maestro')->fetchColumn() ?: null;
     }
 
     public function getMasterById(int $masterId): ?array
     {
+        $this->ensureMasterSchema();
         $stmt = $this->db->prepare('SELECT * FROM reportes_maestro WHERE id = :id LIMIT 1');
         $stmt->execute([':id' => $masterId]);
         $result = $stmt->fetch();
@@ -41,6 +44,7 @@ class Reporte
 
     public function createMaster(?string $observacion = null): int
     {
+        $this->ensureMasterSchema();
         $sql = 'INSERT INTO reportes_maestro (fecha_creacion, observacion_general)
                 VALUES (NOW(), :observacion)';
         $stmt = $this->db->prepare($sql);
@@ -286,6 +290,31 @@ class Reporte
                     $exception
                 );
             }
+        }
+    }
+
+    private function ensureMasterSchema(): void
+    {
+        if ($this->masterSchemaChecked) {
+            return;
+        }
+
+        $this->masterSchemaChecked = true;
+
+        try {
+            $this->db->exec(
+                'CREATE TABLE IF NOT EXISTS reportes_maestro (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    observacion_general TEXT
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+            );
+        } catch (PDOException $exception) {
+            throw new RuntimeException(
+                'No se pudo preparar la tabla reportes_maestro. Ejecuta el script actualizado de database/script.sql.',
+                0,
+                $exception
+            );
         }
     }
 }
