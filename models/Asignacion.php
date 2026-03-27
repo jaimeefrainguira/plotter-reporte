@@ -4,6 +4,7 @@ declare(strict_types=1);
 class Asignacion {
     private PDO $db;
     private bool $schemaChecked = false;
+    private const CAPACIDAD_PLOTTER_DEFAULT = 100;
 
     public function __construct(PDO $db) {
         $this->db = $db;
@@ -20,7 +21,7 @@ class Asignacion {
             plotter_id INT NOT NULL,
             tirajes_asignados INT NOT NULL,
             tirajes_producidos INT DEFAULT 0,
-            estado ENUM('PENDIENTE', 'COMPLETADO') DEFAULT 'PENDIENTE',
+            estado VARCHAR(20) DEFAULT 'Pendiente',
             fecha_asignacion DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (trabajo_id) REFERENCES trabajos(id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -36,44 +37,189 @@ class Asignacion {
             FOREIGN KEY (trabajo_id) REFERENCES trabajos(id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         ";
-        
+
         try {
             $this->db->exec($sql);
+            $this->db->exec("ALTER TABLE asignaciones_plotter MODIFY COLUMN estado VARCHAR(20) DEFAULT 'Pendiente'");
         } catch (Exception $e) {
             // Silenciar si hay error menor
         }
     }
 
-    public function crear(array $data): int {
-        $this->ensureSchema();
-        
-        // Validar tirajes pendientes
+    private function getPendienteAsignableDeTrabajo(int $trabajoId): int {
         $stmt = $this->db->prepare("
-            SELECT tirajes, tirajes_impresos,
-            (SELECT COALESCE(SUM(tirajes_asignados), 0) FROM asignaciones_plotter WHERE trabajo_id = t.id) as total_asignado
-            FROM trabajos t WHERE id = ?
+            SELECT
+                t.tirajes,
+                t.tirajes_impresos,
+                COALESCE(SUM(GREATEST(a.tirajes_asignados - a.tirajes_producidos, 0)), 0) AS pendiente_ya_asignado
+            FROM trabajos t
+            LEFT JOIN asignaciones_plotter a ON a.trabajo_id = t.id AND a.estado <> 'Completado'
+            WHERE t.id = ?
+            GROUP BY t.id
         ");
-        $stmt->execute([$data['trabajo_id']]);
+        $stmt->execute([$trabajoId]);
         $trabajo = $stmt->fetch();
 
-        if (!$trabajo) throw new Exception("Trabajo no encontrado.");
+        if (!$trabajo) {
+            throw new Exception('Trabajo no encontrado.');
+        }
 
-        $pendientes = $trabajo['tirajes'] - $trabajo['total_asignado'];
-        if ($data['tirajes_asignados'] > $pendientes) {
-            throw new Exception("No puedes asignar más tirajes de los que están pendientes (" . $pendientes . ").");
+        $restanteReal = max(0, (int)$trabajo['tirajes'] - (int)$trabajo['tirajes_impresos']);
+        return max(0, $restanteReal - (int)$trabajo['pendiente_ya_asignado']);
+    }
+
+    public function crear(array $data): int {
+        $this->ensureSchema();
+
+        $pendiente = $this->getPendienteAsignableDeTrabajo((int)$data['trabajo_id']);
+        if ($pendiente <= 0) {
+            throw new Exception('El trabajo ya no tiene tirajes pendientes por asignar.');
+        }
+
+        $tirajesAsignados = (int)$data['tirajes_asignados'];
+        if ($tirajesAsignados <= 0) {
+            throw new Exception('La cantidad a asignar debe ser mayor a 0.');
+        }
+
+        if ($tirajesAsignados > $pendiente) {
+            throw new Exception("No puedes asignar más tirajes de los pendientes ($pendiente). ");
         }
 
         $stmt = $this->db->prepare("
-            INSERT INTO asignaciones_plotter (trabajo_id, plotter_id, tirajes_asignados)
-            VALUES (?, ?, ?)
+            INSERT INTO asignaciones_plotter (trabajo_id, plotter_id, tirajes_asignados, estado)
+            VALUES (?, ?, ?, 'Pendiente')
         ");
         $stmt->execute([
-            $data['trabajo_id'],
-            $data['plotter_id'],
-            $data['tirajes_asignados']
+            (int)$data['trabajo_id'],
+            (int)$data['plotter_id'],
+            $tirajesAsignados
         ]);
 
         return (int)$this->db->lastInsertId();
+    }
+
+    public function autoAsignarPendientes(int $capacidadPorPlotter = self::CAPACIDAD_PLOTTER_DEFAULT, ?int $campanaId = null): array {
+        $this->ensureSchema();
+        $capacidadPorPlotter = max(1, $capacidadPorPlotter);
+
+        $this->db->beginTransaction();
+        try {
+            $carga = $this->getCargaPendientePorPlotter();
+
+            $sql = "
+                SELECT t.id, t.prioridad, t.tirajes, t.tirajes_impresos, t.ancho_panel
+                FROM trabajos t
+                WHERE t.tirajes > t.tirajes_impresos
+            ";
+            if ($campanaId !== null && $campanaId > 0) {
+                $sql .= " AND t.campana_id = :campana_id ";
+            }
+            $sql .= " ORDER BY t.prioridad DESC, t.id ASC ";
+            $stmt = $this->db->prepare($sql);
+            if ($campanaId !== null && $campanaId > 0) {
+                $stmt->bindValue(':campana_id', $campanaId, PDO::PARAM_INT);
+            }
+            $stmt->execute();
+            $trabajos = $stmt->fetchAll();
+
+            $resultado = [
+                'creadas' => 0,
+                'tirajes_asignados' => 0,
+                'saltadas' => [],
+            ];
+
+            foreach ($trabajos as $trabajo) {
+                $trabajoId = (int)$trabajo['id'];
+                $pendiente = $this->getPendienteAsignableDeTrabajo($trabajoId);
+                if ($pendiente <= 0) {
+                    continue;
+                }
+
+                $plottersCompatibles = $this->getPlottersCompatibles((float)$trabajo['ancho_panel']);
+                if (empty($plottersCompatibles)) {
+                    $resultado['saltadas'][] = "Trabajo #{$trabajoId}: sin plotter compatible.";
+                    continue;
+                }
+
+                while ($pendiente > 0) {
+                    $plotter = $this->pickPlotterConMenorCarga($plottersCompatibles, $carga, $capacidadPorPlotter);
+                    if ($plotter === null) {
+                        $resultado['saltadas'][] = "Trabajo #{$trabajoId}: capacidad diaria agotada en plotters compatibles.";
+                        break;
+                    }
+
+                    $capDisponible = max(0, $capacidadPorPlotter - $carga[$plotter]);
+                    if ($capDisponible <= 0) {
+                        break;
+                    }
+
+                    $lote = min($pendiente, $capDisponible);
+                    $this->crear([
+                        'trabajo_id' => $trabajoId,
+                        'plotter_id' => $plotter,
+                        'tirajes_asignados' => $lote,
+                    ]);
+
+                    $carga[$plotter] += $lote;
+                    $pendiente -= $lote;
+                    $resultado['creadas']++;
+                    $resultado['tirajes_asignados'] += $lote;
+
+                    if ($pendiente > 0 && $lote < $capDisponible) {
+                        break;
+                    }
+                }
+            }
+
+            $this->db->commit();
+            return $resultado;
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+    }
+
+    private function getPlottersCompatibles(float $ancho): array {
+        // 150cm = cualquier plotter. Otros anchos = plotters 5-6
+        if (abs($ancho - 150.0) < 0.01) {
+            return [1, 2, 3, 4, 5, 6];
+        }
+        return [5, 6];
+    }
+
+    private function getCargaPendientePorPlotter(): array {
+        $carga = [1 => 0, 2 => 0, 3 => 0, 4 => 0, 5 => 0, 6 => 0];
+        $stmt = $this->db->query("
+            SELECT plotter_id, COALESCE(SUM(GREATEST(tirajes_asignados - tirajes_producidos, 0)), 0) AS carga
+            FROM asignaciones_plotter
+            WHERE estado <> 'Completado'
+            GROUP BY plotter_id
+        ");
+        foreach ($stmt->fetchAll() as $row) {
+            $pid = (int)$row['plotter_id'];
+            if (isset($carga[$pid])) {
+                $carga[$pid] = (int)$row['carga'];
+            }
+        }
+        return $carga;
+    }
+
+    private function pickPlotterConMenorCarga(array $plottersCompatibles, array $carga, int $capacidadPorPlotter): ?int {
+        $disponibles = array_filter(
+            $plottersCompatibles,
+            static fn(int $plotterId): bool => ($carga[$plotterId] ?? 0) < $capacidadPorPlotter
+        );
+
+        if (empty($disponibles)) {
+            return null;
+        }
+
+        usort($disponibles, static function (int $a, int $b) use ($carga): int {
+            $cmp = ($carga[$a] ?? 0) <=> ($carga[$b] ?? 0);
+            return $cmp !== 0 ? $cmp : ($a <=> $b);
+        });
+
+        return $disponibles[0];
     }
 
     public function getPorPlotter(int $plotterId): array {
@@ -86,7 +232,7 @@ class Asignacion {
             JOIN trabajos t ON a.trabajo_id = t.id
             JOIN campanas c ON t.campana_id = c.id
             LEFT JOIN materiales m ON t.material_id = m.id
-            WHERE a.plotter_id = ? AND a.estado = 'PENDIENTE'
+            WHERE a.plotter_id = ? AND a.estado <> 'Completado'
             ORDER BY a.fecha_asignacion ASC
         ");
         $stmt->execute([$plotterId]);
@@ -95,9 +241,7 @@ class Asignacion {
 
     public function getAsignacionesDeTrabajo(int $trabajoId): array {
         $this->ensureSchema();
-        $stmt = $this->db->prepare("
-            SELECT * FROM asignaciones_plotter WHERE trabajo_id = ?
-        ");
+        $stmt = $this->db->prepare("SELECT * FROM asignaciones_plotter WHERE trabajo_id = ?");
         $stmt->execute([$trabajoId]);
         return $stmt->fetchAll();
     }
@@ -106,32 +250,34 @@ class Asignacion {
         $this->ensureSchema();
         $this->db->beginTransaction();
         try {
-            // 1. Obtener asignacion
-            $stmt = $this->db->prepare("SELECT * FROM asignaciones_plotter WHERE id = ?");
+            $stmt = $this->db->prepare("SELECT * FROM asignaciones_plotter WHERE id = ? FOR UPDATE");
             $stmt->execute([$asignacionId]);
             $a = $stmt->fetch();
-            if (!$a) throw new Exception("Asignación no encontrada.");
+            if (!$a) throw new Exception('Asignación no encontrada.');
 
-            // 2. Validar que no exceda lo asignado
-            if ($a['tirajes_producidos'] + $cantidad > $a['tirajes_asignados']) {
-                 // Permitimos sobre-produccion? El usuario no dijo, pero usualmente se controla.
-                 // Vamos a permitirlo pero registrar la realidad.
+            $cantidad = max(1, $cantidad);
+            $pendienteAsignacion = max(0, (int)$a['tirajes_asignados'] - (int)$a['tirajes_producidos']);
+            $cantidadAplicada = min($cantidad, $pendienteAsignacion);
+            if ($cantidadAplicada <= 0) {
+                throw new Exception('La asignación ya está completada.');
             }
 
-            // 3. Actualizar asignación
-            $nuevoProducido = $a['tirajes_producidos'] + $cantidad;
-            $nuevoEstado = ($nuevoProducido >= $a['tirajes_asignados']) ? 'COMPLETADO' : 'PENDIENTE';
-            
-            $stmt = $this->db->prepare("UPDATE asignaciones_plotter SET tirajes_producidos = ?, estado = ? WHERE id = ?");
+            $nuevoProducido = (int)$a['tirajes_producidos'] + $cantidadAplicada;
+            $nuevoEstado = 'En proceso';
+            if ($nuevoProducido <= 0) {
+                $nuevoEstado = 'Pendiente';
+            } elseif ($nuevoProducido >= (int)$a['tirajes_asignados']) {
+                $nuevoEstado = 'Completado';
+            }
+
+            $stmt = $this->db->prepare('UPDATE asignaciones_plotter SET tirajes_producidos = ?, estado = ? WHERE id = ?');
             $stmt->execute([$nuevoProducido, $nuevoEstado, $asignacionId]);
 
-            // 4. Actualizar trabajo
-            $stmt = $this->db->prepare("UPDATE trabajos SET tirajes_impresos = tirajes_impresos + ? WHERE id = ?");
-            $stmt->execute([$cantidad, $a['trabajo_id']]);
+            $stmt = $this->db->prepare('UPDATE trabajos SET tirajes_impresos = LEAST(tirajes, tirajes_impresos + ?) WHERE id = ?');
+            $stmt->execute([$cantidadAplicada, $a['trabajo_id']]);
 
-            // 5. Guardar Log
-            $stmt = $this->db->prepare("INSERT INTO produccion_log (asignacion_id, trabajo_id, plotter_id, tirajes) VALUES (?, ?, ?, ?)");
-            $stmt->execute([$asignacionId, $a['trabajo_id'], $a['plotter_id'], $cantidad]);
+            $stmt = $this->db->prepare('INSERT INTO produccion_log (asignacion_id, trabajo_id, plotter_id, tirajes) VALUES (?, ?, ?, ?)');
+            $stmt->execute([$asignacionId, $a['trabajo_id'], $a['plotter_id'], $cantidadAplicada]);
 
             $this->db->commit();
             return true;

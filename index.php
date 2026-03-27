@@ -152,6 +152,10 @@ switch ($action) {
         $campanaController->asignarPlotter();
         break;
 
+    case 'campana_auto_asignar':
+        $campanaController->autoAsignarPlotters();
+        break;
+
     case 'campana_ver_produccion':
         $campanaController->verProduccionPlotter();
         break;
