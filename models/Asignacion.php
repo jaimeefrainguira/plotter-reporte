@@ -81,6 +81,24 @@ class Asignacion {
             throw new Exception('La cantidad a asignar debe ser mayor a 0.');
         }
 
+
+        $restanteReal = max(0, (int)$trabajo['tirajes'] - (int)$trabajo['tirajes_impresos']);
+        return max(0, $restanteReal - (int)$trabajo['pendiente_ya_asignado']);
+    }
+
+    public function crear(array $data): int {
+        $this->ensureSchema();
+
+        $pendiente = $this->getPendienteAsignableDeTrabajo((int)$data['trabajo_id']);
+        if ($pendiente <= 0) {
+            throw new Exception('El trabajo ya no tiene tirajes pendientes por asignar.');
+        }
+
+        $tirajesAsignados = (int)$data['tirajes_asignados'];
+        if ($tirajesAsignados <= 0) {
+            throw new Exception('La cantidad a asignar debe ser mayor a 0.');
+        }
+
         if ($tirajesAsignados > $pendiente) {
             throw new Exception("No puedes asignar más tirajes de los pendientes ($pendiente). ");
         }
@@ -242,6 +260,7 @@ class Asignacion {
     public function getAsignacionesDeTrabajo(int $trabajoId): array {
         $this->ensureSchema();
         $stmt = $this->db->prepare("SELECT * FROM asignaciones_plotter WHERE trabajo_id = ? ORDER BY id DESC");
+        $stmt = $this->db->prepare("SELECT * FROM asignaciones_plotter WHERE trabajo_id = ?");
         $stmt->execute([$trabajoId]);
         return $stmt->fetchAll();
     }
