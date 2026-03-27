@@ -34,10 +34,6 @@ class CampanaController {
             exit;
         }
         $trabajos = $this->campanaModel->getTrabajos($id);
-        $asignacionesPorTrabajo = [];
-        foreach ($trabajos as $trabajo) {
-            $asignacionesPorTrabajo[(int)$trabajo['id']] = $this->asignacionModel->getAsignacionesDeTrabajo((int)$trabajo['id']);
-        }
         $materiales = $this->materialModel->getAll(soloActivos: true);
         $progreso = $this->campanaModel->getProgresoGlobal($id);
         
@@ -306,50 +302,6 @@ class CampanaController {
         try {
             $resultado = $this->asignacionModel->autoAsignarPendientes($capacidad, $campanaId > 0 ? $campanaId : null);
             echo json_encode(['ok' => true, 'resultado' => $resultado]);
-        } catch (Exception $e) {
-            echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
-        }
-        exit;
-    }
-
-    public function editarAsignacionPlotter(): void {
-        header('Content-Type: application/json');
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            echo json_encode(['ok' => false, 'error' => 'Metodo no permitido']);
-            exit;
-        }
-        $inputData = json_decode(file_get_contents('php://input'), true) ?? [];
-        $asignacionId = (int)($inputData['asignacion_id'] ?? 0);
-        $plotterId = (int)($inputData['plotter_id'] ?? 0);
-        $tirajesAsignados = (int)($inputData['tirajes_asignados'] ?? 0);
-        if ($asignacionId <= 0 || $plotterId <= 0 || $tirajesAsignados <= 0) {
-            echo json_encode(['ok' => false, 'error' => 'Datos invalidos']);
-            exit;
-        }
-        try {
-            $this->asignacionModel->actualizar($asignacionId, $plotterId, $tirajesAsignados);
-            echo json_encode(['ok' => true]);
-        } catch (Exception $e) {
-            echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
-        }
-        exit;
-    }
-
-    public function borrarAsignacionPlotter(): void {
-        header('Content-Type: application/json');
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            echo json_encode(['ok' => false, 'error' => 'Metodo no permitido']);
-            exit;
-        }
-        $inputData = json_decode(file_get_contents('php://input'), true) ?? [];
-        $asignacionId = (int)($inputData['asignacion_id'] ?? 0);
-        if ($asignacionId <= 0) {
-            echo json_encode(['ok' => false, 'error' => 'Datos invalidos']);
-            exit;
-        }
-        try {
-            $this->asignacionModel->eliminar($asignacionId);
-            echo json_encode(['ok' => true]);
         } catch (Exception $e) {
             echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
         }

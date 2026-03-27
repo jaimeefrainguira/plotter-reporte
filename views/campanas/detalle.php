@@ -147,33 +147,6 @@
                                 <div class="mt-1 small" style="font-size: 0.6rem; color: #64748b;">
                                     Total asignado: <?= $trabajo['tirajes_asignados'] ?>
                                 </div>
-                                <?php $asigs = $asignacionesPorTrabajo[(int)$trabajo['id']] ?? []; ?>
-                                <?php if (!empty($asigs)): ?>
-                                    <div class="mt-1 text-start">
-                                        <?php foreach ($asigs as $asig): ?>
-                                            <div class="border rounded p-1 mb-1 bg-light d-flex justify-content-between align-items-center" style="font-size: 0.62rem;">
-                                                <span>
-                                                    <strong>P<?= (int)$asig['plotter_id'] ?></strong>:
-                                                    <?= (int)$asig['tirajes_producidos'] ?>/<?= (int)$asig['tirajes_asignados'] ?>
-                                                </span>
-                                                <span class="d-flex gap-1">
-                                                    <button type="button"
-                                                            class="btn btn-outline-secondary btn-sm py-0 px-1 js-editar-asig"
-                                                            data-id="<?= (int)$asig['id'] ?>"
-                                                            data-plotter="<?= (int)$asig['plotter_id'] ?>"
-                                                            data-tirajes="<?= (int)$asig['tirajes_asignados'] ?>">
-                                                        <i class="bi bi-pencil"></i>
-                                                    </button>
-                                                    <button type="button"
-                                                            class="btn btn-outline-danger btn-sm py-0 px-1 js-borrar-asig"
-                                                            data-id="<?= (int)$asig['id'] ?>">
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
-                                                </span>
-                                            </div>
-                                        <?php endforeach; ?>
-                                    </div>
-                                <?php endif; ?>
                             <?php endif; ?>
                         </td>
                         <td class="text-center">
@@ -894,62 +867,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 location.reload();
             } catch (error) {
                 mostrarAlerta('error', 'Error de red al asignar trabajo.');
-            }
-        });
-    });
-
-    document.querySelectorAll('.js-editar-asig').forEach((btn) => {
-        btn.addEventListener('click', async () => {
-            const asignacionId = parseInt(btn.dataset.id || '0', 10);
-            const plotterActual = btn.dataset.plotter || '1';
-            const tirajesActual = btn.dataset.tirajes || '1';
-            const plotterNuevo = prompt('Editar plotter (1-6):', plotterActual);
-            if (plotterNuevo === null) return;
-            const tirajesNuevo = prompt('Editar tirajes asignados:', tirajesActual);
-            if (tirajesNuevo === null) return;
-
-            try {
-                const resp = await fetch('index.php?action=campana_editar_asignacion', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        asignacion_id: asignacionId,
-                        plotter_id: parseInt(plotterNuevo, 10),
-                        tirajes_asignados: parseInt(tirajesNuevo, 10)
-                    })
-                });
-                const data = await resp.json();
-                if (!data.ok) {
-                    mostrarAlerta('error', data.error || 'No se pudo editar la asignación.');
-                    return;
-                }
-                mostrarAlerta('ok', 'Asignación actualizada correctamente.');
-                setTimeout(() => location.reload(), 600);
-            } catch (error) {
-                mostrarAlerta('error', 'Error de red al editar la asignación.');
-            }
-        });
-    });
-
-    document.querySelectorAll('.js-borrar-asig').forEach((btn) => {
-        btn.addEventListener('click', async () => {
-            const asignacionId = parseInt(btn.dataset.id || '0', 10);
-            if (!confirm('¿Seguro que deseas borrar esta asignación?')) return;
-            try {
-                const resp = await fetch('index.php?action=campana_borrar_asignacion', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ asignacion_id: asignacionId })
-                });
-                const data = await resp.json();
-                if (!data.ok) {
-                    mostrarAlerta('error', data.error || 'No se pudo borrar la asignación.');
-                    return;
-                }
-                mostrarAlerta('ok', 'Asignación eliminada.');
-                setTimeout(() => location.reload(), 600);
-            } catch (error) {
-                mostrarAlerta('error', 'Error de red al borrar la asignación.');
             }
         });
     });
