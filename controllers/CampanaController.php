@@ -34,6 +34,15 @@ class CampanaController {
             exit;
         }
         $trabajos = $this->campanaModel->getTrabajos($id);
+        $asignacionesCampana = $this->asignacionModel->getAsignacionesPorCampana($id);
+        $asignacionesPorTrabajo = [];
+        foreach ($asignacionesCampana as $asignacion) {
+            $trabajoId = (int)$asignacion['trabajo_id'];
+            if (!isset($asignacionesPorTrabajo[$trabajoId])) {
+                $asignacionesPorTrabajo[$trabajoId] = [];
+            }
+            $asignacionesPorTrabajo[$trabajoId][] = $asignacion;
+        }
         $materiales = $this->materialModel->getAll(soloActivos: true);
         $progreso = $this->campanaModel->getProgresoGlobal($id);
         
@@ -340,6 +349,71 @@ class CampanaController {
         } catch (Exception $e) {
             echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
         }
+        exit;
+    }
+
+    public function actualizarAsignacionPlotter(): void {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            exit;
+        }
+        $acceptJson = str_contains((string)($_SERVER['HTTP_ACCEPT'] ?? ''), 'application/json');
+        $isJsonBody = str_contains((string)($_SERVER['CONTENT_TYPE'] ?? ''), 'application/json');
+
+        try {
+            $payload = $isJsonBody ? (json_decode(file_get_contents('php://input'), true) ?? []) : $_POST;
+            $asignacionId = (int)($payload['asignacion_id'] ?? 0);
+            $plotterId = (int)($payload['plotter_id'] ?? 0);
+            $tirajesAsignados = (int)($payload['tirajes_asignados'] ?? 0);
+
+            $this->asignacionModel->actualizar($asignacionId, $plotterId, $tirajesAsignados);
+
+            if ($acceptJson || $isJsonBody) {
+                echo json_encode(['ok' => true]);
+                exit;
+            }
+
+            $_SESSION['flash'] = ['type' => 'success', 'message' => 'Asignación actualizada correctamente.'];
+        } catch (Exception $e) {
+            if ($acceptJson || $isJsonBody) {
+                echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
+                exit;
+            }
+
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => $e->getMessage()];
+        }
+
+        $campanaId = (int)($_POST['campana_id'] ?? 0);
+        header('Location: index.php?action=campana_detail&id=' . $campanaId);
+        exit;
+    }
+
+    public function eliminarAsignacionPlotter(): void {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            exit;
+        }
+        $acceptJson = str_contains((string)($_SERVER['HTTP_ACCEPT'] ?? ''), 'application/json');
+        $isJsonBody = str_contains((string)($_SERVER['CONTENT_TYPE'] ?? ''), 'application/json');
+
+        try {
+            $payload = $isJsonBody ? (json_decode(file_get_contents('php://input'), true) ?? []) : $_POST;
+            $asignacionId = (int)($payload['asignacion_id'] ?? 0);
+            $this->asignacionModel->eliminar($asignacionId);
+
+            if ($acceptJson || $isJsonBody) {
+                echo json_encode(['ok' => true]);
+                exit;
+            }
+            $_SESSION['flash'] = ['type' => 'success', 'message' => 'Asignación eliminada correctamente.'];
+        } catch (Exception $e) {
+            if ($acceptJson || $isJsonBody) {
+                echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
+                exit;
+            }
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => $e->getMessage()];
+        }
+
+        $campanaId = (int)($_POST['campana_id'] ?? 0);
+        header('Location: index.php?action=campana_detail&id=' . $campanaId);
         exit;
     }
 }
