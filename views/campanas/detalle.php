@@ -121,6 +121,7 @@
                             </div>
                         </td>
                         <td class="text-center">
+                            <?php $asignacionesTrabajo = $asignacionesPorTrabajo[(int)$trabajo['id']] ?? []; ?>
                             <?php if ($tirajesTotal > $trabajo['tirajes_asignados']): ?>
                                 <form action="index.php?action=campana_asignar_plotter" method="POST" class="d-flex gap-1 js-form-asignar" style="min-width: 160px; justify-content: center;">
                                     <input type="hidden" name="trabajo_id" value="<?= $trabajo['id'] ?>">
@@ -146,6 +147,43 @@
                             if ($trabajo['tirajes_asignados'] > 0): ?>
                                 <div class="mt-1 small" style="font-size: 0.6rem; color: #64748b;">
                                     Total asignado: <?= $trabajo['tirajes_asignados'] ?>
+                                </div>
+                            <?php endif; ?>
+
+                            <?php if (!empty($asignacionesTrabajo)): ?>
+                                <div class="mt-2 text-start border-top pt-2" style="max-height: 180px; overflow-y: auto;">
+                                    <?php foreach ($asignacionesTrabajo as $asig): ?>
+                                        <form action="index.php?action=campana_actualizar_asignacion" method="POST" class="js-form-asignar border rounded p-1 mb-1">
+                                            <input type="hidden" name="campana_id" value="<?= $campana['id'] ?>">
+                                            <input type="hidden" name="asignacion_id" value="<?= (int)$asig['id'] ?>">
+                                            <div class="d-flex gap-1 align-items-center">
+                                                <select name="plotter_id" class="form-select form-select-sm p-1" required style="font-size: 0.65rem;">
+                                                    <?php foreach ($plotters as $pid => $pname): ?>
+                                                        <option value="<?= $pid ?>" <?= (int)$asig['plotter_id'] === $pid ? 'selected' : '' ?>>
+                                                            P<?= $pid ?>
+                                                        </option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                                <input type="number" name="tirajes_asignados" class="form-control form-control-sm p-1 text-center"
+                                                       value="<?= (int)$asig['tirajes_asignados'] ?>" min="<?= max(1, (int)$asig['tirajes_producidos']) ?>"
+                                                       style="width: 60px; font-size: 0.65rem;">
+                                                <button class="btn btn-sm btn-outline-primary p-1" title="Guardar cambios">
+                                                    <i class="bi bi-floppy"></i>
+                                                </button>
+                                            </div>
+                                            <div class="d-flex justify-content-between mt-1">
+                                                <small class="text-muted" style="font-size: 0.6rem;">
+                                                    Prod: <?= (int)$asig['tirajes_producidos'] ?> · <?= htmlspecialchars((string)$asig['estado']) ?>
+                                                </small>
+                                                <button type="button" class="btn btn-link btn-sm text-danger p-0 js-btn-eliminar-asignacion"
+                                                        data-asignacion-id="<?= (int)$asig['id'] ?>"
+                                                        data-campana-id="<?= (int)$campana['id'] ?>"
+                                                        style="font-size: 0.6rem;">
+                                                    Eliminar
+                                                </button>
+                                            </div>
+                                        </form>
+                                    <?php endforeach; ?>
                                 </div>
                             <?php endif; ?>
                         </td>
@@ -867,6 +905,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 location.reload();
             } catch (error) {
                 mostrarAlerta('error', 'Error de red al asignar trabajo.');
+            }
+        });
+    });
+
+    document.querySelectorAll('.js-btn-eliminar-asignacion').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+            if (!confirm('¿Eliminar esta asignación?')) return;
+            const fd = new FormData();
+            fd.append('asignacion_id', btn.dataset.asignacionId || '0');
+            fd.append('campana_id', btn.dataset.campanaId || String(campanaId));
+
+            try {
+                const resp = await fetch('index.php?action=campana_eliminar_asignacion', {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json' },
+                    body: fd
+                });
+                const data = await resp.json();
+                if (!data.ok) {
+                    mostrarAlerta('error', data.error || 'No se pudo eliminar la asignación.');
+                    return;
+                }
+                location.reload();
+            } catch (error) {
+                mostrarAlerta('error', 'Error de red al eliminar asignación.');
             }
         });
     });
