@@ -22,6 +22,7 @@ class Reporte
 
     public function getLatestMasterId(): ?int
     {
+        $this->ensureRequiredColumns();
         if (!$this->hasMasterTable()) {
             return null;
         }
@@ -31,6 +32,7 @@ class Reporte
 
     public function getMasterById(int $masterId): ?array
     {
+        $this->ensureRequiredColumns();
         if (!$this->hasMasterTable()) {
             return null;
         }
@@ -44,6 +46,7 @@ class Reporte
 
     public function getByMasterId(int $masterId): array
     {
+        $this->ensureRequiredColumns();
         $stmt = $this->db->prepare('SELECT * FROM reportes WHERE maestro_id = :masterId ORDER BY plotter ASC, id ASC');
         $stmt->execute([':masterId' => $masterId]);
         return $stmt->fetchAll();

@@ -279,16 +279,18 @@ class ReporteController
     {
         if (!$this->loadDompdfLibrary()) {
             $this->redirectWithMessage(
-                'No se encontró DomPDF. Sube la carpeta vendor o la carpeta dompdf en la raíz del proyecto.',
+                'No se encontró la librería DomPDF necesaria para exportar. Verifica que la carpeta vendor o dompdf exista en el servidor.',
                 'danger'
             );
             return;
         }
 
         if (!class_exists('Dompdf\\Dompdf')) {
-            $this->redirectWithMessage('DomPDF no está disponible. Verifica la instalación de la librería.', 'danger');
+            $this->redirectWithMessage('DomPDF cargado pero el espacio de nombres (namespace) no está disponible. Verifica la versión de la librería.', 'danger');
             return;
         }
+
+        try {
 
         $reportId = ($id !== null && $id > 0) ? $id : null;
         $plotter = trim((string) ($_GET['plotter'] ?? ''));
@@ -311,37 +313,40 @@ class ReporteController
             $reportes = $latestMasterId ? $this->reporteModel->getByMasterId($latestMasterId) : [];
         }
 
-        $html = $this->buildPdfHtml($reportes, $plotter, $fecha);
+            $html = $this->buildPdfHtml($reportes, $plotter, $fecha);
 
-        $dompdf = new Dompdf\Dompdf();
-        $dompdf->loadHtml($html);
-        $dompdf->setPaper('A4', 'landscape');
-        $dompdf->render();
-        $dompdf->stream('reporte-impresiones-plotter.pdf', ['Attachment' => false]);
+            $dompdf = new Dompdf\Dompdf(['isRemoteEnabled' => true, 'isHtml5ParserEnabled' => true]);
+            $dompdf->loadHtml($html);
+            $dompdf->setPaper('A4', 'landscape');
+            $dompdf->render();
+            $dompdf->stream('reporte-impresiones-plotter.pdf', ['Attachment' => false]);
+        } catch (Throwable $e) {
+            $this->redirectWithMessage('Error al generar el PDF: ' . $e->getMessage(), 'danger');
+        }
     }
 
     private function renderJornadaPdf(int $maestroId): void
     {
-
-
-         if (!$this->loadDompdfLibrary() || !class_exists('Dompdf\\Dompdf')) {
-            $this->redirectWithMessage('No se pudo generar PDF. Verifica instalación de DomPDF.', 'danger');
+        if (!$this->loadDompdfLibrary() || !class_exists('Dompdf\\Dompdf')) {
+            $this->redirectWithMessage('No se pudo generar PDF de jornada. Instala la librería DomPDF.', 'danger');
             return;
         }
 
-        $master = $this->reporteModel->getMasterById($maestroId);
-        $reportes = $this->reporteModel->getByMasterId($maestroId);
-        $meta = $this->parseJornadaMetadata((string) ($master['observacion_general'] ?? ''));
+        try {
+            $master = $this->reporteModel->getMasterById($maestroId);
+            $reportes = $this->reporteModel->getByMasterId($maestroId);
+            $meta = $this->parseJornadaMetadata((string) ($master['observacion_general'] ?? ''));
 
-        $html = $this->buildJornadaPdfHtml($reportes, $meta);
+            $html = $this->buildJornadaPdfHtml($reportes, $meta);
 
-        $dompdf = new Dompdf\Dompdf();
-        $dompdf->loadHtml($html);
-        $dompdf->setPaper('A4', 'landscape');
-        $dompdf->render();
-        $dompdf->stream('reporte-jornada-plotters.pdf', ['Attachment' => false]);
-        
-        
+            $dompdf = new Dompdf\Dompdf(['isRemoteEnabled' => true, 'isHtml5ParserEnabled' => true]);
+            $dompdf->loadHtml($html);
+            $dompdf->setPaper('A4', 'landscape');
+            $dompdf->render();
+            $dompdf->stream('reporte-jornada-plotters.pdf', ['Attachment' => false]);
+        } catch (Throwable $e) {
+            $this->redirectWithMessage('Error en reporte PDF de jornada: ' . $e->getMessage(), 'danger');
+        }
     }
 
     private function loadDompdfLibrary(): bool
@@ -350,6 +355,8 @@ class ReporteController
             __DIR__ . '/../vendor/autoload.php',
             __DIR__ . '/../dompdf/autoload.inc.php',
             __DIR__ . '/../dompdf/vendor/autoload.php',
+            __DIR__ . '/../../vendor/autoload.php', // En caso de que estemos en subcarpeta
+            __DIR__ . '/../../dompdf/autoload.inc.php',
         ];
 
         foreach ($autoloadCandidates as $autoloadFile) {
