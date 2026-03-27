@@ -17,7 +17,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         .main-container {
-            max-width: 1200px;
+            max-width: 1260px;
             margin: 40px auto;
             background: white;
             padding: 30px;
@@ -28,7 +28,7 @@
             text-align: center;
             text-transform: uppercase;
             letter-spacing: 2px;
-            margin-bottom: 40px;
+            margin-bottom: 26px;
             font-weight: 300;
             color: var(--primary-dark);
         }
@@ -37,12 +37,13 @@
         }
         .table th {
             text-transform: uppercase;
-            font-size: 0.85rem;
+            font-size: 0.78rem;
             font-weight: 600;
             color: #6c757d;
             border-bottom: 2px solid var(--border-light);
             vertical-align: middle;
             text-align: center;
+            white-space: nowrap;
         }
         .table td {
             vertical-align: middle;
@@ -61,9 +62,9 @@
             background-color: #dee2e6;
         }
         .btn-save {
-            background-color: #e9ecef;
-            border: 1px solid #ced4da;
-            color: #495057;
+            background-color: #198754;
+            border: 1px solid #198754;
+            color: #fff;
             padding: 10px 40px;
             font-weight: 600;
             margin-top: 30px;
@@ -73,7 +74,7 @@
             transition: all 0.2s;
         }
         .btn-save:hover {
-            background-color: #dee2e6;
+            background-color: #157347;
         }
         .form-control, .form-select {
             border-radius: 4px;
@@ -100,28 +101,68 @@
 
 <div class="container py-5">
     <div class="main-container">
-        <h1>REPORTE DE PLOTTERS</h1>
+        <h1>REPORTE DE JORNADA - PLOTTERS</h1>
 
-        <div class="d-flex justify-content-start">
-            <button type="button" class="btn btn-add rounded-0" id="addRow">AGREGAR FILA</button>
-        </div>
+        <?php if (!empty($loadError)): ?>
+            <div class="alert alert-warning" role="alert">
+                <i class="bi bi-exclamation-triangle"></i>
+                <?= htmlspecialchars((string) $loadError) ?>
+            </div>
+        <?php endif; ?>
 
-        <form action="index.php?action=store_bulk" method="POST" id="reportForm" 
-              data-plotters='<?= json_encode($plotters) ?>' 
-              data-campanas='<?= json_encode($campanas, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG) ?>'>
+        <form action="index.php?action=store_bulk" method="POST" id="reportForm"
+              data-plotters='<?= json_encode($plotters) ?>'
+              data-campanas='<?= json_encode($campanas, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG) ?>'
+              data-asignaciones='<?= json_encode($asignacionesJornada ?? [], JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG) ?>'>
             <input type="hidden" name="csrf_token" value="<?= $csrfToken ?>">
-            
+            <input type="hidden" name="submit_mode" value="pdf">
+            <input type="hidden" name="jornada_operator" id="jornadaOperator">
+            <input type="hidden" name="jornada_start" id="jornadaStart">
+            <input type="hidden" name="jornada_end" id="jornadaEnd">
+
+            <div class="card border-0 bg-light mb-3">
+                <div class="card-body">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Operador</label>
+                            <input type="text" class="form-control" id="operatorName" placeholder="Nombre del operador..." required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Inicio jornada (auto)</label>
+                            <input type="text" class="form-control" id="shiftStartDisplay" readonly>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Fin jornada (auto)</label>
+                            <input type="text" class="form-control" id="shiftEndDisplay" readonly>
+                        </div>
+                        <div class="col-md-2 d-grid">
+                            <button type="button" id="startShiftBtn" class="btn btn-primary">
+                                <i class="bi bi-play-circle"></i> Iniciar jornada
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mt-2 small" id="shiftStatus"></div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-start">
+                <button type="button" class="btn btn-add rounded-0" id="addRow">
+                    <i class="bi bi-plus-lg"></i> Agregar trabajo
+                </button>
+            </div>
+
             <div class="table-responsive">
                 <table class="table table-bordered" id="plotterTable">
                     <thead>
                         <tr>
-                            <th style="width: 15%;">PLOTTER</th>
-                            <th style="width: 20%;">CAMPAÑA</th>
-                            <th style="width: 25%;">DESCRIPCIÓN</th>
-                            <th style="width: 10%;">CANTIDAD</th>
-                            <th style="width: 10%;">CANT. IMPRESO</th>
-                            <th style="width: 10%;">% IMPRESO</th>
-                            <th style="width: 10%;">CRUD</th>
+                            <th style="width: 13%;">Plotter</th>
+                            <th style="width: 17%;">Campaña / Trabajo</th>
+                            <th style="width: 20%;">Trabajo (descripción)</th>
+                            <th style="width: 14%;">Material</th>
+                            <th style="width: 9%;">Asignado</th>
+                            <th style="width: 9%;">Producido</th>
+                            <th style="width: 10%;">Progreso del trabajo</th>
+                            <th style="width: 8%;">CRUD</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -130,10 +171,12 @@
                 </table>
             </div>
 
-            <button type="submit" class="btn btn-save rounded-0">GUARDAR REPORTE</button>
+            <button type="submit" class="btn btn-save rounded-0" id="generatePdfBtn">
+                <i class="bi bi-file-earmark-pdf"></i> Generar reporte
+            </button>
         </form>
     </div>
-    
+
     <div class="text-center mt-3">
         <a href="index.php?action=campanas_list" class="text-muted text-decoration-none">
             <i class="bi bi-arrow-left"></i> Volver a Gestión de Campañas
