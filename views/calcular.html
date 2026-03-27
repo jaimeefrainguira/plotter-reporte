@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Producción Impresión PRO</title>
+<style>
+  body { font-family: Arial; padding: 20px; }
+  input, select { margin: 5px; }
+
+  #preview {
+    margin-top: 20px;
+    border: 2px solid #333;
+    position: relative;
+    background: #eee;
+    display: none;
+  }
+
+  .panel {
+    position: absolute;
+    border: 2px solid red;
+    background: rgba(255,0,0,0.1);
+  }
+</style>
+</head>
+<body>
+
+<h2>Producción Impresión</h2>
+
+<h3>Diseño</h3>
+Ancho:
+<input type="number" id="ancho" value="300"> cm<br>
+
+Alto:
+<input type="number" id="alto" value="120"> cm<br>
+
+Copias:
+<input type="number" id="copias" value="1"><br>
+
+<h3>
+<input type="checkbox" id="usarPanelado"> Activar Panelado
+</h3>
+
+<div id="panelConfig" style="display:none;">
+  Ancho panel:
+  <input type="number" id="panelAncho" value="120"> cm<br>
+
+  Gap:
+  <input type="number" id="gap" value="2"> cm<br>
+</div>
+
+<h3>Material Rollos</h3>
+<select id="material">
+  <option value="150x5000">Lona 150</option>
+  <option value="120x5000">Adhesivo 120</option>
+  <option value="250x5000">Lona 250</option>
+  <option value="320x5000">Lona 320</option>
+</select>
+
+<h3>Orientación</h3>
+<select id="orientacion">
+  <option value="auto">Automático</option>
+  <option value="vertical">Forzar Vertical</option>
+  <option value="horizontal">Forzar Horizontal</option>
+</select>
+
+<h3>
+<input type="checkbox" id="usarSintra"> Usar Sintra 122x244
+</h3>
+
+<br><br>
+<button onclick="calcular()">Calcular</button>
+
+<h3 id="resultado"></h3>
+<h3 id="resultadoSintra" style="display:none;"></h3>
+
+<div id="preview"></div>
+
+<script>
+
+// mostrar panelado config
+document.getElementById("usarPanelado").onchange = function() {
+    document.getElementById("panelConfig").style.display = this.checked ? "block" : "none";
+};
+
+// mostrar/ocultar sintra
+document.getElementById("usarSintra").onchange = function() {
+    document.getElementById("resultadoSintra").style.display = this.checked ? "block" : "none";
+};
+
+function calcular() {
+
+    let ancho = parseFloat(document.getElementById("ancho").value);
+    let alto = parseFloat(document.getElementById("alto").value);
+    let copias = parseInt(document.getElementById("copias").value);
+
+    let material = document.getElementById("material").value.split("x");
+    let anchoMat = parseFloat(material[0]);
+    let largoMat = parseFloat(material[1]);
+
+    let orient = document.getElementById("orientacion").value;
+    let usarPanel = document.getElementById("usarPanelado").checked;
+    let usarSintra = document.getElementById("usarSintra").checked;
+
+    let preview = document.getElementById("preview");
+    preview.innerHTML = "";
+    preview.style.display = "none";
+
+    let escala = 0.4;
+
+    // ===============================
+    // ORIENTACIÓN VICEVERSA
+    // ===============================
+    let w, h, modoFinal;
+
+    if (orient === "vertical") {
+        w = alto;
+        h = ancho;
+        modoFinal = "Vertical (Rotado)";
+    }
+    else if (orient === "horizontal") {
+        w = ancho;
+        h = alto;
+        modoFinal = "Horizontal (Normal)";
+    }
+    else {
+        let totalNormal = Math.floor(anchoMat / ancho) * Math.floor(largoMat / alto);
+        let totalRotado = Math.floor(anchoMat / alto) * Math.floor(largoMat / ancho);
+
+        if (totalRotado > totalNormal) {
+            w = alto;
+            h = ancho;
+            modoFinal = "Automático → Rotado";
+        } else {
+            w = ancho;
+            h = alto;
+            modoFinal = "Automático → Normal";
+        }
+    }
+
+    let rollos = 0, sobrante = 0;
+    let copiasPorRollo = 0, copiasExtra = 0;
+    let textoMaterial = "";
+
+    // ===============================
+    // PANELADO
+    // ===============================
+    if (usarPanel) {
+
+        preview.style.display = "block";
+
+        let panelAncho = parseFloat(document.getElementById("panelAncho").value);
+        let gap = parseFloat(document.getElementById("gap").value);
+
+        let paneles = Math.ceil(w / panelAncho);
+        let altoCopia = paneles * h;
+        let largoTotal = altoCopia * copias;
+
+        rollos = Math.floor(largoTotal / largoMat);
+        sobrante = largoTotal % largoMat;
+
+        copiasPorRollo = Math.floor(largoMat / altoCopia);
+        copiasExtra = Math.floor(sobrante / altoCopia);
+
+        if (rollos === 0) {
+            textoMaterial = `${sobrante} cm (${copiasExtra} copias)`;
+        } else {
+            textoMaterial = `${rollos} rollo(s) + ${sobrante} cm 
+            (${copiasPorRollo} copias/rollo + ${copiasExtra} copias adicionales)`;
+        }
+
+        document.getElementById("resultado").innerHTML = `
+            <b>Modo:</b> Panelado<br>
+            <b>Orientación:</b> ${modoFinal}<br>
+            Paneles por copia: ${paneles}<br><br>
+            <b>Material:</b><br>${textoMaterial}
+        `;
+
+        let anchoTotal = (paneles * panelAncho) + ((paneles - 1) * gap);
+
+        preview.style.width = (anchoTotal * escala) + "px";
+        preview.style.height = (h * escala) + "px";
+
+        for (let i = 0; i < paneles; i++) {
+            let div = document.createElement("div");
+            div.className = "panel";
+            div.style.width = (panelAncho * escala) + "px";
+            div.style.height = (h * escala) + "px";
+            div.style.left = ((i * (panelAncho + gap)) * escala) + "px";
+            preview.appendChild(div);
+        }
+
+    } else {
+
+        let piezasPorFila = Math.floor(anchoMat / w);
+        let filas = Math.ceil(copias / piezasPorFila);
+        let largoTotal = filas * h;
+
+        rollos = Math.floor(largoTotal / largoMat);
+        sobrante = largoTotal % largoMat;
+
+        copiasPorRollo = Math.floor(largoMat / h) * piezasPorFila;
+        copiasExtra = Math.floor(sobrante / h) * piezasPorFila;
+
+        if (rollos === 0) {
+            textoMaterial = `${sobrante} cm (${copiasExtra} copias)`;
+        } else {
+            textoMaterial = `${rollos} rollo(s) + ${sobrante} cm 
+            (${copiasPorRollo} copias/rollo + ${copiasExtra} copias adicionales)`;
+        }
+
+        document.getElementById("resultado").innerHTML = `
+            <b>Modo:</b> Sin panelado<br>
+            <b>Orientación:</b> ${modoFinal}<br>
+            <b>Material:</b><br>${textoMaterial}
+        `;
+    }
+
+    // ===============================
+    // 🧱 SINTRA
+    // ===============================
+    if (usarSintra) {
+
+        let anchoPl = 122;
+        let altoPl = 244;
+
+        let n1 = Math.floor(anchoPl / w) * Math.floor(altoPl / h);
+        let n2 = Math.floor(anchoPl / h) * Math.floor(altoPl / w);
+
+        let mejor = Math.max(n1, n2);
+        let orientSintra = (n2 > n1) ? "Rotado" : "Normal";
+        let planchas = Math.ceil(copias / mejor);
+
+        document.getElementById("resultadoSintra").innerHTML = `
+            🧱 <b>Sintra 122x244</b><br><br>
+            Piezas por plancha: ${mejor}<br>
+            Planchas necesarias: ${planchas}<br>
+            Orientación: ${orientSintra}
+        `;
+    }
+}
+</script>
+
+</body>
+</html>

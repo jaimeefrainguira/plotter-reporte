@@ -1,0 +1,205 @@
+/* Estilos específicos para el módulo de Campañas e Industrial */
+.card {
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.progress {
+    background-color: #e9ecef;
+    border-radius: 10px;
+}
+
+.modal-header .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+.result-panel h6 {
+    font-size: 0.75rem;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.table thead th {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ===== PRIORITY SELECT ===== */
+.priority-select {
+    border-left: 4px solid #6c757d;
+    transition: border-color 0.25s;
+}
+
+/* ===== MODAL PROFESIONAL ===== */
+
+/* Títulos de sección */
+.modal-section-title {
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: #64748b;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 6px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Labels del modal */
+.modal-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+/* Inputs del modal */
+.modal-input {
+    border-radius: 8px !important;
+    border: 1.5px solid #e2e8f0 !important;
+    font-size: 0.875rem !important;
+    transition: border-color 0.2s, box-shadow 0.2s !important;
+}
+
+.modal-input:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.12) !important;
+}
+
+/* Tarjetas de toggle (panelado / sintra) */
+.modal-toggle-card {
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.modal-toggle-card:hover {
+    border-color: #93c5fd;
+    background: #eff6ff;
+}
+
+/* Botón calcular */
+.btn-calcular {
+    background: linear-gradient(135deg, #1e3a5f, #2563eb);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    border: none;
+    border-radius: 10px;
+    padding: 11px 20px;
+    transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 14px rgba(37,99,235,0.35);
+}
+
+.btn-calcular:hover {
+    opacity: 0.92;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(37,99,235,0.45);
+    color: #fff;
+}
+
+.btn-calcular:active {
+    transform: translateY(0);
+}
+
+/* Caja de resultado */
+.resultado-box {
+    background: #fff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px 18px;
+    min-height: 120px;
+    font-size: 0.875rem;
+    line-height: 1.7;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.resultado-sintra-box {
+    background: #f0f9ff;
+    border: 1.5px solid #bae6fd;
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 0.875rem;
+    line-height: 1.7;
+}
+
+/* Footer buttons */
+.btn-modal-cancel {
+    border-radius: 9px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 9px 22px;
+}
+
+.btn-modal-save {
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+    color: #fff;
+    border: none;
+    border-radius: 9px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    padding: 9px 28px;
+    box-shadow: 0 4px 12px rgba(22,163,74,0.3);
+    transition: opacity 0.2s, transform 0.15s;
+}
+
+.btn-modal-save:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    color: #fff;
+}
+
+/* ===== RESULTADO SUMMARY CHIPS ===== */
+.res-summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 2px;
+    padding: 6px 2px;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 6px;
+}
+
+.res-chip {
+    font-size: 0.76rem;
+    color: #334155;
+    padding: 2px 6px;
+    background: #f1f5f9;
+    border-radius: 99px;
+    border: 1px solid #e2e8f0;
+    white-space: nowrap;
+}
+
+.res-chip-mode {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #1d4ed8;
+    font-weight: 700;
+}
+
+.res-sep {
+    color: #cbd5e1;
+    font-size: 0.7rem;
+    padding: 0 1px;
+}
+
+.res-detail {
+    font-size: 0.8rem;
+    color: #475569;
+    line-height: 1.6;
+}
+
