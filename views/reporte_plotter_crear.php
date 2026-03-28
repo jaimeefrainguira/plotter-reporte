@@ -159,7 +159,7 @@
                             <th style="width: 17%;">Campaña / Trabajo</th>
                             <th style="width: 20%;">Trabajo (descripción)</th>
                             <th style="width: 14%;">Material</th>
-                            <th style="width: 9%;">Asignado</th>
+                            <th style="width: 9%;">Tirajes</th>
                             <th style="width: 9%;">Producido</th>
                             <th style="width: 10%;">Progreso del trabajo</th>
                             <th style="width: 8%;">CRUD</th>
