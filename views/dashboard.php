@@ -172,7 +172,9 @@ unset($_SESSION['flash']);
                 </div>
             </form>
         </div>
-    </div>    <div class="plotter-grid">
+    </div>
+
+    <div class="plotter-grid">
         <?php foreach ($plotters as $plotter): ?>
             <?php $plotterRows = $reportesByPlotter[$plotter] ?? []; ?>
             <div class="plotter-box">
@@ -189,11 +191,10 @@ unset($_SESSION['flash']);
                             <th>DESCRIPCIÓN</th>
                             <th>CANT. IMPRESO</th>
                             <th>% IMPRESO</th>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="js/shift_session.js"></script>
-<script src="js/app.js"></script>
-</body>
-</html>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php foreach ($plotterRows as $row): ?>
                             <tr>
                                 <td><?= htmlspecialchars($row['observacion']) ?></td>
                                 <td><?= htmlspecialchars($row['descripcion']) ?></td>
@@ -214,6 +215,8 @@ unset($_SESSION['flash']);
             </div>
         <?php endforeach; ?>
     </div>
+</div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
