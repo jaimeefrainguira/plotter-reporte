@@ -25,14 +25,9 @@ try {
     $campanaController = new CampanaController();
     $materialController = new MaterialController();
 } catch (Throwable $exception) {
-    if (in_array($action, ['dashboard', 'plotter', 'plotter_report', 'create', 'edit', 'pdf'], true)) {
-        $errorMessage = 'No fue posible conectar con la base de datos. Verifica la configuración para habilitar todos los reportes.';
-        include __DIR__ . '/views/error_conexion.php';
-        exit;
-    }
-
-    http_response_code(500);
-    echo 'Error de configuración: ' . $exception->getMessage();
+    error_log(sprintf('[bootstrap] action=%s error=%s', (string) $action, $exception->getMessage()));
+    $errorMessage = 'No fue posible conectar con la base de datos. Verifica la configuración para habilitar todos los módulos.';
+    include __DIR__ . '/views/error_conexion.php';
     exit;
 }
 
