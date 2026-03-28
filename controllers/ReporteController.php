@@ -497,7 +497,7 @@ class ReporteController
                                     <tr>
                                         <th>CAMPAÑA / TRABAJO</th>
                                         <th>MATERIAL</th>
-                                        <th>ASIGNADO</th>
+                                        <th>TIRAJES</th>
                                         <th>PRODUCIDO</th>
                                         <th>PROGRESO</th>
                                     </tr>
@@ -529,7 +529,7 @@ class ReporteController
                             <th>Plotter</th>
                             <th>Campaña / Trabajo</th>
                             <th>Material</th>
-                            <th>Asignado</th>
+                            <th>Tirajes</th>
                             <th>Producido</th>
                             <th>Progreso</th>
                             <th>Fecha</th>
@@ -596,7 +596,7 @@ class ReporteController
                         <th>Plotter</th>
                         <th>Campaña / Trabajo</th>
                         <th>Material</th>
-                        <th>Asignado</th>
+                        <th>Tirajes</th>
                         <th>Producido</th>
                         <th>Progreso del Trabajo</th>
                     </tr>
