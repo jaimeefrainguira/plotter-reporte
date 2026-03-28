@@ -141,7 +141,12 @@
                             </button>
                         </div>
                     </div>
-                    <div class="mt-2 small" id="shiftStatus"></div>
+                    <div class="mt-2 d-flex flex-wrap gap-2">
+                        <div class="small" id="shiftStatus"></div>
+                        <button type="button" id="endShiftBtn" class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-stop-circle"></i> Cerrar jornada
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -184,6 +189,7 @@
     </div>
 </div>
 
+<script src="js/shift_session.js?v=<?= time() ?>"></script>
 <script src="js/reporte_plotter.js?v=<?= time() ?>"></script>
 </body>
 </html>

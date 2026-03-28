@@ -129,6 +129,36 @@ unset($_SESSION['flash']);
     </div>
 
     <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-stopwatch"></i> Control de jornada</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label">Operador</label>
+                    <input type="text" class="form-control" id="dashboardOperatorName" placeholder="Nombre del operador...">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Inicio</label>
+                    <input type="text" class="form-control" id="dashboardShiftStart" readonly>
+                </div>
+                <div class="col-md-4 d-flex gap-2">
+                    <button type="button" class="btn btn-primary" id="dashboardStartShiftBtn">
+                        <i class="bi bi-play-circle"></i> Iniciar jornada
+                    </button>
+                    <a href="index.php?action=plotter_report" class="btn btn-success">
+                        <i class="bi bi-file-earmark-plus"></i> Ir a reporte
+                    </a>
+                    <button type="button" class="btn btn-outline-danger" id="dashboardEndShiftBtn">
+                        <i class="bi bi-stop-circle"></i> Cerrar jornada
+                    </button>
+                </div>
+            </div>
+            <div class="small mt-2 text-muted" id="dashboardShiftStatus">Sin jornada iniciada.</div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
         <div class="card-body">
             <form method="get" class="row g-2 align-items-end">
                 <input type="hidden" name="action" value="dashboard">
@@ -159,10 +189,11 @@ unset($_SESSION['flash']);
                             <th>DESCRIPCIÓN</th>
                             <th>CANT. IMPRESO</th>
                             <th>% IMPRESO</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <?php foreach ($plotterRows as $row): ?>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/shift_session.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
                             <tr>
                                 <td><?= htmlspecialchars($row['observacion']) ?></td>
                                 <td><?= htmlspecialchars($row['descripcion']) ?></td>

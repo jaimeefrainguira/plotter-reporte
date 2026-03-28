@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const jornadaStartHidden = document.getElementById('jornadaStart');
     const jornadaEndHidden = document.getElementById('jornadaEnd');
     const generatePdfBtn = document.getElementById('generatePdfBtn');
+    const endShiftBtn = document.getElementById('endShiftBtn');
 
     if (!tableBody || !addRowBtn || !reportForm) return;
 
@@ -37,6 +38,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!shiftStatus) return;
         shiftStatus.className = cssClass;
         shiftStatus.textContent = message;
+    }
+
+    function clearRows() {
+        tableBody.innerHTML = '';
+        rowCount = 0;
     }
 
     function createRow(initialData = null) {
@@ -152,6 +158,9 @@ document.addEventListener('DOMContentLoaded', function() {
         operatorInput.readOnly = true;
         jornadaOperatorHidden.value = nombre;
         jornadaStartHidden.value = nowIso;
+        if (typeof ShiftSession !== 'undefined') {
+            ShiftSession.saveSession(nombre, nowIso);
+        }
         shiftStartInput.value = formatted;
         startShiftBtn.disabled = true;
 
@@ -178,6 +187,26 @@ document.addEventListener('DOMContentLoaded', function() {
         setShiftStatus('Jornada iniciada. Ya puedes registrar trabajos por plotter.', 'text-success fw-semibold');
     });
 
+    endShiftBtn?.addEventListener('click', function() {
+        if (typeof ShiftSession !== 'undefined') {
+            ShiftSession.clearSession();
+        }
+
+        jornadaIniciada = false;
+        operatorInput.readOnly = false;
+        operatorInput.value = '';
+        jornadaOperatorHidden.value = '';
+        jornadaStartHidden.value = '';
+        jornadaEndHidden.value = '';
+        shiftStartInput.value = '';
+        shiftEndInput.value = '';
+        startShiftBtn.disabled = false;
+        addRowBtn.disabled = true;
+        generatePdfBtn.disabled = true;
+        clearRows();
+        setShiftStatus('Jornada cerrada. Se borraron los datos locales.', 'text-muted');
+    });
+
     reportForm.addEventListener('submit', function(event) {
         if (!jornadaIniciada) {
             event.preventDefault();
@@ -202,4 +231,19 @@ document.addEventListener('DOMContentLoaded', function() {
     addRowBtn.disabled = true;
     generatePdfBtn.disabled = true;
     setShiftStatus('Esperando inicio de jornada.', 'text-muted');
+
+    if (typeof ShiftSession !== 'undefined') {
+        const savedSession = ShiftSession.getSession();
+        if (savedSession) {
+            jornadaIniciada = true;
+            operatorInput.value = savedSession.operator;
+            operatorInput.readOnly = true;
+            jornadaOperatorHidden.value = savedSession.operator;
+            jornadaStartHidden.value = savedSession.startIso;
+            shiftStartInput.value = formatDateTime(new Date(savedSession.startIso));
+            startShiftBtn.disabled = true;
+            activarControlesJornada();
+            setShiftStatus('Jornada cargada desde la cookie del equipo.', 'text-success fw-semibold');
+        }
+    }
 });

@@ -25,7 +25,7 @@ try {
     $campanaController = new CampanaController();
     $materialController = new MaterialController();
 } catch (Throwable $exception) {
-    if (in_array($action, ['dashboard', 'plotter'], true)) {
+    if (in_array($action, ['dashboard', 'plotter', 'plotter_report', 'create', 'edit', 'pdf'], true)) {
         $errorMessage = 'No fue posible conectar con la base de datos. Verifica la configuración para habilitar todos los reportes.';
         include __DIR__ . '/views/error_conexion.php';
         exit;
